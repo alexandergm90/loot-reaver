@@ -41,7 +41,21 @@ const CharacterCreationScreen = () => {
         } else if (part === 'eyes') {
             options = Object.keys(characterAssets[character.gender].eyes);
         } else if (part === 'hair') {
-            options = Object.keys(characterAssets[character.gender].hair);
+            // Filter all hair keys matching current hairColor (e.g. long_white, spiky_white)
+            options = Object.keys(characterAssets[character.gender].hair)
+                .filter(key => key.endsWith('_' + character.hairColor));
+
+            const currentHairKey = character.hair + '_' + character.hairColor;
+            const newFullHairKey = cycleOption(options, currentHairKey, direction);
+
+            // Extract the new hairstyle from the new combined key
+            const [newHair] = newFullHairKey.split('_');
+
+            setCharacter(prev => ({
+                ...prev,
+                hair: newHair,
+            }));
+            return;
         } else if (part === 'mouth') {
             options = Object.keys(characterAssets[character.gender].mouth);
         } else if (part === 'beard') {
