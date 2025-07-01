@@ -33,7 +33,7 @@
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/loot-reaver.git
+git clone https://github.com/alexandergm90/loot-reaver.git
 cd loot-reaver
 ```
 
