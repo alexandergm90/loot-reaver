@@ -1,50 +1,88 @@
-# Welcome to your Expo app 👋
+# 🧙‍♂️ Loot Reaver
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+[![Expo SDK](https://img.shields.io/badge/expo-53.0.13-blue?logo=expo)](https://expo.dev)
+[![Platform](https://img.shields.io/badge/platform-ios%20|%20android%20|%20web-brightgreen?logo=react)](https://reactnative.dev)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
+[![Code Style: Prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg?logo=prettier)](https://prettier.io)
 
-## Get started
+**Loot Reaver** is a stylized 2D mobile/web RPG with modular characters, scalable dungeon progression, loot-based growth, and fast turn-based combat. Built with modern web technologies using Expo and React Native.
 
-1. Install dependencies
+---
 
-    ```bash
-    npm install
-    ```
+## 📸 Preview
 
-2. Start the app
+> ![img_1.png](img_1.png)
 
-    ```bash
-    npx expo start
-    ```
+---
 
-In the output, you'll find options to open the app in a
+## 🔧 Tech Stack
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- **Frontend**: [React Native](https://reactnative.dev/) + [Expo](https://expo.dev/)
+- **Navigation**: [Expo Router](https://expo.github.io/router/)
+- **Backend (planned)**: [NestJS](https://nestjs.com/)
+- **Assets**: modular sprites (head, hair, beard, etc.)
+- **Tooling**:
+   - Prettier (`@trivago/prettier-plugin-sort-imports`)
+   - ESLint
+   - GitHub for version control
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## 🚀 Getting Started
 
-When you're ready, run:
+### 1. Clone the repository
 
 ```bash
-npm run reset-project
+git clone https://github.com/your-username/loot-reaver.git
+cd loot-reaver
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Install dependencies
+```bash
+npm install
+# or
+yarn install
+```
 
-## Learn more
+### 3. Start the app
+```bash
+npx expo start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+This opens Expo Dev Tools in your browser. You can preview the app on:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- 📱 Android emulator
+- 🍏 iOS simulator (macOS)
+- 📲 Expo Go on physical device
 
-## Join the community
+### 🎨 Development Notes
+- Character creation uses modular layering (head, eyes, mouth, hair, etc.)
+- Hair style and hair color are selected independently
+- Skin tone is chosen via a horizontal carousel of 12 tones
+- All assets are mapped in characterAssets
+- Code formatting is handled with Prettier:
+```bash
+npm run format
+```
 
-Join our community of developers creating universal apps.
+### 🛠 Planned Features
+✅ Character creation with animation
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+🔜 Scalable dungeon system with backend-generated combat logs
+
+🔜 PvE loot scaling and gear score system
+
+🔜 Inventory and equipment management
+
+🔜 PvP combat & ladder
+
+🔜 Account linking (Google, Apple, Facebook)
+
+🔜 Guild system, leaderboards, titles
+
+### 📝 License
+Copyright © 2025 Manea Alexandru
+
+This project is provided for **non-commercial** use only.  
+You may view, modify, and run this code for educational or personal purposes.  
+Commercial use, redistribution, sublicensing, or publishing derivatives is strictly prohibited without explicit permission.

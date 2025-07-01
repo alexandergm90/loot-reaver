@@ -1,0 +1,18 @@
+Copyright © 2025 Manea Alexandru
+
+This software is provided for non-commercial use only.
+
+You are permitted to:
+- Use and modify this project for personal, educational, or evaluation purposes.
+- Share or discuss the project with appropriate attribution.
+
+You are NOT permitted to:
+- Use this project or any part of it for commercial purposes.
+- Re-distribute, sublicense, or sell this project.
+- Publish this project or derivatives under your own name or brand.
+
+Any use outside of the above must receive explicit written permission from the author.
+
+Unauthorized commercial use is strictly prohibited.
+
+For permission requests, contact: alexander-eu [at] hotmail [dot] com
