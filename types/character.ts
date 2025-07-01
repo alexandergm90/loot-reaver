@@ -1,4 +1,4 @@
-import {ImageRequireSource} from "react-native";
+import { ImageRequireSource } from 'react-native';
 
 export type CharacterPreviewProps = {
     gender: 'male' | 'female';
@@ -11,7 +11,7 @@ export type CharacterPreviewProps = {
 };
 
 export type CharacterAsset = {
-    source: ImageRequireSource
+    source: ImageRequireSource;
     width: number;
     height: number;
     top: number;

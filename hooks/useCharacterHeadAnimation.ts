@@ -1,12 +1,12 @@
-import {useEffect} from 'react';
+import { useEffect } from 'react';
 import {
-    useSharedValue,
-    useAnimatedStyle,
-    withTiming,
-    withSequence,
     Easing,
+    useAnimatedStyle,
+    useSharedValue,
+    withSequence,
+    withTiming,
 } from 'react-native-reanimated';
-import {CharacterPreviewProps} from '@/types/character';
+import { CharacterPreviewProps } from '@/types/character';
 
 export const useCharacterHeadAnimation = (character: CharacterPreviewProps) => {
     const scale = useSharedValue(1);
@@ -15,16 +15,16 @@ export const useCharacterHeadAnimation = (character: CharacterPreviewProps) => {
 
     useEffect(() => {
         opacity.value = 0;
-        opacity.value = withTiming(1, {duration: 300});
+        opacity.value = withTiming(1, { duration: 300 });
 
         scale.value = withSequence(
-            withTiming(0.6, {duration: 100, easing: Easing.out(Easing.exp)}),
-            withTiming(1, {duration: 200, easing: Easing.out(Easing.exp)})
+            withTiming(0.6, { duration: 100, easing: Easing.out(Easing.exp) }),
+            withTiming(1, { duration: 200, easing: Easing.out(Easing.exp) }),
         );
 
         rotate.value = withSequence(
-            withTiming(10, {duration: 100}),
-            withTiming(0, {duration: 200})
+            withTiming(10, { duration: 100 }),
+            withTiming(0, { duration: 200 }),
         );
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -40,9 +40,6 @@ export const useCharacterHeadAnimation = (character: CharacterPreviewProps) => {
 
     return useAnimatedStyle(() => ({
         opacity: opacity.value,
-        transform: [
-            {scale: scale.value},
-            {rotateZ: `${rotate.value}deg`},
-        ],
+        transform: [{ scale: scale.value }, { rotateZ: `${rotate.value}deg` }],
     }));
 };

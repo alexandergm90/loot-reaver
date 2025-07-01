@@ -1,5 +1,5 @@
-import { ItemAsset } from '@/types/equipmentAsset';
 import { itemSlotMeta } from '@/data/itemAssets/slotMeta';
+import { ItemAsset } from '@/types/equipmentAsset';
 
 export type WeaponType = 'main' | 'off' | 'twohanded';
 export type ItemType = 'weapon' | 'shield';
@@ -19,7 +19,7 @@ export interface RenderInstruction {
 
 export function getWeaponRenderInstructions(
     mainHand: EquippedItem | null,
-    offHand: EquippedItem | null
+    offHand: EquippedItem | null,
 ): RenderInstruction[] {
     if (mainHand?.weaponType === 'twohanded') {
         const meta = itemSlotMeta.weapon_twohanded.center;
@@ -33,10 +33,7 @@ export function getWeaponRenderInstructions(
         instructions.push({ source: mainHand.source, ...meta });
     }
 
-    if (
-        offHand?.itemType === 'weapon' &&
-        offHand?.weaponType !== 'twohanded'
-    ) {
+    if (offHand?.itemType === 'weapon' && offHand?.weaponType !== 'twohanded') {
         const meta = itemSlotMeta.weapon.left;
         instructions.push({ source: offHand.source, ...meta });
     }

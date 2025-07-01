@@ -1,13 +1,13 @@
-import { chestAssets } from './chest';
-import { weaponAssets } from './weapon';
-import { helmetAssets } from './helmet';
-import { shieldAssets } from './shield';
+import { EquipmentAssets } from '@/types/equipmentAsset';
 import { capeAssets } from './cape';
+import { chestAssets } from './chest';
+import { feetAssets } from './feet';
 import { gloveAssets } from './glove';
+import { helmetAssets } from './helmet';
 import { neckAssets } from './neck';
 import { ringAssets } from './ring';
-import { feetAssets } from './feet';
-import { EquipmentAssets } from '@/types/equipmentAsset';
+import { shieldAssets } from './shield';
+import { weaponAssets } from './weapon';
 
 export const itemAssets = {
     chest: chestAssets,
@@ -18,5 +18,5 @@ export const itemAssets = {
     glove: gloveAssets,
     neck: neckAssets,
     ring: ringAssets,
-    feet: feetAssets
+    feet: feetAssets,
 } as Record<string, EquipmentAssets>;

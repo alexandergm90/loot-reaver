@@ -1,11 +1,11 @@
-import React, {useState} from 'react';
-import {View, Text, StyleSheet, Pressable} from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import CharacterHeadPreview from '@/components/character/CharacterHeadPreview';
-import {characterAssets} from '@/data/characterAssets';
-import {cycleOption} from '@/utils/cycleOption';
-import {CharacterPreviewProps} from '@/types/character';
-import {generateRandomCharacter} from '@/utils/randomCharacter';
 import SelectorRow from '@/components/ui/SelectorRow';
+import { characterAssets } from '@/data/characterAssets';
+import { cycleOption } from '@/utils/cycleOption';
+import { generateRandomCharacter } from '@/utils/randomCharacter';
+import { CharacterPreviewProps } from '@/types/character';
 
 const HAIR_COLORS = ['blue', 'red', 'yellow', 'black', 'white', 'brown'];
 const SKIN_TONES = Object.keys(characterAssets.male.head);
@@ -26,7 +26,7 @@ const CharacterCreationScreen = () => {
     const visibleSkins = SKIN_TONES.slice(skinIndex, skinIndex + 4);
 
     const toggleGender = () => {
-        setCharacter(prev => ({
+        setCharacter((prev) => ({
             ...prev,
             gender: prev.gender === 'male' ? 'female' : 'male',
             beard: prev.gender === 'female' ? null : prev.beard,
@@ -42,8 +42,9 @@ const CharacterCreationScreen = () => {
             options = Object.keys(characterAssets[character.gender].eyes);
         } else if (part === 'hair') {
             // Filter all hair keys matching current hairColor (e.g. long_white, spiky_white)
-            options = Object.keys(characterAssets[character.gender].hair)
-                .filter(key => key.endsWith('_' + character.hairColor));
+            options = Object.keys(characterAssets[character.gender].hair).filter((key) =>
+                key.endsWith('_' + character.hairColor),
+            );
 
             const currentHairKey = character.hair + '_' + character.hairColor;
             const newFullHairKey = cycleOption(options, currentHairKey, direction);
@@ -51,7 +52,7 @@ const CharacterCreationScreen = () => {
             // Extract the new hairstyle from the new combined key
             const [newHair] = newFullHairKey.split('_');
 
-            setCharacter(prev => ({
+            setCharacter((prev) => ({
                 ...prev,
                 hair: newHair,
             }));
@@ -64,13 +65,21 @@ const CharacterCreationScreen = () => {
             options = Object.keys(characterAssets[character.gender].markings).concat(['none']);
         }
 
-        setCharacter(prev => ({
+        setCharacter((prev) => ({
             ...prev,
             [part]: cycleOption(options, prev[part] || 'none', direction),
         }));
     };
 
-    const ColorSwatch = ({ color, selected, onPress }: { color: string; selected: boolean; onPress: () => void }) => (
+    const ColorSwatch = ({
+        color,
+        selected,
+        onPress,
+    }: {
+        color: string;
+        selected: boolean;
+        onPress: () => void;
+    }) => (
         <Pressable
             onPress={onPress}
             style={{
@@ -88,7 +97,10 @@ const CharacterCreationScreen = () => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Character Creation</Text>
-            <CharacterHeadPreview {...character} hair={character.hair + '_' + character.hairColor} />
+            <CharacterHeadPreview
+                {...character}
+                hair={character.hair + '_' + character.hairColor}
+            />
 
             <View style={styles.toggleRow}>
                 <Text style={styles.label}>Gender:</Text>
@@ -100,59 +112,86 @@ const CharacterCreationScreen = () => {
             {/* Skin Tone Carousel */}
             <View style={styles.colorRow}>
                 <Text style={styles.label}>Skin Tone:</Text>
-                <Pressable onPress={() => setSkinIndex(i => Math.max(0, i - 1))}>
+                <Pressable onPress={() => setSkinIndex((i) => Math.max(0, i - 1))}>
                     <Text style={styles.buttonText}>◀</Text>
                 </Pressable>
                 <View style={{ flexDirection: 'row', marginHorizontal: 8 }}>
-                    {visibleSkins.map(tone => (
+                    {visibleSkins.map((tone) => (
                         <Pressable
                             key={tone}
                             style={{
                                 width: 24,
                                 height: 24,
-                                backgroundColor: characterAssets[character.gender].head[tone].previewColor || '#999',
+                                backgroundColor:
+                                    characterAssets[character.gender].head[tone].previewColor ||
+                                    '#999',
                                 borderRadius: 4,
                                 marginHorizontal: 4,
                                 borderWidth: character.skinTone === tone ? 2 : 1,
                                 borderColor: character.skinTone === tone ? '#fff' : '#666',
                             }}
-                            onPress={() => setCharacter(prev => ({ ...prev, skinTone: tone }))}
+                            onPress={() => setCharacter((prev) => ({ ...prev, skinTone: tone }))}
                         />
                     ))}
                 </View>
-                <Pressable onPress={() => setSkinIndex(i => Math.min(SKIN_TONES.length - 4, i + 1))}>
+                <Pressable
+                    onPress={() => setSkinIndex((i) => Math.min(SKIN_TONES.length - 4, i + 1))}
+                >
                     <Text style={styles.buttonText}>▶</Text>
                 </Pressable>
             </View>
 
-            <SelectorRow label="Eyes" value={character.eyes} onChange={dir => updatePart('eyes', dir)} />
-            <SelectorRow label="Hair" value={character.hair} onChange={dir => updatePart('hair', dir)} />
+            <SelectorRow
+                label="Eyes"
+                value={character.eyes}
+                onChange={(dir) => updatePart('eyes', dir)}
+            />
+            <SelectorRow
+                label="Hair"
+                value={character.hair}
+                onChange={(dir) => updatePart('hair', dir)}
+            />
 
             <View style={styles.colorRow}>
                 <Text style={styles.label}>Hair Color:</Text>
                 <View style={{ flexDirection: 'row', marginLeft: 8 }}>
-                    {HAIR_COLORS.map(color => (
+                    {HAIR_COLORS.map((color) => (
                         <ColorSwatch
                             key={color}
                             color={color}
                             selected={character.hairColor === color}
-                            onPress={() => setCharacter(prev => ({ ...prev, hairColor: color }))}
+                            onPress={() => setCharacter((prev) => ({ ...prev, hairColor: color }))}
                         />
                     ))}
                 </View>
             </View>
 
             {(character.gender !== 'male' || !character.beard?.includes('full')) && (
-                <SelectorRow label="Mouth" value={character.mouth} onChange={dir => updatePart('mouth', dir)} />
+                <SelectorRow
+                    label="Mouth"
+                    value={character.mouth}
+                    onChange={(dir) => updatePart('mouth', dir)}
+                />
             )}
 
             {character.gender === 'male' && (
-                <SelectorRow label="Beard" value={character.beard || 'none'} onChange={dir => updatePart('beard', dir)} />
+                <SelectorRow
+                    label="Beard"
+                    value={character.beard || 'none'}
+                    onChange={(dir) => updatePart('beard', dir)}
+                />
             )}
 
-            <SelectorRow label="Mark" value={character.markings || 'none'} onChange={dir => updatePart('markings', dir)} />
+            <SelectorRow
+                label="Mark"
+                value={character.markings || 'none'}
+                onChange={(dir) => updatePart('markings', dir)}
+            />
 
-            <Pressable style={styles.button} onPress={() => setCharacter(generateRandomCharacter())}>
+            <Pressable
+                style={styles.button}
+                onPress={() => setCharacter(generateRandomCharacter())}
+            >
                 <Text style={styles.buttonText}>🎲 Random</Text>
             </Pressable>
         </View>

@@ -11,9 +11,12 @@ export const generateRandomCharacter = (): CharacterPreviewProps & { hairColor: 
     const fullHairKey = getRandomKey(characterAssets[gender].hair); // e.g. 'spiky_red'
     const mouth = getRandomKey(characterAssets[gender].mouth);
     const markings = Math.random() > 0.5 ? getRandomKey(characterAssets[gender].markings) : 'none';
-    const beard = gender === 'male'
-        ? (Math.random() > 0.4 ? getRandomKey(characterAssets.male.beards) : 'none')
-        : null;
+    const beard =
+        gender === 'male'
+            ? Math.random() > 0.4
+                ? getRandomKey(characterAssets.male.beards)
+                : 'none'
+            : null;
 
     const [hair, hairColor] = fullHairKey.split('_'); // safely split hair and color
 

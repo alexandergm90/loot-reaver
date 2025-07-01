@@ -1,13 +1,18 @@
+import { useCharacterHeadAnimation } from '@/hooks/useCharacterHeadAnimation';
 import React from 'react';
 import { Image, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { characterAssets } from '@/data/characterAssets';
 import { getAssetStyle } from '@/utils/getAssetStyle';
 import { CharacterPreviewProps } from '@/types/character';
-import { useCharacterHeadAnimation } from '@/hooks/useCharacterHeadAnimation';
 
 const LAYER_ORDER: (keyof CharacterPreviewProps | 'head')[] = [
-    'head', 'eyes', 'mouth', 'markings', 'beard', 'hair'
+    'head',
+    'eyes',
+    'mouth',
+    'markings',
+    'beard',
+    'hair',
 ];
 
 const CharacterHeadPreview: React.FC<CharacterPreviewProps> = (props) => {
@@ -19,7 +24,9 @@ const CharacterHeadPreview: React.FC<CharacterPreviewProps> = (props) => {
         head: characterAssets[gender].head[skinTone],
         eyes: characterAssets[gender].eyes[eyes],
         mouth:
-            gender === 'male' && beard?.includes('full') ? null : characterAssets[gender].mouth[mouth],
+            gender === 'male' && beard?.includes('full')
+                ? null
+                : characterAssets[gender].mouth[mouth],
         hair: characterAssets[gender].hair[hair],
         beard: gender === 'male' && beard ? characterAssets[gender].beards[beard] : null,
         markings: markings ? characterAssets[gender].markings[markings] : null,
@@ -39,11 +46,7 @@ const CharacterHeadPreview: React.FC<CharacterPreviewProps> = (props) => {
         );
     }).filter(Boolean);
 
-    return (
-        <Animated.View style={[styles.container, animatedStyle]}>
-            {layers}
-        </Animated.View>
-    );
+    return <Animated.View style={[styles.container, animatedStyle]}>{layers}</Animated.View>;
 };
 
 export default React.memo(CharacterHeadPreview);

@@ -1,7 +1,7 @@
 export const cycleOption = (
     options: string[],
     current: string,
-    direction: 'next' | 'prev'
+    direction: 'next' | 'prev',
 ): string => {
     const index = options.indexOf(current);
     const newIndex =
