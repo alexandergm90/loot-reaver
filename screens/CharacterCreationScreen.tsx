@@ -4,33 +4,25 @@ import CharacterHeadPreview from '@/components/character/CharacterHeadPreview';
 import SelectorRow from '@/components/ui/SelectorRow';
 import { characterAssets } from '@/data/characterAssets';
 import { cycleOption } from '@/utils/cycleOption';
-import { generateRandomCharacter } from '@/utils/randomCharacter';
 import { CharacterPreviewProps } from '@/types/character';
+import { useCharacterStore } from '@/store/characterStore'
+
 
 const HAIR_COLORS = ['blue', 'red', 'yellow', 'black', 'white', 'brown'];
 const SKIN_TONES = Object.keys(characterAssets.male.head);
 
 const CharacterCreationScreen = () => {
-    const [character, setCharacter] = useState<CharacterPreviewProps & { hairColor: string }>({
-        gender: 'male',
-        skinTone: 'celestial',
-        hair: 'spiky',
-        hairColor: 'white',
-        eyes: 'suspicious',
-        mouth: 'mouth1',
-        beard: 'none',
-        markings: 'mark1',
-    });
+    const character = useCharacterStore((s) => s.character);
+    const setPart = useCharacterStore((s) => s.setPart);
+    const randomize = useCharacterStore((s) => s.randomize);
 
     const [skinIndex, setSkinIndex] = useState(0);
     const visibleSkins = SKIN_TONES.slice(skinIndex, skinIndex + 4);
 
     const toggleGender = () => {
-        setCharacter((prev) => ({
-            ...prev,
-            gender: prev.gender === 'male' ? 'female' : 'male',
-            beard: prev.gender === 'female' ? null : prev.beard,
-        }));
+        const newGender = character.gender === 'male' ? 'female' : 'male';
+        setPart('gender', newGender);
+        if (newGender === 'female') setPart('beard', null);
     };
 
     const updatePart = (part: keyof CharacterPreviewProps, direction: 'next' | 'prev') => {
@@ -52,10 +44,8 @@ const CharacterCreationScreen = () => {
             // Extract the new hairstyle from the new combined key
             const [newHair] = newFullHairKey.split('_');
 
-            setCharacter((prev) => ({
-                ...prev,
-                hair: newHair,
-            }));
+            setPart('hair', newHair);
+
             return;
         } else if (part === 'mouth') {
             options = Object.keys(characterAssets[character.gender].mouth);
@@ -65,10 +55,7 @@ const CharacterCreationScreen = () => {
             options = Object.keys(characterAssets[character.gender].markings).concat(['none']);
         }
 
-        setCharacter((prev) => ({
-            ...prev,
-            [part]: cycleOption(options, prev[part] || 'none', direction),
-        }));
+        setPart(part, cycleOption(options, character[part] || 'none', direction));
     };
 
     const ColorSwatch = ({
@@ -130,7 +117,7 @@ const CharacterCreationScreen = () => {
                                 borderWidth: character.skinTone === tone ? 2 : 1,
                                 borderColor: character.skinTone === tone ? '#fff' : '#666',
                             }}
-                            onPress={() => setCharacter((prev) => ({ ...prev, skinTone: tone }))}
+                            onPress={() => setPart('skinTone', tone)}
                         />
                     ))}
                 </View>
@@ -160,7 +147,7 @@ const CharacterCreationScreen = () => {
                             key={color}
                             color={color}
                             selected={character.hairColor === color}
-                            onPress={() => setCharacter((prev) => ({ ...prev, hairColor: color }))}
+                            onPress={() => setPart('hairColor', color)}
                         />
                     ))}
                 </View>
@@ -190,7 +177,7 @@ const CharacterCreationScreen = () => {
 
             <Pressable
                 style={styles.button}
-                onPress={() => setCharacter(generateRandomCharacter())}
+                onPress={randomize}
             >
                 <Text style={styles.buttonText}>🎲 Random</Text>
             </Pressable>
