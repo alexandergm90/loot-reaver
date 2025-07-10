@@ -11,7 +11,7 @@ import { useCharacterStore } from '@/store/characterStore'
 const HAIR_COLORS = ['blue', 'red', 'yellow', 'black', 'white', 'brown'];
 const SKIN_TONES = Object.keys(characterAssets.male.head);
 
-const CharacterCreationScreen = () => {
+const Character = () => {
     const character = useCharacterStore((s) => s.character);
     const setPart = useCharacterStore((s) => s.setPart);
     const randomize = useCharacterStore((s) => s.randomize);
@@ -185,7 +185,7 @@ const CharacterCreationScreen = () => {
     );
 };
 
-export default CharacterCreationScreen;
+export default Character;
 
 const styles = StyleSheet.create({
     container: {

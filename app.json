@@ -40,6 +40,19 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e81c6099-c11d-4caa-8af5-e6e7f81b7e29"
+      }
+    },
+    "owner": "alexander90",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e81c6099-c11d-4caa-8af5-e6e7f81b7e29"
     }
   }
 }

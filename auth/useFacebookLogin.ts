@@ -1,15 +1,21 @@
 import { loginToBackendWithFacebook } from '@/services/authService';
 import { useEffect } from 'react';
 import * as Facebook from 'expo-auth-session/providers/facebook';
+import * as AuthSession from 'expo-auth-session';
 
-export function useFacebookLogin(playerId: string) {
+export function useFacebookLogin(playerId: string | null) {
+    const redirectUri = AuthSession.makeRedirectUri({
+        useProxy: true,
+    } as any);
+
     const [request, response, promptAsync] = Facebook.useAuthRequest({
         clientId: '619505510644125',
         scopes: ['public_profile', 'email'],
+        redirectUri
     });
 
     useEffect(() => {
-        if (response?.type === 'success') {
+        if (response?.type === 'success' && playerId) {
             const accessToken = response.authentication?.accessToken;
             if (accessToken) {
                 loginToBackendWithFacebook(playerId, accessToken)
