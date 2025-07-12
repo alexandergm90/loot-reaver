@@ -6,7 +6,7 @@ import {
     withSequence,
     withTiming,
 } from 'react-native-reanimated';
-import { CharacterPreviewProps } from '@/types/character';
+import { CharacterPreviewProps } from '@/types';
 
 export const useCharacterHeadAnimation = (character: CharacterPreviewProps) => {
     const scale = useSharedValue(1);

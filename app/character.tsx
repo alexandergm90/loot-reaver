@@ -4,7 +4,7 @@ import CharacterHeadPreview from '@/components/character/CharacterHeadPreview';
 import SelectorRow from '@/components/ui/SelectorRow';
 import { characterAssets } from '@/data/characterAssets';
 import { cycleOption } from '@/utils/cycleOption';
-import { CharacterPreviewProps } from '@/types/character';
+import { CharacterPreviewProps } from '@/types';
 import { useCharacterStore } from '@/store/characterStore'
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 

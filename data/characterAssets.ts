@@ -1,4 +1,4 @@
-import { CharacterAssets } from '@/types/character';
+import { CharacterAssets } from '@/types';
 
 export const characterAssets: CharacterAssets = {
     male: {

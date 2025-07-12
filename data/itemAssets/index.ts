@@ -1,4 +1,4 @@
-import { EquipmentAssets } from '@/types/equipmentAsset';
+import { EquipmentAssets } from '@/types';
 import { capeAssets } from './cape';
 import { chestAssets } from './chest';
 import { feetAssets } from './feet';

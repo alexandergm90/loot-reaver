@@ -1,4 +1,4 @@
-import { EquipmentAssets } from '@/types/equipmentAsset';
+import { EquipmentAssets } from '@/types';
 
 export const weaponAssets: EquipmentAssets = {
     iron_sword: {

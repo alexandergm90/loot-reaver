@@ -1,29 +1,4 @@
-export type SlotPosition = {
-    width: number;
-    height: number;
-    top: number;
-    left: number;
-};
-
-export type SidePosition = {
-    left: SlotPosition;
-    right: SlotPosition;
-};
-
-export type ItemSlotMeta = {
-    helmet: SlotPosition;
-    chest: SlotPosition;
-    cape: SlotPosition;
-    glove: SidePosition;
-    weapon: SidePosition;
-    feet: SidePosition;
-    weapon_twohanded: {
-        center: SlotPosition;
-    };
-    shield: {
-        left: SlotPosition;
-    };
-};
+import {ItemSlotMeta} from "@/types";
 
 export const itemSlotMeta: ItemSlotMeta = {
     helmet: { width: 128, height: 128, top: 0, left: 0 },
