@@ -9,6 +9,8 @@ const IntroScreen = () => {
     const [showLogin, setShowLogin] = useState(false);
     const progress = useRef(new Animated.Value(0)).current;
 
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+
     useEffect(() => {
         Animated.timing(progress, {
             toValue: 1,
@@ -17,6 +19,16 @@ const IntroScreen = () => {
             useNativeDriver: false,
         }).start();
     }, [progress]);
+
+    useEffect(() => {
+        if (showLogin) {
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 500,
+                useNativeDriver: true,
+            }).start();
+        }
+    }, [fadeAnim, showLogin]);
 
     useEffect(() => {
         if (status !== 'pending') {
@@ -34,14 +46,16 @@ const IntroScreen = () => {
         <SafeAreaView style={styles.container}>
             <Image source={require('@/assets/images/logo.png')} style={styles.logo} />
             {showLogin ? (
-                <IntroLoginPanel />
+                <Animated.View style={{ opacity: fadeAnim, width: '100%' }}>
+                    <IntroLoginPanel />
+                </Animated.View>
             ) : (
                 <>
                     <View style={styles.progressBar}>
                         <Animated.View style={[styles.progressFill, { width }]} />
                     </View>
                     <Text style={styles.loadingText}>
-                        {status === 'pending' ? 'Loading...' : 'Entering realm...'}
+                        {showLogin ? 'Entering realm...' : 'Loading...'}
                     </Text>
                 </>
             )}
