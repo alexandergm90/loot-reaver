@@ -2,8 +2,8 @@ import { getOrCreatePlayerId } from '@/auth/playerId';
 import storage from '@/auth/storage';
 import { ROUTES } from '@/constants/routes';
 import { usePlayerStore } from '@/store/playerStore';
+import { Player } from '@/types';
 import { router } from 'expo-router';
-import {Player} from "@/types";
 
 const API_BASE = 'http://localhost:3000';
 

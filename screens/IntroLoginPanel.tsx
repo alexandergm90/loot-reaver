@@ -1,4 +1,4 @@
-import {continueSessionFlow} from '@/services/authService';
+import { continueSessionFlow } from '@/services/authService';
 import { usePlayerStore } from '@/store/playerStore';
 import React from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';

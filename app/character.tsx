@@ -1,13 +1,12 @@
+import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useCharacterStore } from '@/store/characterStore';
+import { CharacterPreviewProps } from '@/types';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import CharacterHeadPreview from '@/components/character/CharacterHeadPreview';
 import SelectorRow from '@/components/ui/SelectorRow';
 import { characterAssets } from '@/data/characterAssets';
 import { cycleOption } from '@/utils/cycleOption';
-import { CharacterPreviewProps } from '@/types';
-import { useCharacterStore } from '@/store/characterStore'
-import { useAuthGuard } from '@/hooks/useAuthGuard';
-
 
 const HAIR_COLORS = ['blue', 'red', 'yellow', 'black', 'white', 'brown'];
 const SKIN_TONES = Object.keys(characterAssets.male.head);
@@ -181,10 +180,7 @@ const Character = () => {
                 onChange={(dir) => updatePart('markings', dir)}
             />
 
-            <Pressable
-                style={styles.button}
-                onPress={randomize}
-            >
+            <Pressable style={styles.button} onPress={randomize}>
                 <Text style={styles.buttonText}>🎲 Random</Text>
             </Pressable>
         </View>

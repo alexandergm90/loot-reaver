@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import {PlayerStore} from "@/types/player";
+import { PlayerStore } from '@/types/player';
 
 export const usePlayerStore = create<PlayerStore>()(
     persist(
@@ -11,6 +11,6 @@ export const usePlayerStore = create<PlayerStore>()(
         }),
         {
             name: 'player-store', // key in localStorage/AsyncStorage
-        }
-    )
+        },
+    ),
 );

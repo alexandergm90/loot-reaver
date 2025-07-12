@@ -1,12 +1,12 @@
 import React from 'react';
-import { Text, StyleSheet, ViewStyle, TextStyle , Pressable } from 'react-native';
-import Animated, {
-    useSharedValue,
-    useAnimatedStyle,
-    withTiming,
-    Easing,
-} from 'react-native-reanimated';
+import { Pressable, StyleSheet, Text, TextStyle, ViewStyle } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import Animated, {
+    Easing,
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming,
+} from 'react-native-reanimated';
 
 type Props = {
     onPress: () => void;
@@ -17,12 +17,12 @@ type Props = {
 };
 
 const AppButton: React.FC<Props> = ({
-                                        onPress,
-                                        children,
-                                        style,
-                                        textStyle,
-                                        enableHaptics = true,
-                                    }) => {
+    onPress,
+    children,
+    style,
+    textStyle,
+    enableHaptics = true,
+}) => {
     const scale = useSharedValue(1);
 
     const animatedStyle = useAnimatedStyle(() => ({

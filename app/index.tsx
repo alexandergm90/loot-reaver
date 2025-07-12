@@ -1,10 +1,8 @@
+import { useAuthBootstrap } from '@/hooks/useAuthBootstrap';
+import IntroLoginPanel from '@/screens/IntroLoginPanel';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Image, SafeAreaView, Text, View } from 'react-native';
-import { useAuthBootstrap } from '@/hooks/useAuthBootstrap';
-import { router } from 'expo-router';
 import styles from './styles/IntroScreen.styles';
-import IntroLoginPanel from '@/screens/IntroLoginPanel';
-import {ROUTES} from "@/constants/routes";
 
 const IntroScreen = () => {
     const status = useAuthBootstrap();
@@ -18,7 +16,7 @@ const IntroScreen = () => {
             easing: Easing.inOut(Easing.ease),
             useNativeDriver: false,
         }).start();
-    }, []);
+    }, [progress]);
 
     useEffect(() => {
         if (status !== 'pending') {

@@ -1,4 +1,4 @@
-import {ItemSlotMeta} from "@/types";
+import { ItemSlotMeta } from '@/types';
 
 export const itemSlotMeta: ItemSlotMeta = {
     helmet: { width: 128, height: 128, top: 0, left: 0 },

@@ -22,9 +22,9 @@
 - **Backend (planned)**: [NestJS](https://nestjs.com/)
 - **Assets**: modular sprites (head, hair, beard, etc.)
 - **Tooling**:
-   - Prettier (`@trivago/prettier-plugin-sort-imports`)
-   - ESLint
-   - GitHub for version control
+    - Prettier (`@trivago/prettier-plugin-sort-imports`)
+    - ESLint
+    - GitHub for version control
 
 ---
 
@@ -38,6 +38,7 @@ cd loot-reaver
 ```
 
 ### 2. Install dependencies
+
 ```bash
 npm install
 # or
@@ -45,6 +46,7 @@ yarn install
 ```
 
 ### 3. Start the app
+
 ```bash
 npx expo start
 ```
@@ -56,16 +58,19 @@ This opens Expo Dev Tools in your browser. You can preview the app on:
 - 📲 Expo Go on physical device
 
 ### 🎨 Development Notes
+
 - Character creation uses modular layering (head, eyes, mouth, hair, etc.)
 - Hair style and hair color are selected independently
 - Skin tone is chosen via a horizontal carousel of 12 tones
 - All assets are mapped in characterAssets
 - Code formatting is handled with Prettier:
+
 ```bash
 npm run format
 ```
 
 ### 🛠 Planned Features
+
 ✅ Character creation with animation
 
 🔜 Scalable dungeon system with backend-generated combat logs
@@ -81,6 +86,7 @@ npm run format
 🔜 Guild system, leaderboards, titles
 
 ### 📝 License
+
 Copyright © 2025 Manea Alexandru
 
 This project is provided for **non-commercial** use only.  

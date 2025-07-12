@@ -1,5 +1,5 @@
-import storage from './storage';
 import uuid from 'react-native-uuid';
+import storage from './storage';
 
 const PLAYER_ID_KEY = 'player_id';
 

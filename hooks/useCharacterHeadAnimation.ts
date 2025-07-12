@@ -1,3 +1,4 @@
+import { CharacterPreviewProps } from '@/types';
 import { useEffect } from 'react';
 import {
     Easing,
@@ -6,7 +7,6 @@ import {
     withSequence,
     withTiming,
 } from 'react-native-reanimated';
-import { CharacterPreviewProps } from '@/types';
 
 export const useCharacterHeadAnimation = (character: CharacterPreviewProps) => {
     const scale = useSharedValue(1);

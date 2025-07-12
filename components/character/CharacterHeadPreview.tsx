@@ -1,10 +1,10 @@
 import { useCharacterHeadAnimation } from '@/hooks/useCharacterHeadAnimation';
+import { CharacterPreviewProps } from '@/types';
 import React from 'react';
 import { Image, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { characterAssets } from '@/data/characterAssets';
 import { getAssetStyle } from '@/utils/getAssetStyle';
-import { CharacterPreviewProps } from '@/types';
 
 const LAYER_ORDER: (keyof CharacterPreviewProps | 'head')[] = [
     'head',

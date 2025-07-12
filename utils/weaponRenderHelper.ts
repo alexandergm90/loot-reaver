@@ -1,5 +1,5 @@
-import { itemSlotMeta } from '@/data/itemAssets/slotMeta';
 import { ItemAsset } from '@/types';
+import { itemSlotMeta } from '@/data/itemAssets/slotMeta';
 
 export type WeaponType = 'main' | 'off' | 'twohanded';
 export type ItemType = 'weapon' | 'shield';
