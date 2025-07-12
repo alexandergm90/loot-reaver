@@ -6,7 +6,7 @@ import { Button, View, Text } from 'react-native';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const FB_APP_ID = '619505510644125';
+const FB_APP_ID = 'xxxxxxxxxxxxxxxxx';
 
 export default function FacebookLoginScreen() {
     const [request, response, promptAsync] = Facebook.useAuthRequest(

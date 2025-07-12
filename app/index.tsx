@@ -1,12 +1,15 @@
-import { useAuthBootstrap } from '@/hooks/useAuthBootstrap';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Image, SafeAreaView, Text, View } from 'react-native';
+import { useAuthBootstrap } from '@/hooks/useAuthBootstrap';
 import { router } from 'expo-router';
 import styles from './styles/IntroScreen.styles';
+import IntroLoginPanel from '@/screens/IntroLoginPanel';
+import {ROUTES} from "@/constants/routes";
 
 const IntroScreen = () => {
     const status = useAuthBootstrap();
-    const progress = new Animated.Value(0);
+    const [showLogin, setShowLogin] = useState(false);
+    const progress = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         Animated.timing(progress, {
@@ -19,11 +22,7 @@ const IntroScreen = () => {
 
     useEffect(() => {
         if (status !== 'pending') {
-            const timeout = setTimeout(() => {
-                /*if (status === 'login') router.replace('/login');*/
-                if (status === 'character') router.replace('/character');
-                if (status === 'game') router.replace('/main');
-            }, 2000);
+            const timeout = setTimeout(() => setShowLogin(true), 2000);
             return () => clearTimeout(timeout);
         }
     }, [status]);
@@ -36,12 +35,18 @@ const IntroScreen = () => {
     return (
         <SafeAreaView style={styles.container}>
             <Image source={require('@/assets/images/logo.png')} style={styles.logo} />
-            <View style={styles.progressBar}>
-                <Animated.View style={[styles.progressFill, { width }]} />
-            </View>
-            <Text style={styles.loadingText}>
-                {status === 'pending' ? 'Loading...' : 'Entering realm...'}
-            </Text>
+            {showLogin ? (
+                <IntroLoginPanel />
+            ) : (
+                <>
+                    <View style={styles.progressBar}>
+                        <Animated.View style={[styles.progressFill, { width }]} />
+                    </View>
+                    <Text style={styles.loadingText}>
+                        {status === 'pending' ? 'Loading...' : 'Entering realm...'}
+                    </Text>
+                </>
+            )}
         </SafeAreaView>
     );
 };

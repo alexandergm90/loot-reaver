@@ -4,8 +4,6 @@ import uuid from 'react-native-uuid';
 const PLAYER_ID_KEY = 'player_id';
 
 export async function getOrCreatePlayerId(): Promise<string> {
-    console.log('🟡 getOrCreatePlayerId() called');
-
     try {
         let playerId = await storage.getItem(PLAYER_ID_KEY);
         console.log('📦 [DEBUG] storage.getItem:', playerId);

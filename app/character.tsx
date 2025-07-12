@@ -6,18 +6,24 @@ import { characterAssets } from '@/data/characterAssets';
 import { cycleOption } from '@/utils/cycleOption';
 import { CharacterPreviewProps } from '@/types/character';
 import { useCharacterStore } from '@/store/characterStore'
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 
 const HAIR_COLORS = ['blue', 'red', 'yellow', 'black', 'white', 'brown'];
 const SKIN_TONES = Object.keys(characterAssets.male.head);
 
 const Character = () => {
+    const authStatus = useAuthGuard(false);
+
     const character = useCharacterStore((s) => s.character);
     const setPart = useCharacterStore((s) => s.setPart);
     const randomize = useCharacterStore((s) => s.randomize);
 
     const [skinIndex, setSkinIndex] = useState(0);
     const visibleSkins = SKIN_TONES.slice(skinIndex, skinIndex + 4);
+
+    if (authStatus === 'pending') return null; // or loading spinner
+    if (authStatus === 'unauthorized') return null; // we're already being redirected
 
     const toggleGender = () => {
         const newGender = character.gender === 'male' ? 'female' : 'male';
