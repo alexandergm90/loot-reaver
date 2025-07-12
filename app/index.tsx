@@ -1,7 +1,8 @@
 import { useAuthBootstrap } from '@/hooks/useAuthBootstrap';
 import IntroLoginPanel from '@/screens/IntroLoginPanel';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Image, SafeAreaView, Text, View } from 'react-native';
+import { Animated, Easing, SafeAreaView, Text, View } from 'react-native';
+import AnimatedLogo from '@/components/ui/AnimatedLogo';
 import styles from './styles/IntroScreen.styles';
 
 const IntroScreen = () => {
@@ -44,7 +45,7 @@ const IntroScreen = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <Image source={require('@/assets/images/logo.png')} style={styles.logo} />
+            <AnimatedLogo />
             {showLogin ? (
                 <Animated.View style={{ opacity: fadeAnim, width: '100%' }}>
                     <IntroLoginPanel />
