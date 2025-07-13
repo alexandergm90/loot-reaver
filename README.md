@@ -59,7 +59,7 @@ This opens Expo Dev Tools in your browser. You can preview the app on:
 
 ### 🎨 Development Notes
 
-- Character creation uses modular layering (head, eyes, mouth, hair, etc.)
+- Register creation uses modular layering (head, eyes, mouth, hair, etc.)
 - Hair style and hair color are selected independently
 - Skin tone is chosen via a horizontal carousel of 12 tones
 - All assets are mapped in characterAssets
@@ -71,7 +71,7 @@ npm run format
 
 ### 🛠 Planned Features
 
-✅ Character creation with animation
+✅ Register creation with animation
 
 🔜 Scalable dungeon system with backend-generated combat logs
 

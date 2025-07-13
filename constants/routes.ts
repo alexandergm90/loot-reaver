@@ -1,7 +1,7 @@
 export const ROUTES = {
     intro: '/',
     main: '/main',
-    character: '/character',
+    register: '/register',
     login: '/login',
     settings: '/settings',
 } as const;

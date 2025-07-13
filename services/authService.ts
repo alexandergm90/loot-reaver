@@ -4,8 +4,7 @@ import { ROUTES } from '@/constants/routes';
 import { usePlayerStore } from '@/store/playerStore';
 import { Player } from '@/types';
 import { router } from 'expo-router';
-
-const API_BASE = 'http://localhost:3000';
+import { API_BASE } from '@/constants/config';
 
 export async function loginAsGuest(playerId: string) {
     const res = await fetch(`${API_BASE}/auth/guest`, {
@@ -77,6 +76,6 @@ export async function continueSessionFlow() {
     if (player?.hasCharacter) {
         router.replace(ROUTES.main);
     } else {
-        router.replace(ROUTES.character);
+        router.replace(ROUTES.register);
     }
 }

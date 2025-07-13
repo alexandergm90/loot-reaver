@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { characterAssets } from '@/data/characterAssets';
 
-// Define base character shape
 export type CharacterDraft = {
     gender: 'male' | 'female';
     skinTone: string;
@@ -16,7 +15,9 @@ export type CharacterDraft = {
 
 interface CharacterState {
     character: CharacterDraft;
+    trait: string | null;
     setPart: (part: keyof CharacterDraft, value: string | null) => void;
+    setTrait: (trait: string) => void;
     reset: () => void;
     randomize: () => void;
 }
@@ -56,6 +57,7 @@ export const useCharacterStore = create<CharacterState>()(
     persist(
         (set) => ({
             character: generateRandomCharacter(),
+            trait: null,
             setPart: (part, value) =>
                 set((state) => ({
                     character: {
@@ -63,12 +65,24 @@ export const useCharacterStore = create<CharacterState>()(
                         [part]: value,
                     },
                 })),
-            reset: () => set({ character: generateRandomCharacter() }),
-            randomize: () => set({ character: generateRandomCharacter() }),
+            setTrait: (trait) => set({ trait }),
+            reset: () =>
+                set({
+                    character: generateRandomCharacter(),
+                    trait: null,
+                }),
+            randomize: () =>
+                set({
+                    character: generateRandomCharacter(),
+                    trait: null,
+                }),
         }),
         {
-            name: 'character-storage', // key in localStorage / AsyncStorage
-            partialize: (state) => ({ character: state.character }),
+            name: 'character-storage',
+            partialize: (state) => ({
+                character: state.character,
+                trait: state.trait,
+            }),
         },
     ),
 );

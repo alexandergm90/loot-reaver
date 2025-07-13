@@ -14,6 +14,7 @@ type Props = {
     style?: ViewStyle;
     textStyle?: TextStyle;
     enableHaptics?: boolean;
+    disabled?: boolean;
 };
 
 const AppButton: React.FC<Props> = ({
@@ -22,6 +23,7 @@ const AppButton: React.FC<Props> = ({
     style,
     textStyle,
     enableHaptics = true,
+    disabled = false,
 }) => {
     const scale = useSharedValue(1);
 
@@ -38,10 +40,14 @@ const AppButton: React.FC<Props> = ({
     };
 
     return (
-        <Pressable onPress={handlePress}>
-            <Animated.View style={[styles.button, animatedStyle, style]}>
+        <Pressable onPress={handlePress} disabled={disabled}>
+            <Animated.View
+                style={[styles.button, animatedStyle, disabled && styles.disabledButton, style]}
+            >
                 {typeof children === 'string' ? (
-                    <Text style={[styles.text, textStyle]}>{children}</Text>
+                    <Text style={[styles.text, disabled && styles.disabledText, textStyle]}>
+                        {children}
+                    </Text>
                 ) : (
                     children
                 )}
@@ -66,5 +72,12 @@ const styles = StyleSheet.create({
     text: {
         color: '#fff',
         fontSize: 16,
+    },
+    disabledButton: {
+        opacity: 0.5,
+        backgroundColor: '#444',
+    },
+    disabledText: {
+        color: '#aaa',
     },
 });
