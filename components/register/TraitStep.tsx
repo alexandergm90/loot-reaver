@@ -1,107 +1,96 @@
+import React, { useEffect, useState } from 'react';
+import { Text, View } from 'react-native';
+import Animated, {
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming,
+    runOnJS,
+} from 'react-native-reanimated';
 import { useCharacterStore } from '@/store/characterStore';
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { TRAITS } from '@/data/traits';
+import AppButton from '@/components/ui/AppButton';
+import styles from "./styles/TraitStep.styles"
 
-type Props = {};
-
-const TraitStep: React.FC<Props> = () => {
+const TraitStep: React.FC = () => {
     const selected = useCharacterStore((s) => s.trait);
     const setTrait = useCharacterStore((s) => s.setTrait);
+
+    const [index, setIndex] = useState(0);
+
+    const animX = useSharedValue(0);
+    const opacity = useSharedValue(1);
+    const scale = useSharedValue(1);
+
+    const currentTrait = TRAITS[index];
+
+    useEffect(() => {
+        if (!selected) {
+            setTrait(TRAITS[0].id);
+        }
+    }, []);
+
+    const animateTo = (newIndex: number) => {
+        if (newIndex < 0 || newIndex >= TRAITS.length || newIndex === index) return;
+
+        const direction = newIndex > index ? 1 : -1;
+
+        animX.value = withTiming(direction * -100, { duration: 150 });
+        opacity.value = withTiming(0, { duration: 150 });
+        scale.value = withTiming(0.9, { duration: 150 }, () => {
+            runOnJS(setIndex)(newIndex);
+            runOnJS(setTrait)(TRAITS[newIndex].id);
+
+            animX.value = direction * 100;
+            animX.value = withTiming(0, { duration: 150 });
+            opacity.value = withTiming(1, { duration: 150 });
+            scale.value = withTiming(1, { duration: 150 });
+        });
+    };
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ translateX: animX.value }, { scale: scale.value }],
+        opacity: opacity.value,
+    }));
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Choose a Trait</Text>
 
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContainer}
-            >
-                {TRAITS.map((trait) => (
-                    <Pressable
-                        key={trait.id}
-                        onPress={() => setTrait(trait.id)}
-                        style={[
-                            styles.traitBox,
-                            selected === trait.id && { borderColor: '#fff', borderWidth: 2 },
-                            { backgroundColor: trait.previewColor },
-                        ]}
-                    >
-                        <Text style={styles.traitLabel}>{trait.label}</Text>
-                    </Pressable>
-                ))}
-            </ScrollView>
+            <View style={styles.traitSlider}>
+                <AppButton
+                    onPress={() => animateTo(index - 1)}
+                    disabled={index === 0}
+                    style={styles.arrowButton}
+                >
+                    ◀
+                </AppButton>
 
-            {selected && (
-                <View style={styles.descriptionBox}>
-                    <Text style={styles.traitTitle}>
-                        {TRAITS.find((t) => t.id === selected)?.label}
-                    </Text>
-                    <Text style={styles.traitDescription}>
-                        {TRAITS.find((t) => t.id === selected)?.description}
-                    </Text>
-                    <Text style={styles.traitBonus}>
-                        {TRAITS.find((t) => t.id === selected)?.bonus}
-                    </Text>
-                </View>
-            )}
+                <Animated.View
+                    style={[
+                        styles.traitBox,
+                        { backgroundColor: currentTrait.previewColor },
+                        animatedStyle,
+                    ]}
+                >
+                    <Text style={styles.traitLabel}>{currentTrait.label}</Text>
+                </Animated.View>
+
+                <AppButton
+                    onPress={() => animateTo(index + 1)}
+                    disabled={index === TRAITS.length - 1}
+                    style={styles.arrowButton}
+                >
+                    ▶
+                </AppButton>
+            </View>
+
+            <Animated.View style={[styles.descriptionBox, animatedStyle]}>
+                <Text style={styles.traitTitle}>{currentTrait.label}</Text>
+                <Text style={styles.traitDescription}>{currentTrait.description}</Text>
+                <Text style={styles.traitBonus}>{currentTrait.bonus}</Text>
+            </Animated.View>
         </View>
     );
 };
 
 export default TraitStep;
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 20,
-        backgroundColor: '#111',
-    },
-    title: {
-        fontSize: 22,
-        color: '#fff',
-        textAlign: 'center',
-        marginBottom: 20,
-    },
-    scrollContainer: {
-        paddingHorizontal: 12,
-    },
-    traitBox: {
-        width: 120,
-        height: 100,
-        borderRadius: 8,
-        marginHorizontal: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    traitLabel: {
-        color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
-    descriptionBox: {
-        marginTop: 24,
-        padding: 16,
-        backgroundColor: '#222',
-        borderRadius: 8,
-    },
-    traitTitle: {
-        color: '#fff',
-        fontSize: 18,
-        marginBottom: 6,
-    },
-    traitDescription: {
-        color: '#ccc',
-        marginBottom: 4,
-    },
-    traitBonus: {
-        color: '#ffd700',
-        fontWeight: 'bold',
-    },
-    actions: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginTop: 32,
-    },
-});
