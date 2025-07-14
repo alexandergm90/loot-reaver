@@ -2,20 +2,44 @@ import { ROUTES } from '@/constants/routes';
 import { registerPlayerProfile } from '@/services/playerService';
 import { useCharacterStore } from '@/store/characterStore';
 import { usePlayerStore } from '@/store/playerStore';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
+import Animated, {
+    interpolate,
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming,
+} from 'react-native-reanimated';
 import CharacterStep from '@/components/register/CharacterStep';
 import TraitStep from '@/components/register/TraitStep';
 import AppButton from '@/components/ui/AppButton';
 
 export default function RegisterScreen() {
-    const [step, setStep] = useState<'character' | 'background'>('character');
+    const [step, setStep] = useState<'character' | 'trait'>('character');
     const [loading, setLoading] = useState(false);
     const { character, trait } = useCharacterStore();
+    const setPlayer = usePlayerStore((s) => s.setPlayer);
 
-    const handleNext = () => setStep('background');
-    const handleBack = () => setStep('character');
+    const stepIndex = useSharedValue(0);
+
+    useEffect(() => {
+        stepIndex.value = withTiming(step === 'character' ? 0 : 1, { duration: 300 });
+    }, [step]);
+
+    const characterStyle = useAnimatedStyle(() => ({
+        opacity: interpolate(stepIndex.value, [0, 1], [1, 0]),
+        transform: [{ translateX: interpolate(stepIndex.value, [0, 1], [0, -40]) }],
+        position: 'absolute',
+        width: '100%',
+    }));
+
+    const traitStyle = useAnimatedStyle(() => ({
+        opacity: interpolate(stepIndex.value, [0, 1], [0, 1]),
+        transform: [{ translateX: interpolate(stepIndex.value, [0, 1], [40, 0]) }],
+        position: 'absolute',
+        width: '100%',
+    }));
 
     const handleRegister = async () => {
         setLoading(true);
@@ -24,7 +48,7 @@ export default function RegisterScreen() {
                 appearance: character,
                 trait: trait || 'default',
             });
-            usePlayerStore.getState().setPlayer(player);
+            setPlayer(player);
             router.replace(ROUTES.main);
         } catch (err) {
             console.error('❌ Registration failed:', err);
@@ -33,31 +57,38 @@ export default function RegisterScreen() {
         }
     };
 
-    const isCharacterStep = step === 'character';
     return (
         <View style={styles.container}>
-            {isCharacterStep ? (
-                <CharacterStep />
-            ) : (
-                <TraitStep />
-            )}
+            <View style={styles.content}>
+                {step === 'character' && (
+                    <Animated.View style={[characterStyle]}>
+                        <CharacterStep />
+                    </Animated.View>
+                )}
+
+                {step === 'trait' && (
+                    <Animated.View style={[traitStyle]}>
+                        <TraitStep />
+                    </Animated.View>
+                )}
+            </View>
 
             <View style={styles.buttonRow}>
-                {!isCharacterStep && (
-                    <AppButton onPress={handleBack} style={styles.navButton}>
+                {step === 'trait' && (
+                    <AppButton onPress={() => setStep('character')} style={styles.navButton}>
                         ⬅ Back
                     </AppButton>
                 )}
                 <AppButton
-                    onPress={isCharacterStep ? handleNext : handleRegister}
+                    onPress={step === 'character' ? () => setStep('trait') : handleRegister}
                     style={styles.navButton}
                     disabled={loading}
                 >
-                    {isCharacterStep
+                    {step === 'character'
                         ? 'Choose Trait'
                         : loading
                           ? 'Registering...'
-                          : 'Enter Realm'}
+                          : 'Begin Journey'}
                 </AppButton>
             </View>
         </View>
@@ -69,21 +100,18 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#111',
         padding: 20,
-        justifyContent: 'center',
+        justifyContent: 'space-between',
     },
-    title: {
-        color: '#fff',
-        fontSize: 22,
-        textAlign: 'center',
-        marginBottom: 20,
+    content: {
+        flex: 1,
     },
     buttonRow: {
         flexDirection: 'row',
         justifyContent: 'center',
-        marginTop: 24,
+        paddingBottom: 24,
+        gap: 12,
     },
     navButton: {
         width: 180,
-        marginHorizontal: 6,
     },
 });
