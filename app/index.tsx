@@ -46,20 +46,22 @@ const IntroScreen = () => {
     return (
         <SafeAreaView style={styles.container}>
             <AnimatedLogo />
-            {showLogin ? (
-                <Animated.View style={{ opacity: fadeAnim, width: '100%' }}>
-                    <IntroLoginPanel />
-                </Animated.View>
-            ) : (
-                <>
-                    <View style={styles.progressBar}>
-                        <Animated.View style={[styles.progressFill, { width }]} />
+            <View style={styles.transitionContainer}>
+                {!showLogin && (
+                    <View style={styles.loadingWrapper}>
+                        <View style={styles.progressBar}>
+                            <Animated.View style={[styles.progressFill, { width }]} />
+                        </View>
+                        <Text style={styles.loadingText}>Loading...</Text>
                     </View>
-                    <Text style={styles.loadingText}>
-                        {showLogin ? 'Entering realm...' : 'Loading...'}
-                    </Text>
-                </>
-            )}
+                )}
+
+                {showLogin && (
+                    <Animated.View style={{ opacity: fadeAnim, width: '100%' }}>
+                        <IntroLoginPanel />
+                    </Animated.View>
+                )}
+            </View>
         </SafeAreaView>
     );
 };

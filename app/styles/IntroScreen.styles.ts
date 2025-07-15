@@ -3,9 +3,10 @@ import { StyleSheet } from 'react-native';
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#000',
         alignItems: 'center',
         justifyContent: 'center',
+        position: 'relative',
+        backgroundColor: '#000',
     },
     logo: {
         width: 200,
@@ -28,6 +29,17 @@ const styles = StyleSheet.create({
         marginTop: 24,
         fontSize: 16,
         color: '#fff',
+    },
+    transitionContainer: {
+        marginTop: 32,
+        width: '100%',
+        minHeight: 120,
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+    },
+    loadingWrapper: {
+        alignItems: 'center',
+        width: '100%',
     },
 });
 
