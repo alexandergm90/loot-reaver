@@ -9,4 +9,6 @@ export type PlayerStore = {
     player: Player | null;
     setPlayer: (data: Player) => void;
     clearPlayer: () => void;
+    hasHydrated: boolean;
+    setHasHydrated: () => void;
 };

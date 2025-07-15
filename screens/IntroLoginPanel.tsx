@@ -1,17 +1,31 @@
 import { continueSessionFlow } from '@/services/authService';
 import { usePlayerStore } from '@/store/playerStore';
-import React from 'react';
+import React, {useEffect} from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';
+import storage from "@/auth/storage";
 
 const IntroLoginPanel: React.FC = () => {
     const player = usePlayerStore((state) => state.player);
-    const hasHydrated = usePlayerStore.persist.hasHydrated();
+    const hasHydrated = usePlayerStore((state) => state.hasHydrated);
 
-    if (!hasHydrated) return null;
+    useEffect(() => {
+        const hydrate = async () => {
+            const raw = await storage.getItem('player');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                usePlayerStore.getState().setPlayer(parsed);
+            }
+            usePlayerStore.getState().setHasHydrated();
+        };
+
+        hydrate();
+    }, []);
 
     const handleEnter = async () => {
         await continueSessionFlow();
     };
+
+    if (!hasHydrated) return null;
 
     return (
         <View style={styles.container}>

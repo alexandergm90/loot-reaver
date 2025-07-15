@@ -7,17 +7,26 @@ import { router } from 'expo-router';
 import { API_BASE } from '@/constants/config';
 
 export async function loginAsGuest(playerId: string) {
-    const res = await fetch(`${API_BASE}/auth/guest`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerId }),
-    });
+    try {
+        const res = await fetch(`${API_BASE}/auth/guest`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId }),
+        });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Guest login failed');
+        let data = null;
+        data = await res.json();
 
-    await storage.setItem('access_token', data.access_token);
-    return data.access_token;
+        if (!res.ok) {
+            throw new Error(data?.message || `Guest login failed: ${res.status}`);
+        }
+
+        await storage.setItem('access_token', data.access_token);
+        return data.access_token;
+    } catch (err) {
+        console.error('[loginAsGuest] error:', err);
+        throw err;
+    }
 }
 
 export async function loginToBackendWithFacebook(playerId: string, fbAccessToken: string) {
@@ -59,8 +68,24 @@ export async function getAuthenticatedUser(): Promise<Player | null> {
  * Used after guest login, social login, or restoring session.
  */
 export async function continueSessionFlow() {
+
     const store = usePlayerStore.getState();
     let player = store.player;
+
+    if (!player) {
+        const saved = await storage.getItem('player');
+        if (saved) {
+            try {
+                player = JSON.parse(saved);
+                if (player){
+                    store.setPlayer(player);
+                }
+            } catch (err) {
+                console.warn('[continueSessionFlow] invalid player data', err);
+                await storage.deleteItem('player');
+            }
+        }
+    }
 
     if (!player) {
         const guestId = await getOrCreatePlayerId();
@@ -71,6 +96,7 @@ export async function continueSessionFlow() {
 
         store.setPlayer(fetchedPlayer);
         player = fetchedPlayer;
+        await storage.setItem('player', JSON.stringify(fetchedPlayer));
     }
 
     if (player?.hasCharacter) {
@@ -79,3 +105,4 @@ export async function continueSessionFlow() {
         router.replace(ROUTES.register);
     }
 }
+
