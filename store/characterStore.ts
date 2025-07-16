@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { characterAssets } from '@/data/characterAssets';
 
 export type CharacterDraft = {
@@ -53,36 +52,25 @@ const generateRandomCharacter = (): CharacterDraft => {
     };
 };
 
-export const useCharacterStore = create<CharacterState>()(
-    persist(
-        (set) => ({
+export const useCharacterStore = create<CharacterState>()((set) => ({
+    character: generateRandomCharacter(),
+    trait: null,
+    setPart: (part, value) =>
+        set((state) => ({
+            character: {
+                ...state.character,
+                [part]: value,
+            },
+        })),
+    setTrait: (trait) => set({ trait }),
+    reset: () =>
+        set({
             character: generateRandomCharacter(),
             trait: null,
-            setPart: (part, value) =>
-                set((state) => ({
-                    character: {
-                        ...state.character,
-                        [part]: value,
-                    },
-                })),
-            setTrait: (trait) => set({ trait }),
-            reset: () =>
-                set({
-                    character: generateRandomCharacter(),
-                    trait: null,
-                }),
-            randomize: () =>
-                set({
-                    character: generateRandomCharacter(),
-                    trait: null,
-                }),
         }),
-        {
-            name: 'character-storage',
-            partialize: (state) => ({
-                character: state.character,
-                trait: state.trait,
-            }),
-        },
-    ),
-);
+    randomize: () =>
+        set({
+            character: generateRandomCharacter(),
+            trait: null,
+        }),
+}));
