@@ -1,21 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Text, View } from 'react-native';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, {
     useAnimatedStyle,
     useSharedValue,
     withTiming,
     runOnJS,
+    withSequence,
+    withDelay
 } from 'react-native-reanimated';
 import { useCharacterStore } from '@/store/characterStore';
 import { TRAITS } from '@/data/traits';
 import AppButton from '@/components/ui/AppButton';
-import styles from "./styles/TraitStep.styles"
+import styles from './styles/TraitStep.styles';
 
 const TraitStep: React.FC = () => {
     const selected = useCharacterStore((s) => s.trait);
     const setTrait = useCharacterStore((s) => s.setTrait);
 
     const [index, setIndex] = useState(0);
+
+    const canSwipe = useRef(true); // ✅ prevents overlapping animations
 
     const animX = useSharedValue(0);
     const opacity = useSharedValue(1);
@@ -30,22 +35,54 @@ const TraitStep: React.FC = () => {
     }, []);
 
     const animateTo = (newIndex: number) => {
+        if (!canSwipe.current) return;
         if (newIndex < 0 || newIndex >= TRAITS.length || newIndex === index) return;
 
+        canSwipe.current = false;
         const direction = newIndex > index ? 1 : -1;
 
-        animX.value = withTiming(direction * -100, { duration: 150 });
-        opacity.value = withTiming(0, { duration: 150 });
-        scale.value = withTiming(0.9, { duration: 150 }, () => {
-            runOnJS(setIndex)(newIndex);
-            runOnJS(setTrait)(TRAITS[newIndex].id);
+        // Animate out with sequence
+        animX.value = withSequence(
+            withTiming(direction * -40, { duration: 150 }),
+            withDelay(50, withTiming(0, { duration: 150 }))
+        );
+        opacity.value = withSequence(
+            withTiming(0, { duration: 150 }),
+            withDelay(50, withTiming(1, { duration: 150 }))
+        );
+        scale.value = withSequence(
+            withTiming(0.9, { duration: 150 }),
+            withDelay(50, withTiming(1, { duration: 150 }))
+        );
 
-            animX.value = direction * 100;
-            animX.value = withTiming(0, { duration: 150 });
-            opacity.value = withTiming(1, { duration: 150 });
-            scale.value = withTiming(1, { duration: 150 });
+        // Sync state in parallel with animation timing (no nesting!)
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                setIndex(newIndex);
+                setTrait(TRAITS[newIndex].id);
+                canSwipe.current = true;
+                console.log('[animateTo] canSwipe re-enabled after RAF');
+            });
         });
     };
+
+
+    const swipeGesture = Gesture.Pan()
+        .minDistance(8) // ✅ makes it feel responsive
+        .onUpdate((e) => {
+            animX.value = e.translationX;
+        })
+        .onEnd((e) => {
+            const threshold = 40;
+
+            if (e.translationX > threshold && index > 0) {
+                runOnJS(animateTo)(index - 1);
+            } else if (e.translationX < -threshold && index < TRAITS.length - 1) {
+                runOnJS(animateTo)(index + 1);
+            } else {
+                animX.value = withTiming(0, { duration: 150 });
+            }
+        });
 
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ translateX: animX.value }, { scale: scale.value }],
@@ -65,15 +102,17 @@ const TraitStep: React.FC = () => {
                     ◀
                 </AppButton>
 
-                <Animated.View
-                    style={[
-                        styles.traitBox,
-                        { backgroundColor: currentTrait.previewColor },
-                        animatedStyle,
-                    ]}
-                >
-                    <Text style={styles.traitLabel}>{currentTrait.label}</Text>
-                </Animated.View>
+                <GestureDetector gesture={swipeGesture} key={`trait-${index}`}>
+                    <Animated.View
+                        style={[
+                            styles.traitBox,
+                            { backgroundColor: currentTrait.previewColor },
+                            animatedStyle,
+                        ]}
+                    >
+                        <Text style={styles.traitLabel}>{currentTrait.label}</Text>
+                    </Animated.View>
+                </GestureDetector>
 
                 <AppButton
                     onPress={() => animateTo(index + 1)}
