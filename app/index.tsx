@@ -5,6 +5,7 @@ import { Animated, Easing, SafeAreaView, Text, View } from 'react-native';
 import AnimatedLogo from '@/components/ui/AnimatedLogo';
 import styles from './styles/IntroScreen.styles';
 import AppButton from "@/components/ui/AppButton";
+import LoadingAnimation from "@/components/ui/LoadingAnimation";
 
 const IntroScreen = () => {
     const { status, error, retry } = useAuthBootstrap();
@@ -61,12 +62,7 @@ const IntroScreen = () => {
                         <AppButton onPress={retry}>Retry</AppButton>
                     </View>
                 ) : !showLogin ? (
-                    <View style={styles.loadingWrapper}>
-                        <View style={styles.progressBar}>
-                            <Animated.View style={[styles.progressFill, { width }]} />
-                        </View>
-                        <Text style={styles.loadingText}>Loading...</Text>
-                    </View>
+                    <LoadingAnimation />
                 ) : (
                     <Animated.View style={{ opacity: fadeAnim, width: '100%' }}>
                         <IntroLoginPanel />
