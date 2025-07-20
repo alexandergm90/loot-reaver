@@ -22,7 +22,7 @@ export function useAuthGuard(requireCharacter = true): GuardStatus {
         if (player) {
             if (requireCharacter && !player.hasCharacter) {
                 setStatus(STATUS_UNAUTHORIZED);
-                router.replace(ROUTES.character);
+                router.replace(ROUTES.register);
                 return;
             }
 
@@ -34,7 +34,7 @@ export function useAuthGuard(requireCharacter = true): GuardStatus {
 
         if (!user || (requireCharacter && !user.hasCharacter)) {
             setStatus(STATUS_UNAUTHORIZED);
-            router.replace(requireCharacter ? ROUTES.character : ROUTES.main);
+            router.replace(requireCharacter ? ROUTES.register : ROUTES.main);
             return;
         }
 

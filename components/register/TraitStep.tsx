@@ -1,17 +1,17 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useCharacterStore } from '@/store/characterStore';
+import React, { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+    runOnJS,
     useAnimatedStyle,
     useSharedValue,
-    withTiming,
-    runOnJS,
+    withDelay,
     withSequence,
-    withDelay
+    withTiming,
 } from 'react-native-reanimated';
-import { useCharacterStore } from '@/store/characterStore';
-import { TRAITS } from '@/data/traits';
 import AppButton from '@/components/ui/AppButton';
+import { TRAITS } from '@/data/traits';
 import styles from './styles/TraitStep.styles';
 
 const TraitStep: React.FC = () => {
@@ -44,15 +44,15 @@ const TraitStep: React.FC = () => {
         // Animate out with sequence
         animX.value = withSequence(
             withTiming(direction * -40, { duration: 150 }),
-            withDelay(50, withTiming(0, { duration: 150 }))
+            withDelay(50, withTiming(0, { duration: 150 })),
         );
         opacity.value = withSequence(
             withTiming(0, { duration: 150 }),
-            withDelay(50, withTiming(1, { duration: 150 }))
+            withDelay(50, withTiming(1, { duration: 150 })),
         );
         scale.value = withSequence(
             withTiming(0.9, { duration: 150 }),
-            withDelay(50, withTiming(1, { duration: 150 }))
+            withDelay(50, withTiming(1, { duration: 150 })),
         );
 
         // Sync state in parallel with animation timing (no nesting!)
@@ -61,11 +61,9 @@ const TraitStep: React.FC = () => {
                 setIndex(newIndex);
                 setTrait(TRAITS[newIndex].id);
                 canSwipe.current = true;
-                console.log('[animateTo] canSwipe re-enabled after RAF');
             });
         });
     };
-
 
     const swipeGesture = Gesture.Pan()
         .minDistance(8) // ✅ makes it feel responsive

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import CharacterHeadPreview from './CharacterHeadPreview';
-import SelectorRow from '@/components/ui/SelectorRow';
 import { useCharacterStore } from '@/store/characterStore';
 import { CharacterPreviewProps } from '@/types';
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import SelectorRow from '@/components/ui/SelectorRow';
 import { characterAssets } from '@/data/characterAssets';
 import { cycleOption } from '@/utils/cycleOption';
+import CharacterHeadPreview from './CharacterHeadPreview';
 
 const HAIR_COLORS = ['blue', 'red', 'yellow', 'black', 'white', 'brown'];
 const SKIN_TONES = Object.keys(characterAssets.male.head);
@@ -37,7 +37,7 @@ const CharacterCustomizer: React.FC<Props> = ({ editable = true }) => {
             options = Object.keys(characterAssets[character.gender].eyes);
         } else if (part === 'hair') {
             options = Object.keys(characterAssets[character.gender].hair).filter((key) =>
-                key.endsWith('_' + character.hairColor)
+                key.endsWith('_' + character.hairColor),
             );
 
             const currentHairKey = character.hair + '_' + character.hairColor;
@@ -57,10 +57,10 @@ const CharacterCustomizer: React.FC<Props> = ({ editable = true }) => {
     };
 
     const ColorSwatch = ({
-                             color,
-                             selected,
-                             onPress,
-                         }: {
+        color,
+        selected,
+        onPress,
+    }: {
         color: string;
         selected: boolean;
         onPress: () => void;
@@ -81,7 +81,10 @@ const CharacterCustomizer: React.FC<Props> = ({ editable = true }) => {
 
     return (
         <View style={styles.wrapper}>
-            <CharacterHeadPreview {...character} hair={`${character.hair}_${character.hairColor}`} />
+            <CharacterHeadPreview
+                {...character}
+                hair={`${character.hair}_${character.hairColor}`}
+            />
 
             {editable && (
                 <View style={styles.controls}>
@@ -105,7 +108,8 @@ const CharacterCustomizer: React.FC<Props> = ({ editable = true }) => {
                                         width: 24,
                                         height: 24,
                                         backgroundColor:
-                                            characterAssets[character.gender].head[tone].previewColor || '#999',
+                                            characterAssets[character.gender].head[tone]
+                                                .previewColor || '#999',
                                         borderRadius: 4,
                                         marginHorizontal: 4,
                                         borderWidth: character.skinTone === tone ? 2 : 1,
@@ -124,8 +128,16 @@ const CharacterCustomizer: React.FC<Props> = ({ editable = true }) => {
                         </Pressable>
                     </View>
 
-                    <SelectorRow label="Eyes" value={character.eyes} onChange={(dir) => updatePart('eyes', dir)} />
-                    <SelectorRow label="Hair" value={character.hair} onChange={(dir) => updatePart('hair', dir)} />
+                    <SelectorRow
+                        label="Eyes"
+                        value={character.eyes}
+                        onChange={(dir) => updatePart('eyes', dir)}
+                    />
+                    <SelectorRow
+                        label="Hair"
+                        value={character.hair}
+                        onChange={(dir) => updatePart('hair', dir)}
+                    />
 
                     <View style={styles.row}>
                         <Text style={styles.label}>Hair Color:</Text>
@@ -142,11 +154,19 @@ const CharacterCustomizer: React.FC<Props> = ({ editable = true }) => {
                     </View>
 
                     {(character.gender !== 'male' || !character.beard?.includes('full')) && (
-                        <SelectorRow label="Mouth" value={character.mouth} onChange={(dir) => updatePart('mouth', dir)} />
+                        <SelectorRow
+                            label="Mouth"
+                            value={character.mouth}
+                            onChange={(dir) => updatePart('mouth', dir)}
+                        />
                     )}
 
                     {character.gender === 'male' && (
-                        <SelectorRow label="Beard" value={character.beard || 'none'} onChange={(dir) => updatePart('beard', dir)} />
+                        <SelectorRow
+                            label="Beard"
+                            value={character.beard || 'none'}
+                            onChange={(dir) => updatePart('beard', dir)}
+                        />
                     )}
 
                     <SelectorRow

@@ -1,10 +1,10 @@
 import { getOrCreatePlayerId } from '@/auth/playerId';
 import storage from '@/auth/storage';
+import { API_BASE } from '@/constants/config';
 import { ROUTES } from '@/constants/routes';
 import { usePlayerStore } from '@/store/playerStore';
 import { Player } from '@/types';
 import { router } from 'expo-router';
-import { API_BASE } from '@/constants/config';
 
 export async function loginAsGuest(playerId: string) {
     try {
@@ -43,24 +43,50 @@ export async function loginToBackendWithFacebook(playerId: string, fbAccessToken
     return data.access_token;
 }
 
-export async function bootstrapAuth(): Promise<'login' | 'character' | 'game'> {
-    const user = await getAuthenticatedUser();
-    if (!user) return 'login';
+export async function bootstrapAuth(): Promise<
+    'login' | 'character' | 'game' | 'error-network' | 'error-auth'
+> {
+    try {
+        const player = await getAuthenticatedUser();
 
-    return user.hasCharacter ? 'game' : 'character';
+        if (!player) return 'login';
+
+        if (!player.hasCharacter) return 'character';
+
+        return 'game';
+    } catch (err: any) {
+        console.error('[bootstrapAuth] error:', err.message);
+
+        if (err.message === 'network') {
+            return 'error-network';
+        }
+
+        return 'error-auth';
+    }
 }
 
 export async function getAuthenticatedUser(): Promise<Player | null> {
     const token = await storage.getItem('access_token');
     if (!token) return null;
 
-    const res = await fetch(`${API_BASE}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-    });
+    console.log('[getAuthenticatedUser] token:', token);
 
-    if (!res.ok) return null;
+    try {
+        const res = await fetch(`${API_BASE}/auth/me`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
 
-    return await res.json();
+        if (!res.ok) {
+            console.warn('[getAuthenticatedUser] response not ok:', res.status);
+            return null;
+        }
+
+        const data = await res.json();
+        return data;
+    } catch (err: any) {
+        console.error('[getAuthenticatedUser] Network error:', err.message || err);
+        throw new Error('network'); // ✅ throw, don't return
+    }
 }
 
 /**
@@ -68,7 +94,6 @@ export async function getAuthenticatedUser(): Promise<Player | null> {
  * Used after guest login, social login, or restoring session.
  */
 export async function continueSessionFlow() {
-
     const store = usePlayerStore.getState();
     let player = store.player;
 
@@ -77,7 +102,7 @@ export async function continueSessionFlow() {
         if (saved) {
             try {
                 player = JSON.parse(saved);
-                if (player){
+                if (player) {
                     store.setPlayer(player);
                 }
             } catch (err) {
@@ -105,4 +130,3 @@ export async function continueSessionFlow() {
         router.replace(ROUTES.register);
     }
 }
-

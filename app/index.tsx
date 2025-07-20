@@ -4,9 +4,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, SafeAreaView, Text, View } from 'react-native';
 import AnimatedLogo from '@/components/ui/AnimatedLogo';
 import styles from './styles/IntroScreen.styles';
+import AppButton from "@/components/ui/AppButton";
 
 const IntroScreen = () => {
-    const status = useAuthBootstrap();
+    const { status, error, retry } = useAuthBootstrap();
     const [showLogin, setShowLogin] = useState(false);
     const progress = useRef(new Animated.Value(0)).current;
 
@@ -32,10 +33,13 @@ const IntroScreen = () => {
     }, [fadeAnim, showLogin]);
 
     useEffect(() => {
-        if (status !== 'pending') {
-            const timeout = setTimeout(() => setShowLogin(true), 2000);
-            return () => clearTimeout(timeout);
+        if (status === 'pending') {
+            setShowLogin(false); // 🔄 Reset if retrying
+            return;
         }
+
+        const timeout = setTimeout(() => setShowLogin(true), 2000);
+        return () => clearTimeout(timeout);
     }, [status]);
 
     const width = progress.interpolate({
@@ -47,16 +51,23 @@ const IntroScreen = () => {
         <SafeAreaView style={styles.container}>
             <AnimatedLogo />
             <View style={styles.transitionContainer}>
-                {!showLogin && (
+                {status === 'error' ? (
+                    <View style={styles.errorBox}>
+                        <Text style={styles.errorText}>
+                            {error === 'network'
+                                ? 'Cannot connect to server.'
+                                : 'An unexpected error occurred.'}
+                        </Text>
+                        <AppButton onPress={retry}>Retry</AppButton>
+                    </View>
+                ) : !showLogin ? (
                     <View style={styles.loadingWrapper}>
                         <View style={styles.progressBar}>
                             <Animated.View style={[styles.progressFill, { width }]} />
                         </View>
                         <Text style={styles.loadingText}>Loading...</Text>
                     </View>
-                )}
-
-                {showLogin && (
+                ) : (
                     <Animated.View style={{ opacity: fadeAnim, width: '100%' }}>
                         <IntroLoginPanel />
                     </Animated.View>

@@ -41,6 +41,18 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: '100%',
     },
+    errorBox: {
+        marginTop: 32,
+        alignItems: 'center',
+        padding: 16,
+        backgroundColor: '#330000',
+        borderRadius: 8,
+    },
+    errorText: {
+        color: '#ffaaaa',
+        fontSize: 14,
+        marginBottom: 12,
+    },
 });
 
 export default styles;

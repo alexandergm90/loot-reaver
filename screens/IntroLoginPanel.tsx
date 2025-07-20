@@ -1,8 +1,8 @@
+import storage from '@/auth/storage';
 import { continueSessionFlow } from '@/services/authService';
 import { usePlayerStore } from '@/store/playerStore';
-import React, {useEffect} from 'react';
+import React, { useEffect } from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';
-import storage from "@/auth/storage";
 
 const IntroLoginPanel: React.FC = () => {
     const player = usePlayerStore((state) => state.player);
