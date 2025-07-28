@@ -1,10 +1,10 @@
-import { getOrCreatePlayerId } from '@/auth/playerId';
+import {getOrCreatePlayerId} from '@/auth/playerId';
 import storage from '@/auth/storage';
-import { API_BASE } from '@/constants/config';
-import { ROUTES } from '@/constants/routes';
-import { usePlayerStore } from '@/store/playerStore';
-import { Player } from '@/types';
-import { router } from 'expo-router';
+import {API_BASE} from '@/constants/config';
+import {ROUTES} from '@/constants/routes';
+import {usePlayerStore} from '@/store/playerStore';
+import {Player} from '@/types';
+import {router} from 'expo-router';
 
 export async function loginAsGuest(playerId: string) {
     try {
@@ -78,11 +78,16 @@ export async function getAuthenticatedUser(): Promise<Player | null> {
 
         if (!res.ok) {
             console.warn('[getAuthenticatedUser] response not ok:', res.status);
+
+            // Clean up invalid or expired token
+            if (res.status === 401 || res.status === 403) {
+                await storage.deleteItem('access_token');
+            }
+
             return null;
         }
 
-        const data = await res.json();
-        return data;
+        return await res.json();
     } catch (err: any) {
         console.error('[getAuthenticatedUser] Network error:', err.message || err);
         throw new Error('network'); // ✅ throw, don't return

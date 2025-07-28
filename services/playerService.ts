@@ -13,7 +13,7 @@ export async function registerPlayerProfile({
     const token = await storage.getItem('access_token');
     if (!token) throw new Error('Not authenticated');
 
-    const res = await fetch(`${API_BASE}/character`, {
+    const res = await fetch(`${API_BASE}/register`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

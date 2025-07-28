@@ -43,10 +43,6 @@ const IntroScreen = () => {
         return () => clearTimeout(timeout);
     }, [status]);
 
-    const width = progress.interpolate({
-        inputRange: [0, 1],
-        outputRange: ['0%', '100%'],
-    });
 
     return (
         <SafeAreaView style={styles.container}>
