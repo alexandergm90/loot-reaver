@@ -42,11 +42,18 @@ export default function RegisterScreen() {
     }));
 
     const handleRegister = async () => {
+
+        if (!trait) {
+            console.error('❌ Registration failed: Trait is required.');
+            return;
+        }
+
         setLoading(true);
+
         try {
             const player = await registerPlayerProfile({
                 appearance: character,
-                trait: trait || 'default',
+                trait: trait,
             });
             setPlayer(player);
             router.replace(ROUTES.main);

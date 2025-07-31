@@ -11,6 +11,7 @@ export async function registerPlayerProfile({
     trait: string;
 }): Promise<Player> {
     const token = await storage.getItem('access_token');
+    console.log('[registerPlayerProfile] token:', token);
     if (!token) throw new Error('Not authenticated');
 
     const res = await fetch(`${API_BASE}/register`, {
