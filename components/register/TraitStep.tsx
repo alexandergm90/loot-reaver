@@ -12,7 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import AppButton from '@/components/ui/AppButton';
 import { TRAITS } from '@/data/traits';
-import styles from './styles/TraitStep.styles';
+import styles from './TraitStep.styles';
 
 const TraitStep: React.FC = () => {
     const selected = useCharacterStore((s) => s.trait);

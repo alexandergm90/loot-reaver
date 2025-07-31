@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
 
-const Main = () => {
+const Home = () => {
     return (
         <View>
             <Text>Main Page</Text>
@@ -8,4 +8,4 @@ const Main = () => {
     );
 };
 
-export default Main;
+export default Home;

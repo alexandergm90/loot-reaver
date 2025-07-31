@@ -1,9 +1,9 @@
 import { useAuthBootstrap } from '@/hooks/useAuthBootstrap';
-import IntroLoginPanel from '@/screens/IntroLoginPanel';
+import IntroLoginPanel from '@/components/auth/IntroLoginPanel';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, SafeAreaView, Text, View } from 'react-native';
 import AnimatedLogo from '@/components/ui/AnimatedLogo';
-import styles from './styles/IntroScreen.styles';
+import styles from '@/components/auth/IntroLoginPanel.styles';
 import AppButton from "@/components/ui/AppButton";
 import LoadingAnimation from "@/components/ui/LoadingAnimation";
 
