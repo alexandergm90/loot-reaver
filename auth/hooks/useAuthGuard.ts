@@ -1,5 +1,5 @@
 import { ROUTES } from '@/constants/routes';
-import { getAuthenticatedUser } from '@/services/authService';
+import { getAuthenticatedUser } from '@/auth/services/authService';
 import { usePlayerStore } from '@/store/playerStore';
 import { useEffect, useState } from 'react';
 import { router } from 'expo-router';

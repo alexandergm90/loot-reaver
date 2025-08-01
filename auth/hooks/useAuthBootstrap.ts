@@ -1,4 +1,4 @@
-import { bootstrapAuth } from '@/services/authService';
+import { bootstrapAuth } from '@/auth/services/authService';
 import { useEffect, useState, useCallback } from 'react';
 
 export function useAuthBootstrap() {

@@ -1,5 +1,5 @@
-import {getOrCreatePlayerId} from '@/auth/playerId';
-import storage from '@/auth/storage';
+import {getOrCreatePlayerId} from '@/auth/utils/playerId';
+import storage from '@/auth/utils/storage';
 import {API_BASE} from '@/constants/config';
 import {ROUTES} from '@/constants/routes';
 import {usePlayerStore} from '@/store/playerStore';

@@ -1,4 +1,4 @@
-import storage from '@/auth/storage';
+import storage from '@/auth/utils/storage';
 import { API_BASE } from '@/constants/config';
 import { CharacterDraft } from '@/store/characterStore';
 import { Player } from '@/types';

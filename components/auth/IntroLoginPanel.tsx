@@ -1,5 +1,5 @@
-import storage from '@/auth/storage';
-import { continueSessionFlow } from '@/services/authService';
+import storage from '@/auth/utils/storage';
+import { continueSessionFlow } from '@/auth/services/authService';
 import { usePlayerStore } from '@/store/playerStore';
 import React, { useEffect } from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';

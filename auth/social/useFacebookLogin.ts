@@ -1,4 +1,4 @@
-import { loginToBackendWithFacebook } from '@/services/authService';
+import { loginToBackendWithFacebook } from '@/auth/services/authService';
 import { useEffect } from 'react';
 import * as AuthSession from 'expo-auth-session';
 import * as Facebook from 'expo-auth-session/providers/facebook';
@@ -9,7 +9,7 @@ export function useFacebookLogin(playerId: string | null) {
     } as any);
 
     const [request, response, promptAsync] = Facebook.useAuthRequest({
-        clientId: '619505510644125',
+        clientId: 'xxxxxxxxxxxx',
         scopes: ['public_profile', 'email'],
         redirectUri,
     });
