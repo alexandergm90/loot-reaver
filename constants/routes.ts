@@ -1,7 +1,11 @@
 export const ROUTES = {
-    intro: '/',
-    main: '/main',
-    register: '/register',
-    login: '/login',
-    settings: '/settings',
+    intro: '/auth/intro',
+    register: '/auth/register',
+    main: {
+        home: '/main/home',
+        settings: '/main/settings',
+    },
+    auth: {
+        login: '/auth/intro',
+    },
 } as const;

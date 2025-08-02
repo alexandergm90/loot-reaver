@@ -130,7 +130,7 @@ export async function continueSessionFlow() {
     }
 
     if (player?.hasCharacter) {
-        router.replace(ROUTES.main);
+        router.replace(ROUTES.main.home);
     } else {
         router.replace(ROUTES.register);
     }

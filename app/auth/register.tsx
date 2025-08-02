@@ -56,7 +56,7 @@ export default function RegisterScreen() {
                 trait: trait,
             });
             setPlayer(player);
-            router.replace(ROUTES.main);
+            router.replace(ROUTES.main.home);
         } catch (err) {
             console.error('❌ Registration failed:', err);
         } finally {
