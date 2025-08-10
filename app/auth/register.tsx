@@ -15,25 +15,37 @@ import Animated, {
 import CharacterStep from '@/components/register/CharacterStep';
 import TraitStep from '@/components/register/TraitStep';
 import AppButton from '@/components/ui/AppButton';
+import {tokenService} from "@/auth/services/tokenService";
 
 export default function RegisterScreen() {
     const [step, setStep] = useState<'character' | 'trait'>('character');
     const [loading, setLoading] = useState(false);
     const { character, trait } = useCharacterStore();
     const setPlayer = usePlayerStore((s) => s.setPlayer);
-    const { isLoading, isAuthenticated, player } = useSession();
+    const { isLoading, player } = useSession();
 
     useEffect(() => {
-        if (isLoading) return;
-        if (!isAuthenticated) {
-            router.replace(ROUTES.intro);
-            return;
-        }
-        if (player?.hasCharacter) {
-            router.replace(ROUTES.main.home);
-        }
-    }, [isLoading, isAuthenticated, player]);
+        let alive = true;
+        const run = async () => {
+            if (isLoading) return;
 
+            // If player exists and already has a character, go to main
+            if (player?.hasCharacter) {
+                router.replace(ROUTES.main.home);
+                return;
+            }
+
+            // If no player, check if a valid token exists before kicking back to intro
+            const token = await tokenService.getToken();
+            if (!player && !token) {
+                if (!alive) return;
+                router.replace(ROUTES.intro);
+            }
+            // else: stay on register (we are authenticated or about to be hydrated)
+        };
+        run();
+        return () => { alive = false; };
+    }, [isLoading, player]);
     const stepIndex = useSharedValue(0);
 
     useEffect(() => {
