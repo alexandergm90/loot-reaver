@@ -1,3 +1,4 @@
+import { useSession } from '@/auth/hooks/useSession';
 import { ROUTES } from '@/constants/routes';
 import { registerPlayerProfile } from '@/services/playerService';
 import { useCharacterStore } from '@/store/characterStore';
@@ -20,6 +21,18 @@ export default function RegisterScreen() {
     const [loading, setLoading] = useState(false);
     const { character, trait } = useCharacterStore();
     const setPlayer = usePlayerStore((s) => s.setPlayer);
+    const { isLoading, isAuthenticated, player } = useSession();
+
+    useEffect(() => {
+        if (isLoading) return;
+        if (!isAuthenticated) {
+            router.replace(ROUTES.intro);
+            return;
+        }
+        if (player?.hasCharacter) {
+            router.replace(ROUTES.main.home);
+        }
+    }, [isLoading, isAuthenticated, player]);
 
     const stepIndex = useSharedValue(0);
 
@@ -42,7 +55,6 @@ export default function RegisterScreen() {
     }));
 
     const handleRegister = async () => {
-
         if (!trait) {
             console.error('❌ Registration failed: Trait is required.');
             return;

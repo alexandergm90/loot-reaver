@@ -1,37 +1,48 @@
+import { getAuthenticatedUser, loginAsGuest } from '@/auth/services/authService';
+import { getOrCreatePlayerId } from '@/auth/utils/playerId';
 import storage from '@/auth/utils/storage';
-import { continueSessionFlow } from '@/auth/services/authService';
+import { ROUTES } from '@/constants/routes';
 import { usePlayerStore } from '@/store/playerStore';
-import React, { useEffect } from 'react';
+import { router } from 'expo-router';
+import React from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';
 
 const IntroLoginPanel: React.FC = () => {
-    const player = usePlayerStore((state) => state.player);
-    const hasHydrated = usePlayerStore((state) => state.hasHydrated);
-
-    useEffect(() => {
-        const hydrate = async () => {
-            const raw = await storage.getItem('player');
-            if (raw) {
-                const parsed = JSON.parse(raw);
-                usePlayerStore.getState().setPlayer(parsed);
-            }
-            usePlayerStore.getState().setHasHydrated();
-        };
-
-        hydrate();
-    }, []);
+    const player = usePlayerStore((s) => s.player);
+    const setPlayer = usePlayerStore((s) => s.setPlayer);
 
     const handleEnter = async () => {
-        await continueSessionFlow();
+        try {
+            // If already authenticated (player already loaded by intro), route immediately
+            if (player) {
+                router.replace(player.hasCharacter ? ROUTES.main.home : ROUTES.register);
+                return;
+            }
+
+            // Otherwise, guest login then fetch once
+            const playerId = await getOrCreatePlayerId();
+            await loginAsGuest(playerId);
+
+            const user = await getAuthenticatedUser();
+            if (user) {
+                setPlayer(user);
+                await storage.setItem('player', JSON.stringify(user));
+                router.replace(user.hasCharacter ? ROUTES.main.home : ROUTES.register);
+            } else {
+                router.replace(ROUTES.register);
+            }
+        } catch (err) {
+            console.error('Login error:', err);
+        }
     };
 
-    if (!hasHydrated) return null;
+    // Intro screen already gates display via its own loading state
 
     return (
         <View style={styles.container}>
             {player?.hasCharacter && (
                 <Text style={styles.greeting}>
-                    Welcome, {player.title ?? ''} {player.username}
+                    {`Welcome, ${player.character!.title ? player.character!.title + ' ' : ''}${player.character!.name}`}
                 </Text>
             )}
             <Button title="Enter Realm" onPress={handleEnter} />
@@ -39,8 +50,6 @@ const IntroLoginPanel: React.FC = () => {
         </View>
     );
 };
-
-export default IntroLoginPanel;
 
 const styles = StyleSheet.create({
     container: {
@@ -58,3 +67,5 @@ const styles = StyleSheet.create({
         color: '#888',
     },
 });
+
+export default IntroLoginPanel;
