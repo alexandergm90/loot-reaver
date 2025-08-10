@@ -1,4 +1,5 @@
 import { useSession } from '@/auth/hooks/useSession';
+import { tokenService } from '@/auth/services/tokenService';
 import { ROUTES } from '@/constants/routes';
 import { registerPlayerProfile } from '@/services/playerService';
 import { useCharacterStore } from '@/store/characterStore';
@@ -15,7 +16,6 @@ import Animated, {
 import CharacterStep from '@/components/register/CharacterStep';
 import TraitStep from '@/components/register/TraitStep';
 import AppButton from '@/components/ui/AppButton';
-import {tokenService} from "@/auth/services/tokenService";
 
 export default function RegisterScreen() {
     const [step, setStep] = useState<'character' | 'trait'>('character');
@@ -44,7 +44,9 @@ export default function RegisterScreen() {
             // else: stay on register (we are authenticated or about to be hydrated)
         };
         run();
-        return () => { alive = false; };
+        return () => {
+            alive = false;
+        };
     }, [isLoading, player]);
     const stepIndex = useSharedValue(0);
 

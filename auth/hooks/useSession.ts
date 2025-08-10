@@ -23,11 +23,11 @@ export function useSession() {
 
     const loadSession = async () => {
         try {
-            setState(prev => ({ ...prev, isLoading: true, error: null }));
+            setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
             // Check if we have a valid token
             const hasValidToken = await tokenService.isTokenValid();
-            
+
             if (!hasValidToken) {
                 setState({
                     isAuthenticated: false,

@@ -1,11 +1,11 @@
+import styles from '@/app/auth/intro.styles';
 import { useSession } from '@/auth/hooks/useSession';
-import IntroLoginPanel from '@/components/auth/IntroLoginPanel';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Text, View } from 'react-native';
+import IntroLoginPanel from '@/components/auth/IntroLoginPanel';
 import AnimatedLogo from '@/components/ui/AnimatedLogo';
-import styles from '@/app/auth/intro.styles';
-import AppButton from "@/components/ui/AppButton";
-import LoadingAnimation from "@/components/ui/LoadingAnimation";
+import AppButton from '@/components/ui/AppButton';
+import LoadingAnimation from '@/components/ui/LoadingAnimation';
 
 const IntroScreen = () => {
     const { isLoading, error, loadSession } = useSession();

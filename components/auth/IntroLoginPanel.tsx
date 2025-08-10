@@ -3,9 +3,9 @@ import { getOrCreatePlayerId } from '@/auth/utils/playerId';
 import storage from '@/auth/utils/storage';
 import { ROUTES } from '@/constants/routes';
 import { usePlayerStore } from '@/store/playerStore';
-import { router } from 'expo-router';
 import React from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
 
 const IntroLoginPanel: React.FC = () => {
     const player = usePlayerStore((s) => s.player);

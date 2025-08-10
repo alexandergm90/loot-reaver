@@ -1,7 +1,7 @@
+import { useAuthGuard } from '@/auth/hooks/useAuthGuard';
+import { View } from 'react-native';
 import { Slot } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View } from 'react-native';
-import { useAuthGuard } from '@/auth/hooks/useAuthGuard';
 
 export default function MainLayout() {
     const status = useAuthGuard(true); // requireCharacter = true
