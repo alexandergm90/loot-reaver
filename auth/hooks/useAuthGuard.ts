@@ -1,4 +1,3 @@
-// auth/hooks/useAuthGuard.ts
 import { useSession } from '@/auth/hooks/useSession';
 import { ROUTES } from '@/constants/routes';
 import { useEffect, useRef } from 'react';

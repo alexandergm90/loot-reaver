@@ -3,23 +3,25 @@ import { getOrCreatePlayerId } from '@/auth/utils/playerId';
 import storage from '@/auth/utils/storage';
 import { ROUTES } from '@/constants/routes';
 import { usePlayerStore } from '@/store/playerStore';
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
+import LoadingAnimation from '@/components/ui/LoadingAnimation';
 
 const IntroLoginPanel: React.FC = () => {
     const player = usePlayerStore((s) => s.player);
     const setPlayer = usePlayerStore((s) => s.setPlayer);
+    const [working, setWorking] = useState(false);
 
     const handleEnter = async () => {
         try {
-            // If already authenticated (player already loaded by intro), route immediately
             if (player) {
                 router.replace(player.hasCharacter ? ROUTES.main.home : ROUTES.register);
                 return;
             }
 
-            // Otherwise, guest login then fetch once
+            setWorking(true); // show loader immediately
+
             const playerId = await getOrCreatePlayerId();
             await loginAsGuest(playerId);
 
@@ -33,10 +35,9 @@ const IntroLoginPanel: React.FC = () => {
             }
         } catch (err) {
             console.error('Login error:', err);
+            setWorking(false); // only if something failed
         }
     };
-
-    // Intro screen already gates display via its own loading state
 
     return (
         <View style={styles.container}>
@@ -45,8 +46,14 @@ const IntroLoginPanel: React.FC = () => {
                     {`Welcome, ${player.character!.title ? player.character!.title + ' ' : ''}${player.character!.name}`}
                 </Text>
             )}
-            <Button title="Enter Realm" onPress={handleEnter} />
-            {!player && <Text style={styles.small}>Start as guest (auto-login)</Text>}
+            {working ? (
+                <LoadingAnimation message="Preparing Realm..." />
+            ) : (
+                <>
+                    <Button title="Enter Realm" onPress={handleEnter} disabled={working} />
+                    {!player && <Text style={styles.small}>Start as guest (auto-login)</Text>}
+                </>
+            )}
         </View>
     );
 };

@@ -16,6 +16,7 @@ import Animated, {
 import CharacterStep from '@/components/register/CharacterStep';
 import TraitStep from '@/components/register/TraitStep';
 import AppButton from '@/components/ui/AppButton';
+import LoadingAnimation from "@/components/ui/LoadingAnimation";
 
 export default function RegisterScreen() {
     const [step, setStep] = useState<'character' | 'trait'>('character');
@@ -23,9 +24,12 @@ export default function RegisterScreen() {
     const { character, trait } = useCharacterStore();
     const setPlayer = usePlayerStore((s) => s.setPlayer);
     const { isLoading, player } = useSession();
+    const [ready, setReady] = useState(false);
 
     useEffect(() => {
         let alive = true;
+        setReady(false);
+
         const run = async () => {
             if (isLoading) return;
 
@@ -41,8 +45,9 @@ export default function RegisterScreen() {
                 if (!alive) return;
                 router.replace(ROUTES.intro);
             }
-            // else: stay on register (we are authenticated or about to be hydrated)
+            if (alive) setReady(true);
         };
+
         run();
         return () => {
             alive = false;
@@ -89,6 +94,14 @@ export default function RegisterScreen() {
             setLoading(false);
         }
     };
+
+    if (!ready) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <LoadingAnimation message="Preparing Character Creator..." />
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
