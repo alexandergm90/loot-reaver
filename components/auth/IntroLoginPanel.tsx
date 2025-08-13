@@ -1,12 +1,13 @@
 import { getAuthenticatedUser, loginAsGuest } from '@/auth/services/authService';
+import { tokenService } from '@/auth/services/tokenService';
 import { getOrCreatePlayerId } from '@/auth/utils/playerId';
 import storage from '@/auth/utils/storage';
+import LoadingAnimation from '@/components/ui/LoadingAnimation';
 import { ROUTES } from '@/constants/routes';
 import { usePlayerStore } from '@/store/playerStore';
+import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
-import LoadingAnimation from '@/components/ui/LoadingAnimation';
 
 const IntroLoginPanel: React.FC = () => {
     const player = usePlayerStore((s) => s.player);
@@ -24,6 +25,8 @@ const IntroLoginPanel: React.FC = () => {
 
             const playerId = await getOrCreatePlayerId();
             await loginAsGuest(playerId);
+            const savedToken = await tokenService.getToken();
+            console.log('[IntroLoginPanel] token after guest:', savedToken);
 
             const user = await getAuthenticatedUser();
             if (user) {

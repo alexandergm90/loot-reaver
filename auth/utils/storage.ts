@@ -9,9 +9,7 @@ const useSecureStore = false;
 
 const storage = {
     async getItem(key: string): Promise<string | null> {
-        console.log(
-            `[storage] using ${useSecureStore ? 'SecureStore' : 'AsyncStorage'} for ${key}`,
-        );
+        // console.log(`[storage] using ${useSecureStore ? 'SecureStore' : 'AsyncStorage'} for ${key}`);
 
         if (useSecureStore) {
             return SecureStore.getItemAsync(key);
@@ -21,9 +19,7 @@ const storage = {
     },
 
     async setItem(key: string, value: string): Promise<void> {
-        console.log(
-            `[storage] using ${useSecureStore ? 'SecureStore' : 'AsyncStorage'} for ${key}`,
-        );
+        // console.log(`[storage] using ${useSecureStore ? 'SecureStore' : 'AsyncStorage'} for ${key}`);
         if (useSecureStore) {
             return SecureStore.setItemAsync(key, value, {
                 keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
