@@ -1,189 +1,152 @@
-import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import React, { useState } from "react";
+import { ImageBackground, Platform, Pressable, ScrollView, Text, View } from "react-native";
 
+// ---------- Tiny UI helpers ----------
 const Chip: React.FC<{ label: string }> = ({ label }) => (
-  <View className="px-2 py-0.5 rounded-full border border-zinc-800 bg-zinc-100">
-    <Text className="text-[11px] font-medium text-zinc-900">{label}</Text>
-  </View>
+	<View className="px-2 py-0.5 rounded-full border-2 border-stone-900 bg-amber-100 shadow-[inset_0_1px_0_rgba(255,255,255,.6)]">
+		<Text className="text-[11px] font-semibold">{label}</Text>
+	</View>
 );
 
-const Card: React.FC<{ title: string; className?: string; children?: React.ReactNode }> = ({ title, className = '', children }) => (
-  <View className={`rounded-2xl border-2 border-zinc-900 bg-[#F3E8D1] ${className}`}>
-    <View className="px-4 pt-3 pb-2 border-b-2 border-zinc-900/70">
-      <Text className="text-zinc-900 font-extrabold tracking-wide">{title}</Text>
-    </View>
-    <View className="p-4">{children}</View>
-  </View>
+const Card: React.FC<{ title: string; children?: React.ReactNode; className?: string }> = ({ title, children, className='' }) => (
+	<View className={`rounded-3xl border-2 border-stone-900 bg-transparent shadow-[inset_0_2px_0_rgba(255,255,255,.5),0_3px_0_rgba(0,0,0,.25)] ${className}`}>
+		<View className="px-4 pt-3 pb-2 border-b-2 border-stone-900/70 bg-gradient-to-b from-white/50 to-transparent rounded-t-3xl">
+			<Text className="text-stone-900 font-extrabold tracking-wide">{title}</Text>
+		</View>
+		<View className="p-4">
+			{children}
+		</View>
+	</View>
 );
 
-function useCountdown(seconds: number) {
-  const [left, setLeft] = useState(seconds);
-  useEffect(() => {
-    const t = setInterval(() => setLeft((l) => Math.max(0, l - 1)), 1000);
-    return () => clearInterval(t);
-  }, []);
-  const h = Math.floor(left / 3600);
-  const m = Math.floor((left % 3600) / 60);
-  const s = left % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-}
-
-const IconBox: React.FC<{ label: string }> = ({ label }) => (
-  <View className="h-6 w-6 rounded-md border-2 border-zinc-900 bg-zinc-200 mr-2" accessibilityLabel={label} />
+const ActionPill: React.FC<{ label: string; onClick?: () => void }> = ({ label, onClick }) => (
+	<Pressable onPress={onClick} className="rounded-2xl border-2 border-stone-900 px-4 py-2 bg-gradient-to-b from-amber-200 to-amber-400 shadow-[0_3px_0_rgba(0,0,0,.3)] active:scale-95">
+		<Text className="font-extrabold">{label}</Text>
+	</Pressable>
 );
 
-const ButtonBox: React.FC<React.PropsWithChildren<{ onPress?: () => void; className?: string }>> = ({ children, onPress, className = '' }) => (
-  <Pressable onPress={onPress} className={`rounded-xl border-2 border-zinc-900 px-3 py-2 ${className}`}>
-    {typeof children === 'string' ? <Text className="font-bold text-zinc-900">{children}</Text> : children}
-  </Pressable>
+const IconBox: React.FC<{ title?: string; className?: string }> = ({ title, className='' }) => (
+	<View accessibilityLabel={title} className={`h-7 w-7 rounded-lg border-2 border-stone-900 bg-stone-200 ${className}`}/>
 );
 
-export default function Home() {
+export default function StyledHomeMockup(){
   const [claimed, setClaimed] = useState(false);
-  const countdown = useCountdown(6 * 60 * 60 + 23 * 60 + 12);
-  const [tab, setTab] = useState<'home' | 'character' | 'inventory' | 'map' | 'shop'>('home');
-  const xp = 62;
+  const isWeb = Platform.OS === 'web';
 
-  const Content = (
-    <ScrollView className="flex-1 px-3 pb-28" contentContainerStyle={{ paddingBottom: 28 }}>
-      <Card title="Enter Adventure" className="mt-3">
-        <View className="flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <View className="flex-row items-center gap-2">
-            <IconBox label="dungeon" />
-            <View>
-              <Text className="font-bold text-zinc-900">Dungeon: Ember Crypts</Text>
-              <Text className="text-xs text-zinc-700">Recommended Power 120</Text>
-            </View>
-          </View>
-          <View className="flex-row items-center gap-2">
-            <ButtonBox onPress={() => {}}>Enter Dungeon</ButtonBox>
-            <ButtonBox>Arena</ButtonBox>
-            <ButtonBox>Town</ButtonBox>
-          </View>
-        </View>
-        <View className="mt-4 h-24 rounded-xl border-2 border-zinc-900 bg-zinc-200 items-center justify-center">
-          <Text className="text-sm font-semibold text-zinc-900">Event Banner (carousel)</Text>
-        </View>
-      </Card>
+	return (
+		<ImageBackground
+			source={require("../../assets/images/parchment_texture_orange.png")}
+			resizeMode="cover"
+			style={{ flex: 1 }}
+		>
+			{/* Phone frame (kept only on web to simulate a device) */}
+			<View className={isWeb ? "w-[390px] h-[844px] rounded-[36px] border-[12px] border-stone-900 bg-transparent overflow-hidden shadow-2xl relative self-center" : "flex-1 bg-transparent"}>
+          {/* Sticky Top Bar (permanent across screens) */}
+				<View className="px-3 pt-3 bg-transparent">
+					<View className="rounded-2xl border-2 border-stone-900 bg-transparent px-3 py-2 flex flex-row items-center justify-between">
+              {/* Left: Level + XP */}
+						<View className="w-[46%]">
+							<Text className="text-[11px] font-bold">Level 7</Text>
+							<View className="mt-1 h-3 rounded-full border-2 border-stone-900 bg-white/70 overflow-hidden">
+								<View className="h-full bg-emerald-500" style={{ width: '62%' }}/>
+							</View>
+						</View>
+              {/* Right: Currencies + Energy Runes */}
+						<View className="flex flex-row items-center gap-1 flex-wrap justify-end w-[52%]">
+                <Chip label="Gold 1,245"/>
+                <Chip label="Shards 18"/>
+                <Chip label="Energy 12/20"/>
+						</View>
+					</View>
+				</View>
 
-      <View className="mt-3 grid grid-cols-2 gap-3">
-        <ButtonBox onPress={() => setClaimed(true)} className={`bg-[#F3E8D1] ${claimed ? 'opacity-60' : ''}`}>
-          {claimed ? 'Claimed' : 'Daily Login'}
-        </ButtonBox>
-        <ButtonBox className="bg-[#F3E8D1]">Quests 2/5</ButtonBox>
-        <ButtonBox className="bg-[#F3E8D1]">Season 3</ButtonBox>
-        <ButtonBox className="bg-[#F3E8D1]">Cosmetics</ButtonBox>
-      </View>
+          {/* HOME-ONLY floating buttons: Inbox + Settings */}
+				<Pressable className="absolute top-[70px] right-5 z-30 h-10 w-10 rounded-xl border-2 border-stone-900 bg-stone-200 items-center justify-center shadow" accessibilityLabel="Inbox">
+					<Text className="text-[10px] font-bold">IN</Text>
+				</Pressable>
+				<Pressable className="absolute top-[120px] right-5 z-30 h-10 w-10 rounded-xl border-2 border-stone-900 bg-stone-200 items-center justify-center shadow" accessibilityLabel="Settings">
+					<Text className="text-[10px] font-bold">⚙</Text>
+				</Pressable>
 
-      <View className="mt-3 grid grid-cols-2 gap-3">
-        <Card title="Quests">
-          <View className="space-y-2">
-            <View className="flex-row items-center justify-between">
-              <Text>Defeat 10 skeletons</Text>
-              <Text className="font-bold">6/10</Text>
-            </View>
-            <View className="h-2 rounded bg-white/70">
-              <View style={{ width: '60%' }} className="h-2 bg-emerald-500 rounded" />
-            </View>
-            <View className="flex-row gap-2 pt-1">
-              <Chip label="Daily" />
-              <Chip label="+50 XP" />
-            </View>
-          </View>
-        </Card>
-        <Card title="Events">
-          <Text className="font-bold">Harvest Festival</Text>
-          <Text className="opacity-70">Ends in {countdown}</Text>
-          <View className="mt-3 h-16 rounded-lg border-2 border-zinc-900 bg-zinc-200 items-center justify-center">
-            <Text className="text-xs">Event Art</Text>
-          </View>
-        </Card>
-        <Card title="Guild">
-          <View className="flex-row items-center justify-between">
-            <Text>Ravens of Galeș</Text>
-            <Chip label="3 unread" />
-          </View>
-          <Text className="mt-2 opacity-70">Next Raid: Tomorrow 20:00</Text>
-        </Card>
-        <Card title="Crafting">
-          <Text>Iron Dagger • <Text className="font-semibold">00:12:34</Text></Text>
-          <ButtonBox className="mt-2 bg-white/70">Go to Forge</ButtonBox>
-        </Card>
-        <Card title="Achievements">
-          <Text>Unlocked: <Text className="font-semibold">First Blood</Text></Text>
-          <Text className="opacity-70">Next: Explorer (2/10)</Text>
-        </Card>
-        <Card title="Announcements">
-          <View className="space-y-1">
-            <Text>• Patch 0.1.5 released</Text>
-            <Text>• New cosmetic bundle</Text>
-          </View>
-        </Card>
-      </View>
-    </ScrollView>
-  );
+				{/* Scrollable content */}
+				<View className="flex-1">
+					<ScrollView className="px-3 pb-28">
+            {/* Character Showcase with Name & Title ABOVE character */}
+						<View className="mt-3 items-center">
+							<Text className="text-base font-black">Sir Bogdan</Text>
+							<Text className="text-[12px] opacity-70 -mt-0.5">Reaver</Text>
+						</View>
+				<View className="mt-2 rounded-3xl border-2 border-stone-900 h-56 items-center justify-center shadow-[inset_0_2px_0_rgba(255,255,255,.6)]">
+						<View className="w-40 h-40 rounded-2xl border-2 border-stone-900 bg-stone-200 items-center justify-center">
+								<Text className="text-xs font-semibold opacity-70">Idle Character{"\n"}+ Equipped Gear</Text>
+							</View>
+						</View>
 
-  return (
-    <View className="w-full flex-1 items-center justify-center bg-zinc-100">
-      <View className="w-[390px] h-[844px] rounded-[36px] border-[12px] border-zinc-900 bg-[#F6F0E6] overflow-hidden">
-        <View className="px-3 pt-3">
-          <View className="rounded-2xl border-2 border-zinc-900 bg-[#F3E8D1] px-3 py-2 flex-row items-center justify-between">
-            <View className="flex-row items-center gap-2">
-              <View className="h-9 w-9 rounded-xl border-2 border-zinc-900 bg-zinc-200" />
-              <View>
-                <Text className="font-extrabold leading-4">Sir Bogdan</Text>
-                <Text className="text-xs opacity-70">Lv 7 • Reaver</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center gap-1">
-              <Chip label="Gold 1,245" />
-              <Chip label="Shards 18" />
-              <Chip label="Energy 12/20" />
-              <View className="h-7 w-7 rounded-md border-2 border-zinc-900 bg-zinc-200 ml-1" />
-              <View className="h-7 w-7 rounded-md border-2 border-zinc-900 bg-zinc-200" />
-            </View>
-          </View>
-          <View className="mt-2 h-3 rounded-full border-2 border-zinc-900 bg-white/70 overflow-hidden">
-            <View style={{ width: `${xp}%` }} className="h-full bg-emerald-500" />
-          </View>
-        </View>
+            {/* Event Banner */}
+						<View className="mt-3 rounded-3xl border-2 border-stone-900 bg-transparent px-4 py-3 flex flex-row items-center justify-between">
+							<View>
+								<Text className="text-sm font-extrabold">Harvest Festival</Text>
+								<Text className="text-[12px] opacity-70">Ends in 06:23:12</Text>
+							</View>
+							<ActionPill label="VIEW"/>
+						</View>
 
-        <View className="mt-2 px-3 flex-row justify-between">
-          {[
-            { k: 'home', label: 'Home' },
-            { k: 'character', label: 'Character' },
-            { k: 'inventory', label: 'Inventory' },
-            { k: 'map', label: 'Map' },
-            { k: 'shop', label: 'Shop' },
-          ].map((t: any) => (
-            <Pressable key={t.k} onPress={() => setTab(t.k)} className={`rounded-xl border-2 border-zinc-900 px-2 py-1 ${tab === t.k ? 'bg-amber-300' : 'bg-white/60'}`}>
-              <Text className="text-xs font-bold">{t.label}</Text>
-            </Pressable>
-          ))}
-        </View>
+            {/* Quick Actions */}
+						<View className="mt-3 flex flex-row flex-wrap gap-3">
+							<Pressable onPress={()=>setClaimed(true)} className={`rounded-2xl border-2 border-stone-900 bg-transparent p-3 ${claimed? 'opacity-60':'active:scale-95 transition-transform'}`}>
+								<Text className="text-center font-black">Daily</Text>
+							</Pressable>
+							<Pressable className="rounded-2xl border-2 border-stone-900 bg-transparent p-3">
+								<Text className="text-center font-black">Quests</Text>
+							</Pressable>
+							<Pressable className="rounded-2xl border-2 border-stone-900 bg-transparent p-3">
+								<Text className="text-center font-black">Season</Text>
+							</Pressable>
+							<Pressable className="rounded-2xl border-2 border-stone-900 bg-transparent p-3">
+								<Text className="text-center font-black">Shop</Text>
+							</Pressable>
+						</View>
 
-        {tab === 'home' ? (
-          Content
-        ) : (
-          <View className="flex-1 items-center justify-center p-6">
-            <Text className="text-2xl font-black mb-2 capitalize">{tab}</Text>
-            <Text className="text-sm opacity-70 text-center">
-              This screen is out of scope for the wireframe. Use the tab buttons to switch back to Home.
-            </Text>
-          </View>
-        )}
+            {/* Condensed Cards (3 max) */}
+						<View className="mt-3 gap-3">
+              <Card title="Quests">
+								<View className="text-[12px]">
+									<View className="flex flex-row items-center justify-between"><Text>Upgrade an item</Text><Text className="font-bold">3/6</Text></View>
+									<View className="h-2 rounded bg-white/70 mt-1"><View className="h-2 bg-emerald-500 rounded" style={{ width:'50%' }}/></View>
+									<View className="flex flex-row gap-2 pt-1"><Chip label="Daily"/><Chip label="+50 XP"/></View>
+								</View>
+              </Card>
+              <Card title="Guild">
+								<View className="text-[12px]">
+									<View className="flex flex-row items-center justify-between"><Text>Ravens of Galeș</Text><Chip label="2 unread"/></View>
+									<Text className="mt-2 opacity-70">Next raid: Fri 20:00</Text>
+								</View>
+              </Card>
+							<Card title="Crafting" className="">
+								<View className="text-[12px] flex flex-row items-center justify-between">
+									<Text>Iron Dagger • <Text className="font-semibold">00:12:34</Text></Text>
+									<ActionPill label="FORGE"/>
+								</View>
+              </Card>
+						</View>
 
-        <View className="px-3 pb-4">
-          <View className="rounded-2xl border-2 border-zinc-900 bg-[#F3E8D1] px-4 py-2 flex-row items-center justify-between">
-            {['Home', 'Character', 'Inventory', 'Map', 'Shop'].map((label) => (
-              <View key={label} className="items-center">
-                <View className="h-6 w-6 rounded-md border-2 border-zinc-900 bg-zinc-200 mb-1" />
-                <Text className="text-[11px] font-semibold">{label}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      </View>
-    </View>
+            {/* Footer tiny info */}
+						<Text className="mt-4 mb-24 text-center text-[10px] opacity-60">v0.1.5 • EU Server</Text>
+					</ScrollView>
+				</View>
+
+          {/* Bottom Nav (persistent) */}
+				<View className="absolute bottom-0 left-0 right-0 px-3 pb-4">
+					<View className="rounded-2xl border-2 border-stone-900 bg-transparent px-4 py-2 flex flex-row items-center justify-between">
+						{["Home","Skills","Inventory","Map","Shop","Guild"].map((label)=> (
+							<View key={label} className="flex flex-col items-center">
+								<IconBox className="mb-1"/>
+								<Text className="text-[11px] font-semibold">{label}</Text>
+							</View>
+						))}
+					</View>
+				</View>
+			</View>
+		</ImageBackground>
   );
 }
