@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ImageBackground, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 
 // ---------- Tiny UI helpers ----------
 const Chip: React.FC<{ label: string }> = ({ label }) => (
@@ -34,32 +34,9 @@ export default function StyledHomeMockup(){
   const isWeb = Platform.OS === 'web';
 
 	return (
-		<ImageBackground
-			source={require("../../assets/images/parchment_texture_orange.png")}
-			resizeMode="cover"
-			style={{ flex: 1 }}
-		>
+		<View style={{ flex: 1 }}>
 			{/* Phone frame (kept only on web to simulate a device) */}
 			<View className={isWeb ? "w-[390px] h-[844px] rounded-[36px] border-[12px] border-stone-900 bg-transparent overflow-hidden shadow-2xl relative self-center" : "flex-1 bg-transparent"}>
-          {/* Sticky Top Bar (permanent across screens) */}
-				<View className="px-3 pt-3 bg-transparent">
-					<View className="rounded-2xl border-2 border-stone-900 bg-transparent px-3 py-2 flex flex-row items-center justify-between">
-              {/* Left: Level + XP */}
-						<View className="w-[46%]">
-							<Text className="text-[11px] font-bold">Level 7</Text>
-							<View className="mt-1 h-3 rounded-full border-2 border-stone-900 bg-white/70 overflow-hidden">
-								<View className="h-full bg-emerald-500" style={{ width: '62%' }}/>
-							</View>
-						</View>
-              {/* Right: Currencies + Energy Runes */}
-						<View className="flex flex-row items-center gap-1 flex-wrap justify-end w-[52%]">
-                <Chip label="Gold 1,245"/>
-                <Chip label="Shards 18"/>
-                <Chip label="Energy 12/20"/>
-						</View>
-					</View>
-				</View>
-
           {/* HOME-ONLY floating buttons: Inbox + Settings */}
 				<Pressable className="absolute top-[70px] right-5 z-30 h-10 w-10 rounded-xl border-2 border-stone-900 bg-stone-200 items-center justify-center shadow" accessibilityLabel="Inbox">
 					<Text className="text-[10px] font-bold">IN</Text>
@@ -147,6 +124,6 @@ export default function StyledHomeMockup(){
 					</View>
 				</View>
 			</View>
-		</ImageBackground>
+		</View>
   );
 }

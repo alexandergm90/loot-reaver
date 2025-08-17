@@ -1,6 +1,7 @@
 import { useAuthGuard } from '@/auth/hooks/useAuthGuard';
-import { View } from 'react-native';
+import TopBar from '@/components/ui/TopBar';
 import { Slot } from 'expo-router';
+import { ImageBackground, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function MainLayout() {
@@ -10,9 +11,16 @@ export default function MainLayout() {
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#111' }}>
-            <View style={{ flex: 1 }}>
-                <Slot />
-            </View>
+            <ImageBackground
+                source={require('@/assets/images/parchment_texture_orange.png')}
+                resizeMode="cover"
+                style={{ flex: 1 }}
+            >
+                <View style={{ flex: 1 }}>
+                    <TopBar />
+                    <Slot />
+                </View>
+            </ImageBackground>
         </SafeAreaView>
     );
 }
