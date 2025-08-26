@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import CharacterFullPreview from '@/components/character/CharacterFullPreview';
+import { usePlayerStore } from '@/store/playerStore';
+import React, { useMemo, useState } from "react";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 
 // ---------- Tiny UI helpers ----------
@@ -32,6 +34,47 @@ const IconBox: React.FC<{ title?: string; className?: string }> = ({ title, clas
 export default function StyledHomeMockup(){
   const [claimed, setClaimed] = useState(false);
   const isWeb = Platform.OS === 'web';
+  const { player } = usePlayerStore();
+  const displayName = player?.character?.name || '—';
+  const displayTitle = player?.character?.title || '';
+
+  const equipment = useMemo(() => {
+    const eq: Record<string, string> = {};
+    const items = (player?.character as any)?.items as any[] | undefined;
+    if (!items) return eq;
+    for (const it of items) {
+      if (!it?.equipped) continue;
+      const code = it?.template?.code as string | undefined;
+      const slot = it?.slot as string | undefined;
+      if (!code || !slot) continue;
+      switch (slot) {
+        case 'chest':
+          eq.chest = code;
+          break;
+        case 'helmet':
+          eq.helmet = code;
+          break;
+        case 'cape':
+          eq.cape = code;
+          break;
+        case 'glove':
+          eq.glove_left = code;
+          eq.glove_right = code;
+          break;
+        case 'feet':
+          eq.feet_left = code;
+          eq.feet_right = code;
+          break;
+        case 'weapon':
+          eq.weapon_main = code;
+          break;
+        case 'shield':
+          eq.shield = code;
+          break;
+      }
+    }
+    return eq;
+  }, [player]);
 
 	return (
 		<View style={{ flex: 1 }}>
@@ -50,14 +93,16 @@ export default function StyledHomeMockup(){
 					<ScrollView className="px-3 pb-28">
             {/* Character Showcase with Name & Title ABOVE character */}
 						<View className="mt-3 items-center">
-							<Text className="text-base font-black">Sir Bogdan</Text>
-							<Text className="text-[12px] opacity-70 -mt-0.5">Reaver</Text>
+							<Text className="text-base font-black">{displayName}</Text>
+							{!!displayTitle && (<Text className="text-[12px] opacity-70 -mt-0.5">{displayTitle}</Text>)}
 						</View>
-				<View className="mt-2 rounded-3xl border-2 border-stone-900 h-56 items-center justify-center shadow-[inset_0_2px_0_rgba(255,255,255,.6)]">
-						<View className="w-40 h-40 rounded-2xl border-2 border-stone-900 bg-stone-200 items-center justify-center">
-								<Text className="text-xs font-semibold opacity-70">Idle Character{"\n"}+ Equipped Gear</Text>
-							</View>
-						</View>
+				<View className="mt-2 h-[300px] items-center justify-center" collapsable={false}>
+					<CharacterFullPreview
+						appearance={player?.character?.appearance || null}
+						containerHeight={300}
+						equipment={equipment}
+					/>
+				</View>
 
             {/* Event Banner */}
 						<View className="mt-3 rounded-3xl border-2 border-stone-900 bg-transparent px-4 py-3 flex flex-row items-center justify-between">
@@ -86,25 +131,25 @@ export default function StyledHomeMockup(){
 
             {/* Condensed Cards (3 max) */}
 						<View className="mt-3 gap-3">
-              <Card title="Quests">
+						  <Card title="Quests">
 								<View className="text-[12px]">
 									<View className="flex flex-row items-center justify-between"><Text>Upgrade an item</Text><Text className="font-bold">3/6</Text></View>
 									<View className="h-2 rounded bg-white/70 mt-1"><View className="h-2 bg-emerald-500 rounded" style={{ width:'50%' }}/></View>
 									<View className="flex flex-row gap-2 pt-1"><Chip label="Daily"/><Chip label="+50 XP"/></View>
 								</View>
-              </Card>
-              <Card title="Guild">
+						  </Card>
+						  <Card title="Guild">
 								<View className="text-[12px]">
 									<View className="flex flex-row items-center justify-between"><Text>Ravens of Galeș</Text><Chip label="2 unread"/></View>
 									<Text className="mt-2 opacity-70">Next raid: Fri 20:00</Text>
 								</View>
-              </Card>
+						  </Card>
 							<Card title="Crafting" className="">
 								<View className="text-[12px] flex flex-row items-center justify-between">
 									<Text>Iron Dagger • <Text className="font-semibold">00:12:34</Text></Text>
 									<ActionPill label="FORGE"/>
 								</View>
-              </Card>
+						  </Card>
 						</View>
 
             {/* Footer tiny info */}
