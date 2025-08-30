@@ -3,6 +3,7 @@ export const ROUTES = {
     register: '/auth/register',
     main: {
         home: '/main/home',
+        inventory: '/main/inventory',
         settings: '/main/settings',
     },
     auth: {

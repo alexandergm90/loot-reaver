@@ -1,5 +1,7 @@
 import CharacterFullPreview from '@/components/character/CharacterFullPreview';
+import { ROUTES } from '@/constants/routes';
 import { usePlayerStore } from '@/store/playerStore';
+import { router } from 'expo-router';
 import React, { useMemo, useState } from "react";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 
@@ -43,7 +45,6 @@ export default function StyledHomeMockup(){
     const items = (player?.character as any)?.items as any[] | undefined;
     if (!items) return eq;
     for (const it of items) {
-      if (!it?.equipped) continue;
       const code = it?.template?.code as string | undefined;
       const slot = it?.slot as string | undefined;
       if (!code || !slot) continue;
@@ -160,12 +161,17 @@ export default function StyledHomeMockup(){
           {/* Bottom Nav (persistent) */}
 				<View className="absolute bottom-0 left-0 right-0 px-3 pb-4">
 					<View className="rounded-2xl border-2 border-stone-900 bg-transparent px-4 py-2 flex flex-row items-center justify-between">
-						{["Home","Skills","Inventory","Map","Shop","Guild"].map((label)=> (
-							<View key={label} className="flex flex-col items-center">
-								<IconBox className="mb-1"/>
-								<Text className="text-[11px] font-semibold">{label}</Text>
-							</View>
-						))}
+						{["Home","Skills","Inventory","Map","Shop","Guild"].map((label)=> {
+							const onPress = () => {
+								if (label === 'Inventory') router.push(ROUTES.main.inventory);
+							};
+							return (
+								<Pressable key={label} onPress={onPress} className="flex flex-col items-center">
+									<IconBox className="mb-1"/>
+									<Text className="text-[11px] font-semibold">{label}</Text>
+								</Pressable>
+							);
+						})}
 					</View>
 				</View>
 			</View>

@@ -3,6 +3,28 @@ import { API_BASE } from '@/constants/config';
 import { CharacterDraft } from '@/store/characterStore';
 import { Player } from '@/types';
 
+export async function getPlayerCharacter() {
+    const token = await storage.getItem('access_token');
+    if (!token) throw new Error('Not authenticated');
+    const res = await fetch(`${API_BASE}/player/character`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.message || 'Failed to fetch player character');
+    return data;
+}
+
+export async function getPlayerInventory() {
+    const token = await storage.getItem('access_token');
+    if (!token) throw new Error('Not authenticated');
+    const res = await fetch(`${API_BASE}/player/inventory`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.message || 'Failed to fetch inventory');
+    return data;
+}
+
 export async function registerPlayerProfile({
     appearance,
     trait,
