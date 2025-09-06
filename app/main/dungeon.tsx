@@ -1,8 +1,8 @@
-import { getDungeons } from '@/services/dungeonService';
-import { Dungeon } from '@/types';
+import { getDungeonDetails, getDungeons } from '@/services/dungeonService';
+import { Dungeon, DungeonDetails } from '@/types';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Dimensions, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Dimensions, Image, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -23,8 +23,13 @@ export default function DungeonScreen() {
     const router = useRouter();
     const [dungeons, setDungeons] = useState<Dungeon[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [selectedLevel, setSelectedLevel] = useState(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [dungeonDetails, setDungeonDetails] = useState<DungeonDetails | null>(null);
+    const [detailsLoading, setDetailsLoading] = useState(false);
+    const [detailsError, setDetailsError] = useState<string | null>(null);
 
     useEffect(() => {
         loadDungeons();
@@ -44,13 +49,51 @@ export default function DungeonScreen() {
 
     const nextDungeon = () => {
         setCurrentIndex((prev) => (prev + 1) % dungeons.length);
+        setSelectedLevel(1); // Reset to level 1 when changing dungeons
     };
 
     const prevDungeon = () => {
         setCurrentIndex((prev) => (prev - 1 + dungeons.length) % dungeons.length);
+        setSelectedLevel(1); // Reset to level 1 when changing dungeons
+    };
+
+    const handleLevelSelect = (level: number) => {
+        // Only allow selection of unlocked levels
+        if (currentDungeon && level <= currentDungeon.highestLevelCleared + 1) {
+            setSelectedLevel(level);
+        }
+    };
+
+    const loadDungeonDetails = async () => {
+        if (!currentDungeon) return;
+        
+        try {
+            setDetailsLoading(true);
+            setDetailsError(null);
+            const details = await getDungeonDetails(currentDungeon.id, selectedLevel);
+            setDungeonDetails(details);
+            setShowDetailsModal(true);
+        } catch (err) {
+            setDetailsError(err instanceof Error ? err.message : 'Failed to load dungeon details');
+        } finally {
+            setDetailsLoading(false);
+        }
+    };
+
+    const closeDetailsModal = () => {
+        setShowDetailsModal(false);
+        setDungeonDetails(null);
+        setDetailsError(null);
     };
 
     const currentDungeon = dungeons[currentIndex];
+
+    // Ensure selected level is valid for current dungeon
+    useEffect(() => {
+        if (currentDungeon && selectedLevel > currentDungeon.highestLevelCleared + 1) {
+            setSelectedLevel(1);
+        }
+    }, [currentDungeon, selectedLevel]);
 
     if (loading) {
         return (
@@ -139,24 +182,11 @@ export default function DungeonScreen() {
                     <View className="bg-white/80 rounded-2xl border-2 border-stone-900 p-4">
                         <Text className="text-xl font-bold text-center mb-2">{currentDungeon.name}</Text>
                         
-                        {/* Level Progress */}
+                        {/* Next Level Info */}
                         <View className="mb-4">
-                            <View className="flex-row justify-between items-center mb-2">
-                                <Text className="text-sm font-semibold">Progress</Text>
-                                <Text className="text-sm font-semibold">
-                                    {currentDungeon.highestLevelCleared}/{currentDungeon.availableLevels}
-                                </Text>
-                            </View>
-                            
-                            {/* Progress Bar */}
-                            <View className="h-3 bg-stone-300 rounded-full overflow-hidden">
-                                <View 
-                                    className="h-full bg-gradient-to-r from-green-400 to-green-600"
-                                    style={{ 
-                                        width: `${(currentDungeon.highestLevelCleared / currentDungeon.availableLevels) * 100}%` 
-                                    }}
-                                />
-                            </View>
+                            <Text className="text-sm text-center text-stone-600">
+                                Next level to attempt: <Text className="font-bold text-blue-600">Level {currentDungeon.highestLevelCleared + 1}</Text>
+                            </Text>
                         </View>
 
                         {/* Level Status */}
@@ -173,16 +203,236 @@ export default function DungeonScreen() {
                     </View>
                 </View>
 
+                {/* Level Selection */}
+                <View className="bg-white/80 rounded-2xl border-2 border-stone-900 p-4 mb-6">
+                    <Text className="font-bold text-lg mb-3 text-center">Select Level</Text>
+                    
+                    {/* Level Input with Controls */}
+                    <View className="flex-row items-center justify-center gap-4 mb-3">
+                        <Pressable
+                            onPress={() => {
+                                const newLevel = Math.max(1, selectedLevel - 1);
+                                if (newLevel <= currentDungeon.highestLevelCleared + 1) {
+                                    setSelectedLevel(newLevel);
+                                }
+                            }}
+                            disabled={selectedLevel <= 1}
+                            className={`w-12 h-12 rounded-full border-2 items-center justify-center ${
+                                selectedLevel <= 1
+                                    ? 'bg-gray-300 border-gray-400 opacity-50'
+                                    : 'bg-blue-500 border-blue-700'
+                            }`}
+                        >
+                            <Text className={`text-xl font-bold ${
+                                selectedLevel <= 1 ? 'text-gray-500' : 'text-white'
+                            }`}>-</Text>
+                        </Pressable>
+                        
+                        <View className="items-center">
+                            <Text className="text-2xl font-bold text-stone-900">Level {selectedLevel}</Text>
+                            <Text className="text-sm text-stone-600">
+                                {selectedLevel <= currentDungeon.highestLevelCleared ? 'Cleared ✓' : 'Next to attempt'}
+                            </Text>
+                        </View>
+                        
+                        <Pressable
+                            onPress={() => {
+                                const newLevel = selectedLevel + 1;
+                                if (newLevel <= currentDungeon.highestLevelCleared + 1) {
+                                    setSelectedLevel(newLevel);
+                                }
+                            }}
+                            disabled={selectedLevel >= currentDungeon.highestLevelCleared + 1}
+                            className={`w-12 h-12 rounded-full border-2 items-center justify-center ${
+                                selectedLevel >= currentDungeon.highestLevelCleared + 1
+                                    ? 'bg-gray-300 border-gray-400 opacity-50'
+                                    : 'bg-blue-500 border-blue-700'
+                            }`}
+                        >
+                            <Text className={`text-xl font-bold ${
+                                selectedLevel >= currentDungeon.highestLevelCleared + 1
+                                    ? 'text-gray-500' : 'text-white'
+                            }`}>+</Text>
+                        </Pressable>
+                    </View>
+                    
+                    <Text className="text-xs text-center text-stone-600 mb-3">
+                        Available: 1-{currentDungeon.highestLevelCleared + 1} (Infinite levels)
+                    </Text>
+                    
+                    {/* Quick Jump for Higher Levels */}
+                    {currentDungeon.highestLevelCleared > 10 && (
+                        <View className="flex-row items-center justify-center gap-2">
+                            <Text className="text-sm text-stone-600">Jump to:</Text>
+                            <TextInput
+                                value={selectedLevel.toString()}
+                                onChangeText={(text) => {
+                                    const level = parseInt(text);
+                                    if (!isNaN(level) && level >= 1 && level <= currentDungeon.highestLevelCleared + 1) {
+                                        setSelectedLevel(level);
+                                    }
+                                }}
+                                keyboardType="numeric"
+                                className="w-16 h-8 text-center border border-stone-400 rounded bg-white"
+                                maxLength={3}
+                            />
+                            <Pressable
+                                onPress={() => setSelectedLevel(currentDungeon.highestLevelCleared + 1)}
+                                className="px-3 py-1 bg-blue-500 rounded border border-blue-600"
+                            >
+                                <Text className="text-white text-xs font-bold">Max</Text>
+                            </Pressable>
+                        </View>
+                    )}
+                </View>
+
                 {/* Action Buttons */}
                 <View className="flex-row space-x-4 mb-6">
-                    <Pressable className="flex-1 py-3 bg-red-500 rounded-xl border-2 border-stone-900">
-                        <Text className="text-white font-bold text-center">Enter Dungeon</Text>
+                    <Pressable 
+                        onPress={loadDungeonDetails}
+                        disabled={detailsLoading}
+                        className={`flex-1 py-3 rounded-xl border-2 border-stone-900 ${
+                            detailsLoading ? 'bg-gray-400' : 'bg-red-500'
+                        }`}
+                    >
+                        <Text className="text-white font-bold text-center">
+                            {detailsLoading ? 'Loading...' : 'View Details'}
+                        </Text>
                     </Pressable>
                     <Pressable className="flex-1 py-3 bg-blue-500 rounded-xl border-2 border-stone-900">
-                        <Text className="text-white font-bold text-center">View Rewards</Text>
+                        <Text className="text-white font-bold text-center">Enter Dungeon</Text>
                     </Pressable>
                 </View>
             </ScrollView>
+
+            {/* Dungeon Details Modal */}
+            <Modal
+                visible={showDetailsModal}
+                animationType="slide"
+                presentationStyle="pageSheet"
+                onRequestClose={closeDetailsModal}
+            >
+                <View className="flex-1 bg-stone-100">
+                    {/* Modal Header */}
+                    <View className="bg-white border-b border-stone-300 px-4 py-3 flex-row items-center justify-between">
+                        <Text className="text-lg font-bold">Dungeon Details</Text>
+                        <Pressable onPress={closeDetailsModal} className="p-2">
+                            <Text className="text-blue-600 font-bold text-lg">✕</Text>
+                        </Pressable>
+                    </View>
+
+                    {/* Modal Content */}
+                    <ScrollView className="flex-1 px-4 py-4">
+                        {detailsLoading ? (
+                            <View className="flex-1 items-center justify-center py-20">
+                                <Text className="text-lg font-bold">Loading details...</Text>
+                            </View>
+                        ) : detailsError ? (
+                            <View className="flex-1 items-center justify-center py-20">
+                                <Text className="text-lg font-bold text-red-600 mb-4">Error: {detailsError}</Text>
+                                <Pressable 
+                                    onPress={loadDungeonDetails}
+                                    className="px-4 py-2 bg-blue-500 rounded-lg"
+                                >
+                                    <Text className="text-white font-bold">Retry</Text>
+                                </Pressable>
+                            </View>
+                        ) : dungeonDetails ? (
+                            <View>
+                                {/* Dungeon Info */}
+                                <View className="bg-white rounded-2xl border-2 border-stone-900 p-4 mb-4">
+                                    <Text className="text-xl font-bold text-center mb-2">{dungeonDetails.name}</Text>
+                                    <Text className="text-lg text-center text-stone-600 mb-4">Level {dungeonDetails.level}</Text>
+                                    
+                                    {/* Requirements */}
+                                    <View className="bg-yellow-100 rounded-xl border-2 border-yellow-300 p-3 mb-4">
+                                        <Text className="font-bold text-lg mb-2">Requirements</Text>
+                                        <Text className="text-stone-700">
+                                            Required Item Power: <Text className="font-bold">{dungeonDetails.requiredItemPower}</Text>
+                                        </Text>
+                                    </View>
+
+                                    {/* Waves */}
+                                    <View className="mb-4">
+                                        <Text className="text-lg font-bold mb-3">Enemy Waves</Text>
+                                        {dungeonDetails.waves.map((wave, index) => (
+                                            <View key={index} className="bg-stone-100 rounded-xl border-2 border-stone-900 p-3 mb-3">
+                                                <Text className="font-bold text-lg mb-2 text-center">Wave {index + 1}</Text>
+                                                {wave.enemies.map((enemyInWave, enemyIndex) => (
+                                                    <View key={enemyIndex} className="bg-white/80 rounded-lg border border-stone-300 p-2 mb-2">
+                                                        <View className="flex-row items-center justify-between mb-1">
+                                                            <Text className="font-bold">{enemyInWave.enemy.name}</Text>
+                                                            <Text className="text-sm text-stone-600">x{enemyInWave.count}</Text>
+                                                        </View>
+                                                        <View className="flex-row space-x-4">
+                                                            <View className="items-center">
+                                                                <Text className="text-xs text-stone-600">HP</Text>
+                                                                <Text className="font-semibold text-red-600">{enemyInWave.enemy.scaledHp}</Text>
+                                                            </View>
+                                                            <View className="items-center">
+                                                                <Text className="text-xs text-stone-600">ATK</Text>
+                                                                <Text className="font-semibold text-orange-600">{enemyInWave.enemy.scaledAtk}</Text>
+                                                            </View>
+                                                            <View className="items-center">
+                                                                <Text className="text-xs text-stone-600">DEF</Text>
+                                                                <Text className="font-semibold text-blue-600">{enemyInWave.enemy.scaledDef}</Text>
+                                                            </View>
+                                                        </View>
+                                                    </View>
+                                                ))}
+                                            </View>
+                                        ))}
+                                    </View>
+
+                                    {/* Rewards */}
+                                    <View className="bg-green-100 rounded-xl border-2 border-green-300 p-3">
+                                        <Text className="font-bold text-lg mb-3">Rewards</Text>
+                                        
+                                        {/* Gold & XP */}
+                                        <View className="flex-row justify-between mb-3">
+                                            <View className="items-center">
+                                                <Text className="text-sm text-stone-600">Gold</Text>
+                                                <Text className="font-bold text-yellow-600">
+                                                    {dungeonDetails.rewards.goldMin}-{dungeonDetails.rewards.goldMax}
+                                                </Text>
+                                            </View>
+                                            <View className="items-center">
+                                                <Text className="text-sm text-stone-600">XP</Text>
+                                                <Text className="font-bold text-blue-600">
+                                                    {dungeonDetails.rewards.xpMin}-{dungeonDetails.rewards.xpMax}
+                                                </Text>
+                                            </View>
+                                        </View>
+
+                                        {/* Drop Items */}
+                                        <View>
+                                            <Text className="font-semibold mb-2">Possible Drops:</Text>
+                                            <View className="flex-row flex-wrap">
+                                                {dungeonDetails.rewards.dropsJson.items.map((item, index) => (
+                                                    <View key={index} className="bg-amber-100 rounded-lg border-2 border-amber-300 p-2 mr-2 mb-2">
+                                                        <Text className="text-sm font-semibold">{item.itemId}</Text>
+                                                        <Text className="text-xs text-amber-700">{(item.weight * 100).toFixed(0)}%</Text>
+                                                    </View>
+                                                ))}
+                                            </View>
+                                        </View>
+                                    </View>
+                                </View>
+
+                                {/* Action Buttons */}
+                                <View className="flex-row space-x-4 mb-6">
+                                    <Pressable className="flex-1 py-3 bg-red-500 rounded-xl border-2 border-stone-900">
+                                        <Text className="text-white font-bold text-center">Start Battle</Text>
+                                    </Pressable>
+                                    <Pressable className="flex-1 py-3 bg-blue-500 rounded-xl border-2 border-stone-900">
+                                        <Text className="text-white font-bold text-center">Auto Battle</Text>
+                                    </Pressable>
+                                </View>
+                            </View>
+                        ) : null}
+                    </ScrollView>
+                </View>
+            </Modal>
         </View>
     );
 }
