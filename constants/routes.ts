@@ -4,6 +4,7 @@ export const ROUTES = {
     main: {
         home: '/main/home',
         inventory: '/main/inventory',
+        dungeon: '/main/dungeon',
         settings: '/main/settings',
     },
     auth: {

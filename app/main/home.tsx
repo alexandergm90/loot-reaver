@@ -161,9 +161,10 @@ export default function StyledHomeMockup(){
           {/* Bottom Nav (persistent) */}
 				<View className="absolute bottom-0 left-0 right-0 px-3 pb-4">
 					<View className="rounded-2xl border-2 border-stone-900 bg-transparent px-4 py-2 flex flex-row items-center justify-between">
-						{["Home","Skills","Inventory","Map","Shop","Guild"].map((label)=> {
+						{["Home","Skills","Inventory","Dungeon","Shop","Guild"].map((label)=> {
 							const onPress = () => {
 								if (label === 'Inventory') router.push(ROUTES.main.inventory);
+								if (label === 'Dungeon') router.push(ROUTES.main.dungeon);
 							};
 							return (
 								<Pressable key={label} onPress={onPress} className="flex flex-col items-center">
