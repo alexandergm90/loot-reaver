@@ -1,5 +1,6 @@
 export * from './character';
 export * from './dungeon';
+export * from './enemy';
 export * from './equipmentAsset';
 export * from './player';
 export * from './slot';

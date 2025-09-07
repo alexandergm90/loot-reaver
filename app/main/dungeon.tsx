@@ -1,5 +1,7 @@
+import EnemyCard from '@/components/enemy/EnemyCard';
 import { getDungeonDetails, getDungeons } from '@/services/dungeonService';
 import { Dungeon, DungeonDetails } from '@/types';
+import { createEnemyInstance } from '@/utils/enemyUtils';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Dimensions, Image, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
@@ -358,28 +360,19 @@ export default function DungeonScreen() {
                                         {dungeonDetails.waves.map((wave, index) => (
                                             <View key={index} className="bg-stone-100 rounded-xl border-2 border-stone-900 p-3 mb-3">
                                                 <Text className="font-bold text-lg mb-2 text-center">Wave {index + 1}</Text>
-                                                {wave.enemies.map((enemyInWave, enemyIndex) => (
-                                                    <View key={enemyIndex} className="bg-white/80 rounded-lg border border-stone-300 p-2 mb-2">
-                                                        <View className="flex-row items-center justify-between mb-1">
-                                                            <Text className="font-bold">{enemyInWave.enemy.name}</Text>
-                                                            <Text className="text-sm text-stone-600">x{enemyInWave.count}</Text>
-                                                        </View>
-                                                        <View className="flex-row space-x-4">
-                                                            <View className="items-center">
-                                                                <Text className="text-xs text-stone-600">HP</Text>
-                                                                <Text className="font-semibold text-red-600">{enemyInWave.enemy.scaledHp}</Text>
-                                                            </View>
-                                                            <View className="items-center">
-                                                                <Text className="text-xs text-stone-600">ATK</Text>
-                                                                <Text className="font-semibold text-orange-600">{enemyInWave.enemy.scaledAtk}</Text>
-                                                            </View>
-                                                            <View className="items-center">
-                                                                <Text className="text-xs text-stone-600">DEF</Text>
-                                                                <Text className="font-semibold text-blue-600">{enemyInWave.enemy.scaledDef}</Text>
-                                                            </View>
-                                                        </View>
-                                                    </View>
-                                                ))}
+                                                {wave.enemies.map((enemyInWave, enemyIndex) => {
+                                                    const enemyInstance = createEnemyInstance(enemyInWave.enemy);
+                                                    if (!enemyInstance) return null;
+                                                    
+                                                    return (
+                                                        <EnemyCard
+                                                            key={enemyIndex}
+                                                            enemy={enemyInstance}
+                                                            count={enemyInWave.count}
+                                                            showPreview={true}
+                                                        />
+                                                    );
+                                                })}
                                             </View>
                                         ))}
                                     </View>
