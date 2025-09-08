@@ -61,14 +61,14 @@ export default function EnemyPreview({
   };
 
   const renderEnemyPart = (part: any, index: number) => {
-    const { image, width, height, offsetX = 0, offsetY = 0, zIndex = 0 } = part;
+    const { image, width, height, left = 0, top = 0, zIndex = 0, rotation = 0 } = part;
     
     // Calculate scaling based on container size
-    const scale = Math.min(containerWidth / 64, containerHeight / 64);
+    const scale = Math.min(containerWidth / 140, containerHeight / 136); // Use actual enemy size as base
     const scaledWidth = width * scale;
     const scaledHeight = height * scale;
-    const scaledOffsetX = offsetX * scale;
-    const scaledOffsetY = offsetY * scale;
+    const scaledLeft = left * scale;
+    const scaledTop = top * scale;
 
     // Add subtle animation to the part
     const animatedStyle = showAnimation ? {
@@ -85,8 +85,17 @@ export default function EnemyPreview({
             outputRange: [1, 1.02, 1],
           }),
         },
+        {
+          rotate: `${rotation}deg`,
+        },
       ],
-    } : {};
+    } : {
+      transform: [
+        {
+          rotate: `${rotation}deg`,
+        },
+      ],
+    };
 
     return (
       <Animated.View
@@ -94,8 +103,8 @@ export default function EnemyPreview({
         style={[
           {
             position: 'absolute',
-            left: scaledOffsetX,
-            top: scaledOffsetY,
+            left: scaledLeft,
+            top: scaledTop,
             width: scaledWidth,
             height: scaledHeight,
             zIndex,
@@ -115,6 +124,31 @@ export default function EnemyPreview({
     );
   };
 
+  // Flatten all parts for rendering
+  const getAllParts = () => {
+    const parts: any[] = [];
+    const template = enemy.template;
+    
+    // Add body
+    parts.push(template.parts.body);
+    
+    // Add head
+    parts.push(template.parts.head);
+    
+    // Add feet (render before hands for proper layering)
+    parts.push(template.parts.feet.left);
+    parts.push(template.parts.feet.right);
+    
+    // Add hands
+    parts.push(template.parts.hands.left);
+    parts.push(template.parts.hands.right);
+    
+    // Add weapon (on top)
+    parts.push(template.parts.weapon);
+    
+    return parts;
+  };
+
   return (
     <View
       style={{
@@ -123,10 +157,11 @@ export default function EnemyPreview({
         position: 'relative',
         alignItems: 'center',
         justifyContent: 'center',
+        transform: enemy.template.rotate ? [{ scaleX: -1 }] : undefined, // Horizontal flip if needed
       }}
     >
       {/* Render all enemy parts in order */}
-      {Object.values(enemy.template.parts).map((part, index) => 
+      {getAllParts().map((part, index) => 
         renderEnemyPart(part, index)
       )}
     </View>

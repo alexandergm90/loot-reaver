@@ -3,19 +3,32 @@ export interface EnemyPart {
   image: any; // require() result
   width: number;
   height: number;
-  offsetX?: number;
-  offsetY?: number;
+  left?: number;
+  top?: number;
   zIndex?: number;
+  rotation?: number; // rotation in degrees
+}
+
+export interface EnemyHands {
+  left: EnemyPart;
+  right: EnemyPart;
+}
+
+export interface EnemyFeet {
+  left: EnemyPart;
+  right: EnemyPart;
 }
 
 export interface EnemyTemplate {
   id: string;
   name: string;
   code: string;
+  rotate?: boolean; // horizontal flip for mirrored enemies
   parts: {
     body: EnemyPart;
     head: EnemyPart;
-    hand: EnemyPart;
+    hands: EnemyHands;
+    feet: EnemyFeet;
     weapon: EnemyPart;
   };
   animation: {
