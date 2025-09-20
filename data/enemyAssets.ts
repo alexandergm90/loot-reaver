@@ -72,8 +72,8 @@ const goblinWarrior: EnemyTemplate = {
       image: require('@/assets/images/enemies/goblin_warrior/weapon.png'),
       width: 41,
       height: 140,
-      left: 145,
-      top: 8,
+      left: 152,
+      top: 14,
       zIndex: 2,
       rotation: 40, // Weapon angle for dynamic look
     },

@@ -21,8 +21,8 @@ export default function EnemyCard({ enemy, count, showPreview = true }: EnemyCar
         <View className="items-center mb-3">
           <EnemyPreview 
             enemy={enemy} 
-            containerWidth={60} 
-            containerHeight={60}
+            containerWidth={120} 
+            containerHeight={120}
             showAnimation={true}
           />
         </View>

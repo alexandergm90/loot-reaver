@@ -76,11 +76,18 @@ export default function EnemyPreview({
     });
   };
 
+  // Calculate scaling based on container size with padding (matching CharacterFullPreview approach)
+  const padding = 12; // px padding inside the container
+  const FIT_SHRINK = 0.92; // slight global shrink to avoid touching container edges
+  const availableWidth = containerWidth - padding * 2;
+  const availableHeight = containerHeight - padding * 2;
+  // Use a larger base size to match character scale (character uses 300x300 base)
+  const enemyBaseSize = 250; // Increased further to make enemy smaller
+  const baseScale = Math.min(availableWidth / enemyBaseSize, availableHeight / enemyBaseSize);
+  const scale = Math.max(0.0001, baseScale * FIT_SHRINK);
+
   const renderEnemyPart = (part: any, index: number) => {
     const { image, width, height, left = 0, top = 0, zIndex = 0, rotation = 0, name } = part;
-    
-    // Calculate scaling based on container size
-    const scale = Math.min(containerWidth / 140, containerHeight / 136); // Use actual enemy size as base
     const scaledWidth = width * scale;
     const scaledHeight = height * scale;
     const scaledLeft = left * scale;
@@ -335,6 +342,12 @@ export default function EnemyPreview({
     return parts;
   };
 
+  // Calculate offset to center the enemy assembly
+  const enemyWidth = 140 * scale; // Original enemy width scaled
+  const enemyHeight = 136 * scale; // Original enemy height scaled
+  const offsetX = (containerWidth - enemyWidth) / 2;
+  const offsetY = (containerHeight - enemyHeight) / 2;
+
   return (
     <View
       style={{
@@ -346,10 +359,12 @@ export default function EnemyPreview({
         transform: enemy.template.rotate ? [{ scaleX: -1 }] : undefined, // Horizontal flip if needed
       }}
     >
-      {/* Render all enemy parts in order */}
-      {getAllParts().map((part, index) => 
-        renderEnemyPart(part, index)
-      )}
+      {/* Render all enemy parts in order with centering offset */}
+      <View style={{ position: 'absolute', left: offsetX, top: offsetY }}>
+        {getAllParts().map((part, index) => 
+          renderEnemyPart(part, index)
+        )}
+      </View>
     </View>
   );
 }

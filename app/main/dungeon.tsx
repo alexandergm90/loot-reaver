@@ -1,6 +1,9 @@
+import CharacterTest from '@/components/combat/CharacterTest';
+import CombatScreen from '@/components/combat/CombatScreen';
+import CombatTest from '@/components/combat/CombatTest';
 import EnemyCard from '@/components/enemy/EnemyCard';
 import { getDungeonDetails, getDungeons } from '@/services/dungeonService';
-import { Dungeon, DungeonDetails } from '@/types';
+import { CombatResult, Dungeon, DungeonDetails } from '@/types';
 import { createEnemyInstance } from '@/utils/enemyUtils';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -32,6 +35,10 @@ export default function DungeonScreen() {
     const [dungeonDetails, setDungeonDetails] = useState<DungeonDetails | null>(null);
     const [detailsLoading, setDetailsLoading] = useState(false);
     const [detailsError, setDetailsError] = useState<string | null>(null);
+    const [showCombat, setShowCombat] = useState(false);
+    
+    // Test mode toggle
+    const [testMode, setTestMode] = useState<'normal' | 'combat' | 'character'>('normal');
 
     useEffect(() => {
         loadDungeons();
@@ -88,6 +95,19 @@ export default function DungeonScreen() {
         setDetailsError(null);
     };
 
+    const startCombat = () => {
+        setShowCombat(true);
+    };
+
+    const handleCombatComplete = (result: CombatResult) => {
+        setShowCombat(false);
+        // Combat results are already shown in the combat screen, no need for duplicate modal
+    };
+
+    const closeCombat = () => {
+        setShowCombat(false);
+    };
+
     const currentDungeon = dungeons[currentIndex];
 
     // Ensure selected level is valid for current dungeon
@@ -96,6 +116,15 @@ export default function DungeonScreen() {
             setSelectedLevel(1);
         }
     }, [currentDungeon, selectedLevel]);
+
+    // Test mode rendering
+    if (testMode === 'combat') {
+        return <CombatTest onBack={() => setTestMode('normal')} />;
+    }
+    
+    if (testMode === 'character') {
+        return <CharacterTest onBack={() => setTestMode('normal')} />;
+    }
 
     if (loading) {
         return (
@@ -130,6 +159,31 @@ export default function DungeonScreen() {
     return (
         <View className="flex-1">
             <ScrollView className="flex-1 px-4">
+                {/* Test Mode Selector */}
+                <View className="mt-4 mb-4">
+                    <Text className="text-lg font-bold text-center mb-3">Test Mode</Text>
+                    <View className="flex-row justify-center space-x-2">
+                        <Pressable 
+                            onPress={() => setTestMode('normal')}
+                            className={`px-3 py-2 rounded-lg ${testMode === 'normal' ? 'bg-blue-600' : 'bg-gray-600'}`}
+                        >
+                            <Text className="text-white text-sm">Normal</Text>
+                        </Pressable>
+                        <Pressable 
+                            onPress={() => setTestMode('combat')}
+                            className={`px-3 py-2 rounded-lg ${testMode === 'combat' ? 'bg-blue-600' : 'bg-gray-600'}`}
+                        >
+                            <Text className="text-white text-sm">Combat Test</Text>
+                        </Pressable>
+                        <Pressable 
+                            onPress={() => setTestMode('character')}
+                            className={`px-3 py-2 rounded-lg ${testMode === 'character' ? 'bg-blue-600' : 'bg-gray-600'}`}
+                        >
+                            <Text className="text-white text-sm">Character Test</Text>
+                        </Pressable>
+                    </View>
+                </View>
+
                 {/* Header */}
                 <View className="mt-4 mb-6">
                     <Text className="text-2xl font-bold text-center">Dungeons</Text>
@@ -301,7 +355,10 @@ export default function DungeonScreen() {
                             {detailsLoading ? 'Loading...' : 'View Details'}
                         </Text>
                     </Pressable>
-                    <Pressable className="flex-1 py-3 bg-blue-500 rounded-xl border-2 border-stone-900">
+                    <Pressable 
+                        onPress={startCombat}
+                        className="flex-1 py-3 bg-blue-500 rounded-xl border-2 border-stone-900"
+                    >
                         <Text className="text-white font-bold text-center">Enter Dungeon</Text>
                     </Pressable>
                 </View>
@@ -414,7 +471,10 @@ export default function DungeonScreen() {
 
                                 {/* Action Buttons */}
                                 <View className="flex-row space-x-4 mb-6">
-                                    <Pressable className="flex-1 py-3 bg-red-500 rounded-xl border-2 border-stone-900">
+                                    <Pressable 
+                                        onPress={startCombat}
+                                        className="flex-1 py-3 bg-red-500 rounded-xl border-2 border-stone-900"
+                                    >
                                         <Text className="text-white font-bold text-center">Start Battle</Text>
                                     </Pressable>
                                     <Pressable className="flex-1 py-3 bg-blue-500 rounded-xl border-2 border-stone-900">
@@ -426,6 +486,24 @@ export default function DungeonScreen() {
                     </ScrollView>
                 </View>
             </Modal>
+
+            {/* Combat Screen Modal */}
+            <Modal
+                visible={showCombat}
+                animationType="slide"
+                presentationStyle="fullScreen"
+                onRequestClose={closeCombat}
+            >
+                {currentDungeon && (
+                    <CombatScreen
+                        dungeonId={currentDungeon.id}
+                        level={selectedLevel}
+                        onCombatComplete={handleCombatComplete}
+                        onClose={closeCombat}
+                    />
+                )}
+            </Modal>
+
         </View>
     );
 }
