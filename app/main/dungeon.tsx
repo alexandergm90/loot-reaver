@@ -6,19 +6,28 @@ import { getDungeonDetails, getDungeons } from '@/services/dungeonService';
 import { CombatResult, Dungeon, DungeonDetails } from '@/types';
 import { createEnemyInstance } from '@/utils/enemyUtils';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Dimensions, Image, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Image, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import ReanimatedAnimated, {
+    Easing,
+    runOnJS,
+    useAnimatedStyle,
+    useSharedValue,
+    withDelay,
+    withSequence,
+    withTiming,
+} from 'react-native-reanimated';
 
-const { width: screenWidth } = Dimensions.get('window');
 
 const getDungeonImage = (code: string) => {
     switch (code) {
         case 'goblin_cave':
             return require('@/assets/images/dungeons/goblin_cave.png');
-        case 'orc_stronghold':
-            return require('@/assets/images/dungeons/orc_stronghold.png');
         case 'undead_crypt':
             return require('@/assets/images/dungeons/undead_crypt.png');
+        case 'dark_sanctuary':
+            return require('@/assets/images/dungeons/dark_sanctuary.png');
         default:
             return require('@/assets/images/logo.png');
     }
@@ -38,11 +47,53 @@ export default function DungeonScreen() {
     const [showCombat, setShowCombat] = useState(false);
     
     // Test mode toggle
-    const [testMode, setTestMode] = useState<'normal' | 'combat' | 'character'>('normal');
+    const [testMode, setTestMode] = useState<'normal' | 'combat' | 'character'>('normal' as const);
+    
+    // Floating animation for dungeon images
+    const floatingAnim = useRef(new Animated.Value(0)).current;
+    
+    // Gesture and animation state for sliding
+    const canSwipe = useSharedValue(true);
+    const animX = useSharedValue(0);
+    const opacity = useSharedValue(1);
+    const scale = useSharedValue(1);
+    const zoomScale = useSharedValue(0.7); // Start less dramatic for Android compatibility
 
     useEffect(() => {
         loadDungeons();
     }, []);
+
+    // Start floating animation
+    useEffect(() => {
+        const floatingAnimation = Animated.loop(
+            Animated.sequence([
+                Animated.timing(floatingAnim, {
+                    toValue: 1,
+                    duration: 3000,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(floatingAnim, {
+                    toValue: 0,
+                    duration: 3000,
+                    useNativeDriver: true,
+                }),
+            ])
+        );
+        
+        floatingAnimation.start();
+        
+        return () => {
+            floatingAnimation.stop();
+        };
+    }, [floatingAnim]);
+
+    // Zoom-in animation when dungeon changes
+    useEffect(() => {
+        zoomScale.value = withSequence(
+            withTiming(0.7, { duration: 0 }), // Start less dramatic for Android compatibility
+            withTiming(1, { duration: 400, easing: Easing.out(Easing.quad) }) // Simpler easing for better performance
+        );
+    }, [currentIndex, zoomScale]);
 
     const loadDungeons = async () => {
         try {
@@ -56,14 +107,43 @@ export default function DungeonScreen() {
         }
     };
 
+    const animateToDungeon = (newIndex: number) => {
+        if (!canSwipe.value) return;
+        if (newIndex < 0 || newIndex >= dungeons.length || newIndex === currentIndex) return;
+
+        canSwipe.value = false;
+        const direction = newIndex > currentIndex ? 1 : -1;
+
+        // Animate out with sequence - smoother transition
+        animX.value = withSequence(
+            withTiming(direction * -20, { duration: 100 }),
+            withDelay(100, withTiming(0, { duration: 200 })),
+        );
+        opacity.value = withSequence(
+            withTiming(0.3, { duration: 100 }),
+            withDelay(100, withTiming(1, { duration: 200 })),
+        );
+        scale.value = withSequence(
+            withTiming(0.95, { duration: 100 }),
+            withDelay(100, withTiming(1, { duration: 200 })),
+        );
+
+        // Sync state in parallel with animation timing
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                setCurrentIndex(newIndex);
+                setSelectedLevel(1); // Reset to level 1 when changing dungeons
+                canSwipe.value = true;
+            });
+        });
+    };
+
     const nextDungeon = () => {
-        setCurrentIndex((prev) => (prev + 1) % dungeons.length);
-        setSelectedLevel(1); // Reset to level 1 when changing dungeons
+        animateToDungeon((currentIndex + 1) % dungeons.length);
     };
 
     const prevDungeon = () => {
-        setCurrentIndex((prev) => (prev - 1 + dungeons.length) % dungeons.length);
-        setSelectedLevel(1); // Reset to level 1 when changing dungeons
+        animateToDungeon((currentIndex - 1 + dungeons.length) % dungeons.length);
     };
 
     const handleLevelSelect = (level: number) => {
@@ -106,6 +186,54 @@ export default function DungeonScreen() {
 
     const closeCombat = () => {
         setShowCombat(false);
+    };
+
+    // Gesture handler for drag & drop sliding
+    const swipeGesture = Gesture.Pan()
+        .minDistance(15)
+        .activeOffsetX([-25, 25])
+        .failOffsetY([-20, 20])
+        .onUpdate((e) => {
+            if (canSwipe.value) {
+                animX.value = e.translationX;
+            }
+        })
+        .onEnd((e) => {
+            if (!canSwipe.value) {
+                animX.value = withTiming(0, { duration: 150 });
+                return;
+            }
+
+            const threshold = 50;
+
+            if (e.translationX > threshold && currentIndex > 0) {
+                runOnJS(animateToDungeon)(currentIndex - 1);
+            } else if (e.translationX < -threshold && currentIndex < dungeons.length - 1) {
+                runOnJS(animateToDungeon)(currentIndex + 1);
+            } else {
+                animX.value = withTiming(0, { duration: 150 });
+            }
+        });
+
+    // Animated styles
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ translateX: animX.value }, { scale: scale.value }],
+        opacity: opacity.value,
+    }));
+
+    const zoomAnimatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: zoomScale.value }],
+    }));
+
+    const floatingAnimatedStyle = {
+        transform: [
+            { 
+                translateY: floatingAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-8, 8],
+                })
+            },
+        ],
     };
 
     const currentDungeon = dungeons[currentIndex];
@@ -191,14 +319,27 @@ export default function DungeonScreen() {
 
                 {/* Dungeon Slider */}
                 <View className="mb-6">
-                    <View className="relative">
+                    <GestureDetector gesture={swipeGesture} key={`dungeon-slider-${currentIndex}`}>
+                        <View className="relative">
                         {/* Dungeon Image */}
-                        <View className="h-64 rounded-2xl border-2 border-stone-900 bg-stone-200 overflow-hidden mb-4">
-                            <Image
-                                source={getDungeonImage(currentDungeon.code)}
-                                className="w-full h-full"
-                                resizeMode="cover"
-                            />
+                        <View className="items-center justify-center mb-4">
+                            <Animated.View style={floatingAnimatedStyle}>
+                                <ReanimatedAnimated.View
+                                    style={[
+                                        animatedStyle,
+                                        zoomAnimatedStyle,
+                                    ]}
+                                >
+                                    <Image
+                                        source={getDungeonImage(currentDungeon.code)}
+                                        style={{
+                                            width: 300,
+                                            height: 450,
+                                        }}
+                                        resizeMode="contain"
+                                    />
+                                </ReanimatedAnimated.View>
+                            </Animated.View>
                         </View>
 
                         {/* Navigation Arrows */}
@@ -206,15 +347,27 @@ export default function DungeonScreen() {
                             <>
                                 <Pressable
                                     onPress={prevDungeon}
-                                    className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 items-center justify-center"
+                                    disabled={currentIndex === 0}
+                                    className={`absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full items-center justify-center ${
+                                        currentIndex === 0 ? 'bg-black/30' : 'bg-black/60'
+                                    }`}
+                                    style={{ zIndex: 10 }}
                                 >
-                                    <Text className="text-white font-bold text-lg">‹</Text>
+                                    <Text className={`font-bold text-xl ${
+                                        currentIndex === 0 ? 'text-gray-400' : 'text-white'
+                                    }`}>‹</Text>
                                 </Pressable>
                                 <Pressable
                                     onPress={nextDungeon}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 items-center justify-center"
+                                    disabled={currentIndex === dungeons.length - 1}
+                                    className={`absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full items-center justify-center ${
+                                        currentIndex === dungeons.length - 1 ? 'bg-black/30' : 'bg-black/60'
+                                    }`}
+                                    style={{ zIndex: 10 }}
                                 >
-                                    <Text className="text-white font-bold text-lg">›</Text>
+                                    <Text className={`font-bold text-xl ${
+                                        currentIndex === dungeons.length - 1 ? 'text-gray-400' : 'text-white'
+                                    }`}>›</Text>
                                 </Pressable>
                             </>
                         )}
@@ -232,7 +385,8 @@ export default function DungeonScreen() {
                                 ))}
                             </View>
                         )}
-                    </View>
+                        </View>
+                    </GestureDetector>
 
                     {/* Dungeon Info */}
                     <View className="bg-white/80 rounded-2xl border-2 border-stone-900 p-4">
