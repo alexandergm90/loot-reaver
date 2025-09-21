@@ -23,11 +23,11 @@ import ReanimatedAnimated, {
 const getDungeonImage = (code: string) => {
     switch (code) {
         case 'goblin_cave':
-            return require('@/assets/images/dungeons/goblin_cave.png');
+            return require('@/assets/images/dungeons/selectors/goblin_cave.png');
         case 'undead_crypt':
-            return require('@/assets/images/dungeons/undead_crypt.png');
+            return require('@/assets/images/dungeons/selectors/undead_crypt.png');
         case 'dark_sanctuary':
-            return require('@/assets/images/dungeons/dark_sanctuary.png');
+            return require('@/assets/images/dungeons/selectors/dark_sanctuary.png');
         default:
             return require('@/assets/images/logo.png');
     }
@@ -651,6 +651,7 @@ export default function DungeonScreen() {
                 {currentDungeon && (
                     <CombatScreen
                         dungeonId={currentDungeon.id}
+                        dungeonCode={currentDungeon.code}
                         level={selectedLevel}
                         onCombatComplete={handleCombatComplete}
                         onClose={closeCombat}

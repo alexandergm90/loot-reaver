@@ -1,15 +1,30 @@
 import { runDungeonCombat } from '@/services/combatService';
 import { CombatResult, CombatState, FloatingDamage as FloatingDamageType } from '@/types/combat';
 import React, { useCallback, useState } from 'react';
-import { Alert, Dimensions, Pressable, Text, View } from 'react-native';
+import { Alert, Dimensions, Image, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CombatEntity from './CombatEntity';
 import FloatingDamage from './FloatingDamage';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
+// Helper function to get dungeon layout image
+const getDungeonLayoutImage = (dungeonCode: string) => {
+  switch (dungeonCode) {
+    case 'goblin_cave':
+      return require('@/assets/images/dungeons/layouts/goblin_cave.png');
+    case 'undead_crypt':
+      return require('@/assets/images/dungeons/layouts/undead_crypt.png');
+    case 'dark_sanctuary':
+      return require('@/assets/images/dungeons/layouts/dark_sanctuary.png');
+    default:
+      return require('@/assets/images/dungeons/layouts/goblin_cave.png');
+  }
+};
+
 interface CombatScreenProps {
   dungeonId: string;
+  dungeonCode?: string; // Add dungeon code prop
   level: number;
   onCombatComplete: (result: CombatResult) => void;
   onClose: () => void;
@@ -17,6 +32,7 @@ interface CombatScreenProps {
 
 export default function CombatScreen({ 
   dungeonId, 
+  dungeonCode = 'goblin_cave', // Default fallback
   level, 
   onCombatComplete, 
   onClose 
@@ -214,38 +230,53 @@ export default function CombatScreen({
         </Pressable>
       </View>
 
-      {/* Combat Arena */}
-      <View className="flex-1 flex-row items-center px-4">
-         {/* Player Side */}
-         <View className="items-center flex-1">
-           {combatState.playerEntity && (
-             <CombatEntity
-               entity={combatState.playerEntity}
-               containerWidth={200}
-               containerHeight={200}
-               isAnimating={combatState.isAnimating}
-               isAttacking={attackingEntity === combatState.playerEntity.id}
-               isTakingDamage={damagedEntity === combatState.playerEntity.id}
-             />
-           )}
-         </View>
+      {/* Combat Arena with Dungeon Layout Background */}
+      <View className="flex-1 relative">
+        {/* Dungeon Layout Background */}
+        <View className="absolute inset-0 items-center justify-center">
+          <Image
+            source={getDungeonLayoutImage(dungeonCode)}
+            style={{
+              width: '100%',
+              height: '100%',
+              opacity: 0.6,
+            }}
+            resizeMode="contain"
+          />
+        </View>
 
+        {/* Combat Entities */}
+        <View className="flex-1 flex-row items-center px-4 relative z-10">
+          {/* Player Side */}
+          <View className="items-center flex-1">
+            {combatState.playerEntity && (
+              <CombatEntity
+                entity={combatState.playerEntity}
+                containerWidth={200}
+                containerHeight={200}
+                isAnimating={combatState.isAnimating}
+                isAttacking={attackingEntity === combatState.playerEntity.id}
+                isTakingDamage={damagedEntity === combatState.playerEntity.id}
+              />
+            )}
+          </View>
 
-         {/* Enemy Side */}
-         <View className="items-center flex-1">
-           {combatState.enemyEntities.map((enemy, index) => (
-             <View key={enemy.id} className="mb-4">
-               <CombatEntity
-                 entity={enemy}
-                 containerWidth={200} // Scaled to match player size
-                 containerHeight={200} // Scaled to match player size
-                 isAnimating={combatState.isAnimating}
-                 isAttacking={attackingEntity === enemy.id}
-                 isTakingDamage={damagedEntity === enemy.id}
-               />
-             </View>
-           ))}
-         </View>
+          {/* Enemy Side */}
+          <View className="items-center flex-1">
+            {combatState.enemyEntities.map((enemy, index) => (
+              <View key={enemy.id} className="mb-4">
+                <CombatEntity
+                  entity={enemy}
+                  containerWidth={200} // Scaled to match player size
+                  containerHeight={200} // Scaled to match player size
+                  isAnimating={combatState.isAnimating}
+                  isAttacking={attackingEntity === enemy.id}
+                  isTakingDamage={damagedEntity === enemy.id}
+                />
+              </View>
+            ))}
+          </View>
+        </View>
       </View>
 
       {/* Floating Damage Numbers */}
