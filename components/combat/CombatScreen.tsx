@@ -1,3 +1,4 @@
+import { enemyTemplates } from '@/data/enemyAssets';
 import { runDungeonCombat } from '@/services/combatService';
 import { CombatResult, CombatState, FloatingDamage as FloatingDamageType } from '@/types/combat';
 import React, { useCallback, useState } from 'react';
@@ -20,6 +21,22 @@ const getDungeonLayoutImage = (dungeonCode: string) => {
     default:
       return require('@/assets/images/dungeons/layouts/goblin_cave.png');
   }
+};
+
+// Helper function to get enemy size based on enemy template
+const getEnemySize = (enemyCode: string) => {
+  const baseSize = 200; // Player size
+  
+  // Get enemy template by code
+  const enemyTemplate = enemyTemplates[enemyCode];
+  
+  // Use size from template if available
+  if (enemyTemplate?.size) {
+    return Math.round(baseSize * enemyTemplate.size);
+  }
+  
+  // Fallback to default size
+  return Math.round(baseSize * 1.0); // Same size as player
 };
 
 interface CombatScreenProps {
@@ -263,18 +280,21 @@ export default function CombatScreen({
 
           {/* Enemy Side */}
           <View className="items-center flex-1">
-            {combatState.enemyEntities.map((enemy, index) => (
-              <View key={enemy.id} className="mb-4">
-                <CombatEntity
-                  entity={enemy}
-                  containerWidth={200} // Scaled to match player size
-                  containerHeight={200} // Scaled to match player size
-                  isAnimating={combatState.isAnimating}
-                  isAttacking={attackingEntity === enemy.id}
-                  isTakingDamage={damagedEntity === enemy.id}
-                />
-              </View>
-            ))}
+            {combatState.enemyEntities.map((enemy, index) => {
+              const enemySize = getEnemySize(enemy.code || 'default');
+              return (
+                <View key={enemy.id} className="mb-4">
+                  <CombatEntity
+                    entity={enemy}
+                    containerWidth={enemySize}
+                    containerHeight={enemySize}
+                    isAnimating={combatState.isAnimating}
+                    isAttacking={attackingEntity === enemy.id}
+                    isTakingDamage={damagedEntity === enemy.id}
+                  />
+                </View>
+              );
+            })}
           </View>
         </View>
       </View>

@@ -24,6 +24,7 @@ export interface EnemyTemplate {
   name: string;
   code: string;
   rotate?: boolean; // horizontal flip for mirrored enemies
+  size?: number; // size multiplier relative to player (e.g., 0.7, 0.9, 1.2)
   parts: {
     body: EnemyPart;
     head: EnemyPart;

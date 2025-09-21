@@ -6,6 +6,7 @@ const goblinWarrior: EnemyTemplate = {
   name: 'Goblin Warrior',
   code: 'goblin_warrior',
   rotate: true, // Set to true for mirrored enemies
+  size: 0.75, // Small, agile goblin
   parts: {
     body: {
       name: 'body',
@@ -97,6 +98,7 @@ const goblinArcher: EnemyTemplate = {
   name: 'Goblin Archer',
   code: 'goblin_archer',
   rotate: true, // Mirrored enemy
+  size: 0.75, // Small, agile goblin
   parts: {
     body: {
       name: 'body',
@@ -188,6 +190,7 @@ const skeletonWarrior: EnemyTemplate = {
   name: 'Skeleton Warrior',
   code: 'skeleton_warrior',
   rotate: true,
+  size: 0.85, // Medium-sized skeleton
   parts: {
     body: {
       name: 'body',
@@ -279,6 +282,7 @@ const zombie: EnemyTemplate = {
   name: 'Zombie',
   code: 'zombie',
   rotate: true,
+  size: 0.95, // Large, imposing zombie
   parts: {
     body: {
       name: 'body',
@@ -370,6 +374,7 @@ const darkCultist: EnemyTemplate = {
   name: 'Dark Cultist',
   code: 'dark_cultist',
   rotate: true,
+  size: 0.9, // Medium-large dark cultist
   parts: {
     body: {
       name: 'body',
@@ -461,6 +466,7 @@ const darkWarlock: EnemyTemplate = {
   name: 'Dark Warlock',
   code: 'dark_warlock',
   rotate: true,
+  size: 0.9, // Medium-large dark warlock
   parts: {
     body: {
       name: 'body',
