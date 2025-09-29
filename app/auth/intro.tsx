@@ -3,6 +3,7 @@ import { useSession } from '@/auth/hooks/useSession';
 import IntroLoginPanel from '@/components/auth/IntroLoginPanel';
 import AnimatedLogo from '@/components/ui/AnimatedLogo';
 import AppButton from '@/components/ui/AppButton';
+import EmberField from '@/components/ui/EmberField';
 import LoadingAnimation from '@/components/ui/LoadingAnimation';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, ImageBackground, Text, View } from 'react-native';
@@ -39,6 +40,7 @@ const IntroScreen = () => {
             imageStyle={{ resizeMode: 'cover' }}
         >
             <View style={styles.container}>
+            <EmberField motionScale={0.55} lifetimeScale={0.8} fadeOutAt={0.5} />
                 <View style={{ marginTop: 100 }}>
                     <AnimatedLogo />
                 </View>
