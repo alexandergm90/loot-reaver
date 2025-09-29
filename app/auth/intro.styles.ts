@@ -6,7 +6,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
-        backgroundColor: '#000',
+        backgroundColor: 'transparent',
     },
     logo: {
         width: 200,
