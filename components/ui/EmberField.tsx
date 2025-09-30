@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, ImageSourcePropType, StyleSheet, View } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 
 type Ember = {
     id: number;
@@ -21,6 +22,7 @@ type EmberFieldProps = {
     motionScale?: number;   // scales travel distance (0..1)
     lifetimeScale?: number; // scales lifetime (0..1)
     fadeOutAt?: number;     // when to start fading (0..1)
+    maxRiseFraction?: number; // 0..1 cap for rise height relative to screen height
 };
 
 const emberSources: ImageSourcePropType[] = [
@@ -42,9 +44,11 @@ export const EmberField: React.FC<EmberFieldProps> = ({
     motionScale = 0.6,
     lifetimeScale = 0.85,
     fadeOutAt = 0.55,
+    maxRiseFraction = 0.6,
 }) => {
     const [embers, setEmbers] = useState<Ember[]>([]);
     const area = useRef<{ width?: number; height?: number }>({}).current;
+    const reducedMotion = useReducedMotion();
 
     const makeEmber = useCallback(
         (id: number, isBurst: boolean): Ember | null => {
@@ -55,7 +59,8 @@ export const EmberField: React.FC<EmberFieldProps> = ({
             const startY = height - randomBetween(0, 40);
             const size = randomBetween(16, 34);
             const driftX = randomBetween(-60, 60);
-            const peakY = randomBetween(height * 0.6, height * 1.1);
+            const riseCap = Math.max(0.2, Math.min(1, maxRiseFraction));
+            const peakY = randomBetween(height * (riseCap - 0.15), height * riseCap);
             const rotation = randomBetween(-35, 35);
             const baseDuration = randomBetween(2200, 3600);
             const durationMs = baseDuration * lifetimeScale;
@@ -64,7 +69,7 @@ export const EmberField: React.FC<EmberFieldProps> = ({
             const source = emberSources[Math.floor(Math.random() * emberSources.length)];
             return { id, startX, startY, driftX, peakY, size, rotation, durationMs, delayMs, source, version: 0 };
         },
-        [area, areaPaddingHorizontal, lifetimeScale],
+        [area, areaPaddingHorizontal, lifetimeScale, maxRiseFraction],
     );
 
     // Initialize pool after layout
@@ -93,6 +98,11 @@ export const EmberField: React.FC<EmberFieldProps> = ({
             });
         });
     }, [makeEmber]);
+
+    // Don't render embers if reduce motion is enabled
+    if (reducedMotion) {
+        return null;
+    }
 
     return (
         <View pointerEvents="none" style={StyleSheet.absoluteFill} onLayout={onLayout}>
@@ -139,7 +149,11 @@ const SingleEmber: React.FC<{ ember: Ember; onDone: () => void; motionScale: num
     const translateY = t.interpolate({ inputRange: [0, 1], outputRange: [0, -rise] });
 
     const fadeStart = Math.min(Math.max(fadeOutAt, 0.3), 0.9);
-    const opacity = t.interpolate({ inputRange: [0, 0.12, fadeStart, 1], outputRange: [0, 1, 1, 0] });
+    // Reduce opacity in lower 120px to avoid competing with button
+    const opacity = t.interpolate({ 
+        inputRange: [0, 0.12, fadeStart, 1], 
+        outputRange: [0, 1, 1, 0] 
+    });
 
     const rotate = t.interpolate({
         inputRange: [0, 0.5, 1],

@@ -1,5 +1,6 @@
+import LRText from '@/components/ui/LRText';
 import React, { useEffect } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
     Easing,
     useAnimatedStyle,
@@ -51,7 +52,7 @@ const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
                 style={[{ width: size, height: size }, animatedStyle]}
                 resizeMode="contain"
             />
-            <Text style={styles.message}>{message}</Text>
+            <LRText style={styles.message}>{message}</LRText>
         </View>
     );
 };

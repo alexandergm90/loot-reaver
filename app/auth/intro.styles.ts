@@ -31,11 +31,14 @@ const styles = StyleSheet.create({
         color: '#fff',
     },
     transitionContainer: {
-        marginTop: 32,
-        width: '100%',
-        minHeight: 120,
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 100,
+        paddingHorizontal: 24,
         alignItems: 'center',
         justifyContent: 'flex-start',
+        minHeight: 140,
     },
     loadingWrapper: {
         alignItems: 'center',

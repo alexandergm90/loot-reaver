@@ -1,10 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 
 const AnimatedLogo = () => {
     const scaleAnim = useRef(new Animated.Value(0.8)).current;
     const opacityAnim = useRef(new Animated.Value(0)).current;
     const pulseAnim = useRef(new Animated.Value(1)).current;
+    const reducedMotion = useReducedMotion();
 
     useEffect(() => {
         // Fade + scale in
@@ -22,25 +24,27 @@ const AnimatedLogo = () => {
                 useNativeDriver: true,
             }),
         ]).start(() => {
-            // After initial entry, begin pulsing
-            Animated.loop(
-                Animated.sequence([
-                    Animated.timing(pulseAnim, {
-                        toValue: 1.05,
-                        duration: 900,
-                        easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: true,
-                    }),
-                    Animated.timing(pulseAnim, {
-                        toValue: 1,
-                        duration: 900,
-                        easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: true,
-                    }),
-                ]),
-            ).start();
+            // After initial entry, begin subtle pulsing (respects reduce motion)
+            if (!reducedMotion) {
+                Animated.loop(
+                    Animated.sequence([
+                        Animated.timing(pulseAnim, {
+                            toValue: 1.02,
+                            duration: 1200,
+                            easing: Easing.inOut(Easing.ease),
+                            useNativeDriver: true,
+                        }),
+                        Animated.timing(pulseAnim, {
+                            toValue: 1,
+                            duration: 1200,
+                            easing: Easing.inOut(Easing.ease),
+                            useNativeDriver: true,
+                        }),
+                    ]),
+                ).start();
+            }
         });
-    }, []);
+    }, [reducedMotion]);
 
     return (
         <Animated.Image

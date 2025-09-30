@@ -1,21 +1,26 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, TextStyle, ViewStyle } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import React, { useState } from 'react';
+import { ImageBackground, Pressable, StyleSheet, Text, TextStyle, ViewStyle } from 'react-native';
 import Animated, {
-    Easing,
     useAnimatedStyle,
     useSharedValue,
-    withTiming,
+    withTiming
 } from 'react-native-reanimated';
 
-type Props = {
+const BG_NORMAL = require('@/assets/images/ui/medium_button_simple.png');
+const BG_PRESSED = require('@/assets/images/ui/medium_button_hover.png');
+
+ type Props = {
     onPress: () => void;
     children: React.ReactNode;
     style?: ViewStyle;
     textStyle?: TextStyle;
     enableHaptics?: boolean;
     disabled?: boolean;
-};
+    size?: 'sm' | 'md' | 'lg';
+ };
+
+const WIDTHS = { sm: 160, md: 220, lg: 320 } as const;
 
 const AppButton: React.FC<Props> = ({
     onPress,
@@ -24,33 +29,72 @@ const AppButton: React.FC<Props> = ({
     textStyle,
     enableHaptics = true,
     disabled = false,
+    size = 'md',
 }) => {
-    const scale = useSharedValue(1);
+    const isPressed = useSharedValue(false);
+    const [hovered, setHovered] = useState(false);
+    const [focused, setFocused] = useState(false);
+    const [pressed, setPressed] = useState(false);
+    const [glow, setGlow] = useState(false);
 
     const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: scale.value }],
+        transform: [{ scale: withTiming(isPressed.value ? 0.98 : 1, { duration: 100 }) }],
     }));
+
+    const handlePressIn = () => {
+        isPressed.value = true;
+        setPressed(true);
+        setGlow(true);
+        setTimeout(() => setGlow(false), 120);
+    };
+    const handlePressOut = () => {
+        isPressed.value = false;
+        setPressed(false);
+    };
 
     const handlePress = () => {
         if (enableHaptics) Haptics.selectionAsync();
-        scale.value = withTiming(0.9, { duration: 50, easing: Easing.out(Easing.ease) }, () => {
-            scale.value = withTiming(1, { duration: 100, easing: Easing.out(Easing.ease) });
-        });
         onPress();
     };
 
+    const active = glow || pressed || hovered || focused;
+
     return (
-        <Pressable onPress={handlePress} disabled={disabled}>
-            <Animated.View
-                style={[styles.button, animatedStyle, disabled && styles.disabledButton, style]}
-            >
-                {typeof children === 'string' ? (
-                    <Text style={[styles.text, disabled && styles.disabledText, textStyle]}>
-                        {children}
-                    </Text>
-                ) : (
-                    children
-                )}
+        <Pressable
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            onPress={handlePress}
+            onHoverIn={() => setHovered(true)}
+            onHoverOut={() => setHovered(false)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            disabled={disabled}
+            accessibilityRole="button"
+            accessibilityLabel="Enter Realm"
+        >
+            <Animated.View style={[styles.container, animatedStyle, disabled && styles.disabledButton, style]}>
+                <ImageBackground
+                    source={active ? BG_PRESSED : BG_NORMAL}
+                    style={[styles.bg, { width: WIDTHS[size] }]}
+                    imageStyle={{ resizeMode: 'stretch' }}
+                >
+                    {typeof children === 'string' ? (
+                        <Text
+                            style={[
+                                styles.label,
+                                size === 'sm' && styles.labelSm,
+                                size === 'lg' && styles.labelLg,
+                                disabled && styles.disabledText,
+                                glow && { textShadowRadius: 5 },
+                                textStyle,
+                            ]}
+                        >
+                            {children}
+                        </Text>
+                    ) : (
+                        children
+                    )}
+                </ImageBackground>
             </Animated.View>
         </Pressable>
     );
@@ -59,23 +103,32 @@ const AppButton: React.FC<Props> = ({
 export default AppButton;
 
 const styles = StyleSheet.create({
-    button: {
-        backgroundColor: '#222',
-        padding: 6,
-        borderRadius: 4,
-        marginHorizontal: 8,
+    container: {
+        alignSelf: 'center',
         alignItems: 'center',
         justifyContent: 'center',
-        minWidth: 32,
-        minHeight: 32,
+        marginHorizontal: 8,
     },
-    text: {
-        color: '#fff',
-        fontSize: 16,
+    bg: {
+        height: 64,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 24,
     },
+    label: {
+        fontFamily: 'Cinzel_900Black',
+        fontSize: 20,
+        letterSpacing: 0.5,
+        color: '#f5d9a6',
+        textAlign: 'center',
+        textShadowColor: 'rgba(0,0,0,0.85)',
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 3,
+    },
+    labelSm: { fontSize: 16 },
+    labelLg: { fontSize: 24 },
     disabledButton: {
-        opacity: 0.5,
-        backgroundColor: '#444',
+        opacity: 0.6,
     },
     disabledText: {
         color: '#aaa',

@@ -5,13 +5,33 @@ import AnimatedLogo from '@/components/ui/AnimatedLogo';
 import AppButton from '@/components/ui/AppButton';
 import EmberField from '@/components/ui/EmberField';
 import LoadingAnimation from '@/components/ui/LoadingAnimation';
+import { Asset } from 'expo-asset';
+import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, ImageBackground, Text, View } from 'react-native';
+import { Animated, ImageBackground, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const IntroScreen = () => {
     const { isLoading, error, loadSession } = useSession();
     const [showLogin, setShowLogin] = useState(false);
     const fadeAnim = useRef(new Animated.Value(0)).current;
+    const insets = useSafeAreaInsets();
+
+    useEffect(() => {
+        Asset.loadAsync([
+            require('@/assets/images/dark_leather.png'),
+            require('@/assets/images/ui/medium_button_simple.png'),
+            require('@/assets/images/ui/medium_button_hover.png'),
+            require('@/assets/images/flame1.png'),
+            require('@/assets/images/flame2.png'),
+            require('@/assets/images/flame3.png'),
+            require('@/assets/images/flame4.png'),
+            require('@/assets/images/flame5.png'),
+            require('@/assets/images/flame6.png'),
+            require('@/assets/images/flame7.png'),
+        ]);
+    }, []);
 
     useEffect(() => {
         if (showLogin) {
@@ -34,36 +54,54 @@ const IntroScreen = () => {
     }, [isLoading]);
 
     return (
-        <ImageBackground
-            source={require('@/assets/images/dark_leather.png')}
-            style={{ flex: 1 }}
-            imageStyle={{ resizeMode: 'cover' }}
-        >
-            <View style={styles.container}>
-            <EmberField motionScale={0.55} lifetimeScale={0.8} fadeOutAt={0.5} />
-                <View style={{ marginTop: 100 }}>
-                    <AnimatedLogo />
-                </View>
-                <View style={styles.transitionContainer}>
-                    {error ? (
-                        <View style={styles.errorBox}>
-                            <Text style={styles.errorText}>
-                                {error === 'network'
-                                    ? 'Cannot connect to server.'
-                                    : 'An unexpected error occurred.'}
-                            </Text>
-                            <AppButton onPress={loadSession}>Retry</AppButton>
-                        </View>
-                    ) : !showLogin ? (
-                        <LoadingAnimation />
-                    ) : (
-                        <Animated.View style={{ opacity: fadeAnim, width: '100%' }}>
-                            <IntroLoginPanel />
-                        </Animated.View>
-                    )}
+        <View style={{ flex: 1, backgroundColor: '#1a120a' }}>
+            {/* Draw UI under system bars */}
+            <StatusBar style="light" translucent backgroundColor="transparent" />
+
+            {/* Background fills entire screen including safe areas */}
+            <ImageBackground
+                source={require('@/assets/images/dark_leather.png')}
+                style={StyleSheet.absoluteFill}
+                imageStyle={{ resizeMode: 'cover' }}
+            />
+            <LinearGradient
+                pointerEvents="none"
+                colors={['transparent', 'rgba(0,0,0,0.35)']}
+                locations={[0.6, 1]}
+                style={StyleSheet.absoluteFill}
+            />
+
+            {/* Foreground content respects safe areas */}
+            <View style={[{ flex: 1 }, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+                <View style={styles.container}>
+                    {/* Far layer (slower) */}
+                    <EmberField poolSize={8} motionScale={0.8} lifetimeScale={0.9} fadeOutAt={0.6} maxRiseFraction={0.55} />
+                    {/* Near layer (quicker, shorter) */}
+                    <EmberField poolSize={6} motionScale={0.5} lifetimeScale={0.8} fadeOutAt={0.5} maxRiseFraction={0.45} />
+                    <View style={{ marginTop: -50 }}>
+                        <AnimatedLogo />
+                    </View>
+                    <View style={styles.transitionContainer}>
+                        {error ? (
+                            <View style={styles.errorBox}>
+                                <Text style={styles.errorText}>
+                                    {error === 'network'
+                                        ? 'Cannot connect to server.'
+                                        : 'An unexpected error occurred.'}
+                                </Text>
+                                <AppButton onPress={loadSession}>Retry</AppButton>
+                            </View>
+                        ) : !showLogin ? (
+                            <LoadingAnimation />
+                        ) : (
+                            <Animated.View style={{ opacity: fadeAnim, width: '100%' }}>
+                                <IntroLoginPanel />
+                            </Animated.View>
+                        )}
+                    </View>
                 </View>
             </View>
-        </ImageBackground>
+        </View>
     );
 };
 
