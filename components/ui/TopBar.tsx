@@ -1,11 +1,115 @@
 import { fetchTopbar } from '@/services/topbarService';
 import { TopbarData } from '@/types';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Image, ImageBackground, Text, View } from 'react-native';
+import { Image, ImageBackground, LayoutChangeEvent, Text, View } from 'react-native';
 
 function formatTwoDigits(value: number): string {
     return value < 10 ? `0${value}` : `${value}`;
 }
+
+// Styling constants for unified pill design
+const pillStyle = {
+    backgroundColor: 'rgba(38,24,12,0.85)',
+    borderColor: '#6b4a24',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    height: 24,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+};
+
+const pillTextStyle = {
+    fontFamily: 'Cinzel_700Bold',
+    fontSize: 12,
+    color: '#f5d9a6',
+    textShadowColor: 'rgba(0,0,0,0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1.25,
+};
+
+function formatCurrency(value: number): string {
+    if (value >= 1000000) {
+        return `${(value / 1000000).toFixed(1)}M`;
+    } else if (value >= 1000) {
+        return `${(value / 1000).toFixed(1)}K`;
+    }
+    return value.toString();
+}
+
+// Pixel-perfect positioning constants
+// Web fallback for Image.resolveAssetSource
+const getImageDimensions = () => {
+    try {
+        const asset = Image.resolveAssetSource(require('@/assets/images/ui/top_bar.png'));
+        return { width: asset.width ?? 1056, height: asset.height ?? 248 };
+    } catch (error) {
+        // Web fallback - use known dimensions
+        return { width: 1056, height: 248 };
+    }
+};
+
+const { width: PSD_W, height: PSD_H } = getImageDimensions();
+
+// Helper to place elements by PSD pixel boxes
+function Place({
+    box,
+    scale,
+    children,
+}: {
+    box: { x: number; y: number; w: number; h: number };
+    scale: number;
+    children: React.ReactNode;
+}) {
+    return (
+        <View
+            style={{
+                position: 'absolute',
+                left: Math.round(box.x * scale),
+                top: Math.round(box.y * scale),
+                width: Math.round(box.w * scale),
+                height: Math.round(box.h * scale),
+            }}
+        >
+            {children}
+        </View>
+    );
+}
+
+// Debug overlay for calibration
+function DebugBox({
+    box,
+    scale,
+    color = 'rgba(0,255,0,.2)',
+}: {
+    box: { x: number; y: number; w: number; h: number };
+    scale: number;
+    color?: string;
+}) {
+    return (
+        <View
+            style={{
+                position: 'absolute',
+                left: Math.round(box.x * scale),
+                top: Math.round(box.y * scale),
+                width: Math.round(box.w * scale),
+                height: Math.round(box.h * scale),
+                backgroundColor: color,
+                borderWidth: 1,
+                borderColor: 'rgba(0,255,0,.6)',
+            }}
+        />
+    );
+}
+
+// PSD coordinates - adjust these to match your actual PSD layout
+const SPEC = {
+    levelBadge: { x: 482, y: 34, w: 90, h: 90 },
+    goldChip: { x: 224, y: 114, w: 78, h: 40 },
+    scrapChip: { x: 364, y: 114, w: 78, h: 40 },
+    xp: { x: 334, y: 181, w: 384, h: 33 }, // total track rect (left+mid+right)
+    runesBlock: { x: 590, y: 100, w: 190, h: 60 }, // rune+count(+timer)
+};
 
 function useRuneCountdown(initialSeconds: number | null) {
     const [secondsLeft, setSecondsLeft] = useState<number | null>(initialSeconds);
@@ -35,11 +139,14 @@ function useRuneCountdown(initialSeconds: number | null) {
     return { label, secondsLeft, setSecondsLeft } as const;
 }
 
-export const TopBar: React.FC<{ onRuneRefill?: (data: TopbarData) => void }> = ({ onRuneRefill }) => {
+export const TopBar: React.FC<{ onRuneRefill?: (data: TopbarData) => void }> = ({
+    onRuneRefill,
+}) => {
     const [data, setData] = useState<TopbarData | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isRefetching, setIsRefetching] = useState<boolean>(false);
+    const [w, setW] = useState(0);
 
     useEffect(() => {
         let mounted = true;
@@ -63,10 +170,14 @@ export const TopBar: React.FC<{ onRuneRefill?: (data: TopbarData) => void }> = (
         if (!data) return 0;
         const { expInCurrentLevel, expRequiredForNextLevel } = data;
         if (expRequiredForNextLevel <= 0) return 0;
-        return Math.max(0, Math.min(100, Math.round((expInCurrentLevel / expRequiredForNextLevel) * 100)));
+        return Math.max(0, Math.min(1, expInCurrentLevel / expRequiredForNextLevel));
     }, [data]);
 
-    const { label: countdown, secondsLeft, setSecondsLeft } = useRuneCountdown(data?.runes?.nextRuneInSeconds ?? null);
+    const {
+        label: countdown,
+        secondsLeft,
+        setSecondsLeft,
+    } = useRuneCountdown(data?.runes?.nextRuneInSeconds ?? null);
 
     const refetchTopbar = useCallback(async () => {
         if (isRefetching) return;
@@ -81,7 +192,9 @@ export const TopBar: React.FC<{ onRuneRefill?: (data: TopbarData) => void }> = (
                 setSecondsLeft(null);
             } else {
                 const next = res?.runes?.nextRuneInSeconds ?? null;
-                setSecondsLeft(next && next > 0 ? next : res?.runes?.regenIntervalSeconds ?? null);
+                setSecondsLeft(
+                    next && next > 0 ? next : (res?.runes?.regenIntervalSeconds ?? null),
+                );
             }
             if (onRuneRefill && prev && res && res.runes.current > (prev.runes?.current ?? 0)) {
                 onRuneRefill(res);
@@ -111,84 +224,402 @@ export const TopBar: React.FC<{ onRuneRefill?: (data: TopbarData) => void }> = (
         refetchTopbar();
     }, [secondsLeft, data, refetchTopbar, setSecondsLeft]);
 
-    const BAR_HEIGHT = 84;
+    const onLayout = (e: LayoutChangeEvent) => setW(e.nativeEvent.layout.width);
+    const scale = w ? w / PSD_W : 0;
+    const height = w ? (w * PSD_H) / PSD_W : 0;
 
     return (
         <View style={{ paddingTop: 10 }}>
-            <ImageBackground
-                source={require('@/assets/images/ui/top_bar.png')}
-                resizeMode="cover"
-                style={{
-                    width: '100%',
-                    height: BAR_HEIGHT,
-                    paddingHorizontal: 16,
-                    paddingVertical: 10,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    borderRadius: 12,
-                    overflow: 'hidden',
-                    position: 'relative',
-                }}
-                imageStyle={{ resizeMode: 'cover' }}
-            >
-                {/* Absolutely centered level number to match plaque */}
-                <Text style={{ position: 'absolute', top: 8, left: 0, right: 0, textAlign: 'center', fontSize: 16, fontWeight: '900' }}>
-                    {data ? `${data.level}` : isLoading ? '...' : '—'}
-                </Text>
-                {/* Left: currencies */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', width: '30%' }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 10 }}>
-                        <Image source={require('@/assets/images/icons/gold_pile_icon.png')} style={{ width: 22, height: 22, marginRight: 6 }} />
-                        <Text style={{ fontSize: 14, fontWeight: '800' }}>{data?.gold ?? (isLoading ? '...' : '0')}</Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <Image source={require('@/assets/images/icons/scrap_icon.png')} style={{ width: 22, height: 22, marginRight: 6 }} />
-                        <Text style={{ fontSize: 14, fontWeight: '800' }}>{data?.scrap ?? (isLoading ? '...' : '0')}</Text>
-                    </View>
-                </View>
-
-                {/* Center: level + xp */}
-                <View style={{ width: '40%', alignItems: 'center', justifyContent: 'flex-end' }}>
+            <View onLayout={onLayout} style={{ width: '100%' }}>
+                {scale > 0 && (
                     <ImageBackground
-                        source={require('@/assets/images/ui/progress_bar.png')}
-                        resizeMode="cover"
-                        style={{ height: 18, marginTop: 28, borderRadius: 9, overflow: 'hidden', justifyContent: 'center', alignSelf: 'stretch' }}
-                        imageStyle={{ resizeMode: 'cover' }}
+                        source={require('@/assets/images/ui/top_bar.png')}
+                        style={{ width: w, height }}
+                        imageStyle={{ resizeMode: 'contain' }}
                     >
-                        <View style={{ width: `${expPercent}%`, height: '100%' }}>
-                            <Image
-                                source={require('@/assets/images/ui/energy_fill.png')}
-                                resizeMode="repeat"
-                                style={{ width: '100%', height: '100%' }}
-                            />
-                        </View>
-                        <Text style={{ position: 'absolute', width: '100%', textAlign: 'center', fontSize: 11, fontWeight: '700' }}>
-                            {data ? `${data.expInCurrentLevel}/${data.expRequiredForNextLevel}` : ''}
-                        </Text>
-                    </ImageBackground>
-                </View>
+                        {/* Debug overlay - remove in production */}
+                         {/*<DebugBox box={SPEC.levelBadge} scale={scale} color="rgba(255,0,0,.2)" />
+                        <DebugBox box={SPEC.goldChip} scale={scale} color="rgba(0,255,0,.2)" />
+                        <DebugBox box={SPEC.scrapChip} scale={scale} color="rgba(0,0,255,.2)" />
+                        <DebugBox box={SPEC.xp} scale={scale} color="rgba(255,255,0,.2)" />
+                        <DebugBox box={SPEC.runesBlock} scale={scale} color="rgba(255,0,255,.2)" />*/}
 
-                {/* Right: runes */}
-                <View style={{ width: '30%', alignItems: 'flex-end', justifyContent: 'center' }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                        {Array.from({ length: data?.runes?.capacity ?? 0 }).map((_, idx) => {
-                            const isActive = (data?.runes?.current ?? 0) > idx;
-                            const src = isActive
-                                ? require('@/assets/images/icons/active_rune_icon.png')
-                                : require('@/assets/images/icons/used_rune_icon.png');
-                            return <Image key={idx} source={src} style={{ width: 18, height: 18, marginLeft: idx === 0 ? 0 : 6 }} />;
-                        })}
-                    </View>
-                    {data && data.runes.current < data.runes.capacity ? (
-                        <Text style={{ fontSize: 11, fontWeight: '700', width: '100%', textAlign: 'right' }}>Next rune in {countdown}</Text>
-                    ) : null}
-                </View>
-            </ImageBackground>
+                        {/* Level number */}
+                        <Place box={SPEC.levelBadge} scale={scale}>
+                            <View
+                                style={{
+                                    position: 'absolute',
+                                    left: 0,
+                                    right: 0,
+                                    top: 0,
+                                    bottom: 0,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                }}
+                            >
+                                <Text
+                                    style={{
+                                        textAlign: 'center',
+                                        fontFamily: 'Cinzel_900Black',
+                                        fontSize: Math.round(64 * scale),
+                                        color: '#F8E6C2',
+                                        textShadowColor: 'rgba(0,0,0,0.9)',
+                                        textShadowOffset: {
+                                            width: 0,
+                                            height: Math.max(1, 1 * scale),
+                                        },
+                                        textShadowRadius: 2 * scale,
+                                    }}
+                                    numberOfLines={1}
+                                    adjustsFontSizeToFit
+                                    minimumFontScale={0.6}
+                                >
+                                    {data?.level ?? '—'}
+                                </Text>
+                            </View>
+                        </Place>
+
+                        {/* Gold chip */}
+                        <Place box={SPEC.goldChip} scale={scale}>
+                            <View
+                                style={{
+                                    position: 'absolute',
+                                    left: 0,
+                                    right: 0,
+                                    top: 0,
+                                    bottom: 0,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                }}
+                            >
+                                <Text
+                                    style={{
+                                        textAlign: 'center',
+                                        fontFamily: 'Cinzel_700Bold',
+                                        fontSize: Math.round(28 * scale),
+                                        color: '#FFD700',
+                                        textShadowColor: 'rgba(0,0,0,0.8)',
+                                        textShadowOffset: { width: 0, height: 1 * scale },
+                                        textShadowRadius: 1.2 * scale,
+                                    }}
+                                    numberOfLines={1}
+                                    adjustsFontSizeToFit
+                                    minimumFontScale={0.7}
+                                >
+                                    {data?.gold
+                                        ? formatCurrency(data.gold)
+                                        : isLoading
+                                          ? '...'
+                                          : '0'}
+                                </Text>
+                            </View>
+                        </Place>
+
+                        {/* Scrap chip */}
+                        <Place box={SPEC.scrapChip} scale={scale}>
+                            <View
+                                style={{
+                                    position: 'absolute',
+                                    left: 0,
+                                    right: 0,
+                                    top: 0,
+                                    bottom: 0,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                }}
+                            >
+                                <Text
+                                    style={{
+                                        textAlign: 'center',
+                                        fontFamily: 'Cinzel_700Bold',
+                                        fontSize: Math.round(28 * scale),
+                                        color: '#FFD700',
+                                        textShadowColor: 'rgba(0,0,0,0.8)',
+                                        textShadowOffset: { width: 0, height: 1 * scale },
+                                        textShadowRadius: 1.2 * scale,
+                                    }}
+                                    numberOfLines={1}
+                                    adjustsFontSizeToFit
+                                    minimumFontScale={0.7}
+                                >
+                                    {data?.scrap
+                                        ? formatCurrency(data.scrap)
+                                        : isLoading
+                                          ? '...'
+                                          : '0'}
+                                </Text>
+                            </View>
+                        </Place>
+
+                        {/* XP bar */}
+                        <Place box={SPEC.xp} scale={scale}>
+                            <View style={{ flexDirection: 'row', width: '100%', height: '100%' }}>
+                                <View style={{ flex: 1, height: '100%', position: 'relative' }}>
+                                    {expPercent > 0 && (
+                                        <View
+                                            style={{
+                                                position: 'absolute',
+                                                left: Math.round(18 * scale),
+                                                top: -1,
+                                                bottom: -1,
+                                                marginLeft: -2,
+                                                width: expPercent > 0.8 ? Math.round(
+                                                    SPEC.xp.w * scale * expPercent -
+                                                    36 * scale,
+                                                ) : Math.round(
+                                                    SPEC.xp.w * scale * expPercent -
+                                                    9 * scale,
+                                                ),
+                                                height: '100%',
+                                            }}
+                                        >
+                                            <Image
+                                                source={require('@/assets/images/ui/exp_bar_fill.png')}
+                                                style={{ width: '100%', height: '100%' }}
+                                                resizeMode="stretch"
+                                            />
+                                        </View>
+                                    )}
+                                    {/* Left rounded end overlay */}
+                                    {expPercent > 0 && (
+                                        <View
+                                            style={{
+                                                position: 'absolute',
+                                                left: 0,
+                                                top: 0,
+                                                width: Math.round(18 * scale),
+                                                height: '100%',
+                                                marginTop: -1,
+                                                marginRight: 0,
+                                            }}
+                                        >
+                                            <Image
+                                                source={require('@/assets/images/ui/exp_bar_left.png')}
+                                                style={{ width: '100%', height: '100%' }}
+                                                resizeMode="contain"
+                                            />
+                                        </View>
+                                    )}
+                                    {/* Right rounded end overlay */}
+                                    {expPercent >= 1 && (
+                                        <View
+                                            style={{
+                                                position: 'absolute',
+                                                right: 0,
+                                                top: 0,
+                                                width: Math.round(18 * scale),
+                                                height: '100%',
+                                                marginTop: -1,
+                                                marginLeft: -2,
+                                            }}
+                                        >
+                                            <Image
+                                                source={require('@/assets/images/ui/exp_bar_right.png')}
+                                                style={{ width: '100%', height: '100%' }}
+                                                resizeMode="contain"
+                                            />
+                                        </View>
+                                    )}
+                                    <View
+                                        style={{
+                                            position: 'absolute',
+                                            left: 0,
+                                            right: 0,
+                                            top: 0,
+                                            bottom: 0,
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                        }}
+                                    >
+                                        <Text
+                                            style={{
+                                                position: 'absolute',
+                                                left: 0, right: 0, top: 0, bottom: 0,
+                                                textAlign: 'center',
+                                                textAlignVertical: 'center',
+                                                includeFontPadding: false,
+                                                fontFamily: 'Cinzel_700Bold',
+                                                fontSize: Math.round(24 * scale),
+                                                color: '#FFFFFF',
+                                                letterSpacing: Math.round(0.25 * scale),
+                                                textShadowColor: 'rgba(0,0,0,0.8)',
+                                                textShadowOffset: { width: 0, height: Math.max(1, 1 * scale) },
+                                                textShadowRadius: Math.round(1.25 * scale),
+                                            }}
+                                            numberOfLines={1}
+                                            adjustsFontSizeToFit
+                                            minimumFontScale={0.7}
+                                        >
+                                            {data
+                                                ? `${data.expInCurrentLevel}/${data.expRequiredForNextLevel}`
+                                                : ''}
+                                        </Text>
+                                    </View>
+                                </View>
+                            </View>
+                        </Place>
+
+                        {/* Runes block */}
+                        <Place box={SPEC.runesBlock} scale={scale}>
+                            <View
+                                style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    height: '100%',
+                                }}
+                            >
+                                {(() => {
+                                    const currentRunes = data?.runes?.current ?? 0;
+                                    const maxRunes = data?.runes?.capacity ?? 0;
+
+                                    if (maxRunes <= 3) {
+                                        // Show all runes (max 3) + timer
+                                        return (
+                                            <>
+                                                {Array.from({ length: maxRunes }).map((_, idx) => {
+                                                    const isActive = currentRunes > idx;
+                                                    const src = isActive
+                                                        ? require('@/assets/images/icons/active_rune.png')
+                                                        : require('@/assets/images/icons/used_rune.png');
+                                                    return (
+                                                        <Image
+                                                            key={idx}
+                                                            source={src}
+                                                            style={{
+                                                                width: Math.round(50 * scale),
+                                                                height: Math.round(50 * scale),
+                                                                marginLeft:
+                                                                    idx === 0
+                                                                        ? 0
+                                                                        : Math.round(6 * scale),
+                                                            }}
+                                                        />
+                                                    );
+                                                })}
+                                                {/* Timer pill - hide when full */}
+                                                {currentRunes < maxRunes && (
+                                                    <View
+                                                        style={{
+                                                            backgroundColor: 'rgba(38,24,12,0.85)',
+                                                            borderColor: '#6b4a24',
+                                                            borderWidth: 1,
+                                                            borderRadius: Math.round(15.84 * scale),
+                                                            paddingHorizontal: Math.round(
+                                                                15.84 * scale,
+                                                            ),
+                                                            height: Math.round(47.52 * scale),
+                                                            marginLeft: Math.round(16 * scale),
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                        }}
+                                                    >
+                                                        <Text
+                                                            style={{
+                                                                fontFamily: 'Cinzel_700Bold',
+                                                                fontSize: Math.round(21.78 * scale),
+                                                                color: '#f5d9a6',
+                                                                textShadowColor: 'rgba(0,0,0,0.75)',
+                                                                textShadowOffset: {
+                                                                    width: 0,
+                                                                    height: 1,
+                                                                },
+                                                                textShadowRadius: Math.round(
+                                                                    1.25 * scale,
+                                                                ),
+                                                            }}
+                                                        >
+                                                            {countdown}
+                                                        </Text>
+                                                    </View>
+                                                )}
+                                            </>
+                                        );
+                                    } else {
+                                        // Show 1 rune + count + timer
+                                        const isActive = currentRunes > 0;
+                                        const src = isActive
+                                            ? require('@/assets/images/icons/active_rune.png')
+                                            : require('@/assets/images/icons/used_rune.png');
+
+                                        return (
+                                            <>
+                                                <Image
+                                                    source={src}
+                                                    style={{
+                                                        width: Math.round(66 * scale),
+                                                        height: Math.round(66 * scale),
+                                                    }}
+                                                />
+                                                <View
+                                                    style={{
+                                                        ...pillStyle,
+                                                        borderRadius: Math.round(23.76 * scale),
+                                                        paddingHorizontal: Math.round(
+                                                            15.84 * scale,
+                                                        ),
+                                                        height: Math.round(47.52 * scale),
+                                                        marginLeft: Math.round(13.2 * scale),
+                                                    }}
+                                                >
+                                                    <Text
+                                                        style={{
+                                                            ...pillTextStyle,
+                                                            fontSize: Math.round(23.76 * scale),
+                                                            textShadowRadius: Math.round(
+                                                                2.475 * scale,
+                                                            ),
+                                                        }}
+                                                    >
+                                                        {currentRunes}/{maxRunes}
+                                                    </Text>
+                                                </View>
+                                                {/* Timer pill - hide when full */}
+                                                {currentRunes < maxRunes && (
+                                                    <View
+                                                        style={{
+                                                            backgroundColor: 'rgba(38,24,12,0.85)',
+                                                            borderColor: '#6b4a24',
+                                                            borderWidth: 1,
+                                                            borderRadius: Math.round(15.84 * scale),
+                                                            paddingHorizontal: Math.round(
+                                                                15.84 * scale,
+                                                            ),
+                                                            height: Math.round(47.52 * scale),
+                                                            marginLeft: Math.round(16 * scale),
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                        }}
+                                                    >
+                                                        <Text
+                                                            style={{
+                                                                fontFamily: 'Cinzel_700Bold',
+                                                                fontSize: Math.round(21.78 * scale),
+                                                                color: '#f5d9a6',
+                                                                textShadowColor: 'rgba(0,0,0,0.75)',
+                                                                textShadowOffset: {
+                                                                    width: 0,
+                                                                    height: 1,
+                                                                },
+                                                                textShadowRadius: Math.round(
+                                                                    1.25 * scale,
+                                                                ),
+                                                            }}
+                                                        >
+                                                            {countdown}
+                                                        </Text>
+                                                    </View>
+                                                )}
+                                            </>
+                                        );
+                                    }
+                                })()}
+                            </View>
+                        </Place>
+                    </ImageBackground>
+                )}
+            </View>
         </View>
     );
 };
 
 export default TopBar;
-
-
