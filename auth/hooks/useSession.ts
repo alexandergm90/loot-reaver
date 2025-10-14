@@ -29,6 +29,9 @@ export function useSession() {
             const hasValidToken = await tokenService.isTokenValid();
 
             if (!hasValidToken) {
+                // Clear any stale player data when token is invalid
+                clearPlayer();
+                await storage.deleteItem('player');
                 setState({
                     isAuthenticated: false,
                     hasCharacter: false,
@@ -116,13 +119,16 @@ export function useSession() {
     }, []);
 
     // Reflect store changes immediately in session derived flags
+    // Only update if we're not currently loading a session
     useEffect(() => {
-        setState((prev) => ({
-            ...prev,
-            isAuthenticated: !!player,
-            hasCharacter: !!player?.hasCharacter,
-        }));
-    }, [player]);
+        if (!state.isLoading) {
+            setState((prev) => ({
+                ...prev,
+                isAuthenticated: !!player,
+                hasCharacter: !!player?.hasCharacter,
+            }));
+        }
+    }, [player, state.isLoading]);
 
     return {
         ...state,

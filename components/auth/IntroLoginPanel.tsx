@@ -40,7 +40,8 @@ const IntroLoginPanel: React.FC = () => {
             }
         } catch (err) {
             console.error('Login error:', err);
-            setWorking(false); // only if something failed
+        } finally {
+            setWorking(false); // always reset working state
         }
     };
 
