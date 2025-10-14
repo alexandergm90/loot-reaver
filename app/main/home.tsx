@@ -125,7 +125,7 @@ export default function StyledHomeMockup(){
 							<Pressable className="rounded-2xl border-2 border-stone-900 bg-transparent p-3">
 								<Text className="text-center font-black">Season</Text>
 							</Pressable>
-							<Pressable className="rounded-2xl border-2 border-stone-900 bg-transparent p-3">
+                            <Pressable className="rounded-2xl border-2 border-stone-900 bg-transparent p-3">
 								<Text className="text-center font-black">Shop</Text>
 							</Pressable>
 						</View>

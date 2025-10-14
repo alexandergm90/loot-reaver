@@ -3,6 +3,16 @@ export interface CombatAction {
   targetId: string;
   damage: number;
   actionType: 'attack' | 'heal' | 'buff' | 'debuff';
+  actionId: string;
+  ability: string;
+  crit: boolean;
+  miss: boolean;
+  blocked: boolean;
+  statusApplied: any[];
+  tags: string[];
+  targetHpBefore: number;
+  targetHpAfter: number;
+  kill: boolean;
 }
 
 export interface CombatEntity {

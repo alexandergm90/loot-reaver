@@ -1,5 +1,5 @@
-import { ItemAsset } from '@/types';
 import { itemSlotMeta } from '@/data/itemAssets/slotMeta';
+import { ItemAsset } from '@/types';
 
 export type WeaponType = 'main' | 'off' | 'twohanded';
 export type ItemType = 'weapon' | 'shield';
@@ -30,7 +30,14 @@ export function getWeaponRenderInstructions(
 
     if (mainHand?.weaponType === 'main' || mainHand?.itemType === 'weapon') {
         const meta = itemSlotMeta.weapon.right;
-        instructions.push({ source: mainHand.source, ...meta });
+        // Adjust weapon position to match the moved hand pivot (15px down, 10px right)
+        instructions.push({
+            source: mainHand.source,
+            width: meta.width,
+            height: meta.height,
+            top: meta.top + 10,
+            left: meta.left + 5
+        });
     }
 
     if (offHand?.itemType === 'weapon' && offHand?.weaponType !== 'twohanded') {

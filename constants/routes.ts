@@ -5,6 +5,7 @@ export const ROUTES = {
         home: '/main/home',
         inventory: '/main/inventory',
         dungeon: '/main/dungeon',
+        combat: '/main/combat',
         settings: '/main/settings',
     },
     auth: {

@@ -1,9 +1,8 @@
-import CharacterTest from '@/components/combat/CharacterTest';
-import CombatScreen from '@/components/combat/CombatScreen';
-import CombatTest from '@/components/combat/CombatTest';
+// Removed old combat test components
 import EnemyCard from '@/components/enemy/EnemyCard';
+import { ROUTES } from '@/constants/routes';
 import { getDungeonDetails, getDungeons } from '@/services/dungeonService';
-import { CombatResult, Dungeon, DungeonDetails } from '@/types';
+import { Dungeon, DungeonDetails } from '@/types';
 import { createEnemyInstance } from '@/utils/enemyUtils';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
@@ -44,10 +43,7 @@ export default function DungeonScreen() {
     const [dungeonDetails, setDungeonDetails] = useState<DungeonDetails | null>(null);
     const [detailsLoading, setDetailsLoading] = useState(false);
     const [detailsError, setDetailsError] = useState<string | null>(null);
-    const [showCombat, setShowCombat] = useState(false);
     
-    // Test mode toggle
-    const [testMode, setTestMode] = useState<'normal' | 'combat' | 'character'>('normal' as const);
     
     // Floating animation for dungeon images
     const floatingAnim = useRef(new Animated.Value(0)).current;
@@ -176,16 +172,15 @@ export default function DungeonScreen() {
     };
 
     const startCombat = () => {
-        setShowCombat(true);
-    };
-
-    const handleCombatComplete = (result: CombatResult) => {
-        setShowCombat(false);
-        // Combat results are already shown in the combat screen, no need for duplicate modal
-    };
-
-    const closeCombat = () => {
-        setShowCombat(false);
+        // Navigate to combat page instead of showing modal
+        router.push({
+            pathname: ROUTES.main.combat,
+            params: {
+                dungeonId: currentDungeon.id,
+                dungeonCode: currentDungeon.code,
+                level: selectedLevel.toString(),
+            },
+        });
     };
 
     // Gesture handler for drag & drop sliding
@@ -245,14 +240,7 @@ export default function DungeonScreen() {
         }
     }, [currentDungeon, selectedLevel]);
 
-    // Test mode rendering
-    if (testMode === 'combat') {
-        return <CombatTest onBack={() => setTestMode('normal')} />;
-    }
-    
-    if (testMode === 'character') {
-        return <CharacterTest onBack={() => setTestMode('normal')} />;
-    }
+    // Test mode rendering - removed old combat test components
 
     if (loading) {
         return (
@@ -287,31 +275,6 @@ export default function DungeonScreen() {
     return (
         <View className="flex-1">
             <ScrollView className="flex-1 px-4">
-                {/* Test Mode Selector */}
-                <View className="mt-4 mb-4">
-                    <Text className="text-lg font-bold text-center mb-3">Test Mode</Text>
-                    <View className="flex-row justify-center space-x-2">
-                        <Pressable 
-                            onPress={() => setTestMode('normal')}
-                            className={`px-3 py-2 rounded-lg ${testMode === 'normal' ? 'bg-blue-600' : 'bg-gray-600'}`}
-                        >
-                            <Text className="text-white text-sm">Normal</Text>
-                        </Pressable>
-                        <Pressable 
-                            onPress={() => setTestMode('combat')}
-                            className={`px-3 py-2 rounded-lg ${testMode === 'combat' ? 'bg-blue-600' : 'bg-gray-600'}`}
-                        >
-                            <Text className="text-white text-sm">Combat Test</Text>
-                        </Pressable>
-                        <Pressable 
-                            onPress={() => setTestMode('character')}
-                            className={`px-3 py-2 rounded-lg ${testMode === 'character' ? 'bg-blue-600' : 'bg-gray-600'}`}
-                        >
-                            <Text className="text-white text-sm">Character Test</Text>
-                        </Pressable>
-                    </View>
-                </View>
-
                 {/* Header */}
                 <View className="mt-4 mb-6">
                     <Text className="text-2xl font-bold text-center">Dungeons</Text>
@@ -641,23 +604,6 @@ export default function DungeonScreen() {
                 </View>
             </Modal>
 
-            {/* Combat Screen Modal */}
-            <Modal
-                visible={showCombat}
-                animationType="slide"
-                presentationStyle="fullScreen"
-                onRequestClose={closeCombat}
-            >
-                {currentDungeon && (
-                    <CombatScreen
-                        dungeonId={currentDungeon.id}
-                        dungeonCode={currentDungeon.code}
-                        level={selectedLevel}
-                        onCombatComplete={handleCombatComplete}
-                        onClose={closeCombat}
-                    />
-                )}
-            </Modal>
 
         </View>
     );
