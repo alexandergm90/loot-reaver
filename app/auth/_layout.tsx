@@ -1,10 +1,13 @@
+import FullScreenBackground from '@/components/ui/FullScreenBackground';
 import { Slot } from 'expo-router';
-import { View } from 'react-native';
 
 export default function AuthLayout() {
     return (
-        <View style={{ flex: 1 }}>
+        <FullScreenBackground
+            backgroundImage={require('@/assets/images/dark_leather.png')}
+            backgroundColor="#1a120a"
+        >
             <Slot />
-        </View>
+        </FullScreenBackground>
     );
 }

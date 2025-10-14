@@ -1,9 +1,24 @@
 import { CombatScene } from '@/components/combatV2/CombatScene';
+import FullScreenBackground from '@/components/ui/FullScreenBackground';
 import { runDungeonCombat } from '@/services/combatService';
 import { CombatLogV2 } from '@/types/combatV2';
 import { router, useLocalSearchParams } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
+
+const getDungeonBackground = (dungeonCode?: string) => {
+  switch (dungeonCode) {
+    case 'goblin_cave':
+      return require('@/assets/images/dungeons/backgrounds/goblin_cave.png');
+    case 'undead_crypt':
+      return require('@/assets/images/dungeons/backgrounds/undead_crypt.png');
+    case 'dark_sanctuary':
+      return require('@/assets/images/dungeons/backgrounds/dark_sanctuary.png');
+    default:
+      return require('@/assets/images/dungeons/backgrounds/goblin_cave.png'); // fallback
+  }
+};
 
 export default function CombatPage() {
   const params = useLocalSearchParams<{
@@ -52,26 +67,44 @@ export default function CombatPage() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Preparing combat...</Text>
-      </View>
+      <FullScreenBackground
+        backgroundImage={getDungeonBackground(params.dungeonCode)}
+        backgroundColor="#1a120a"
+      >
+        <StatusBar style="light" translucent backgroundColor="transparent" />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Preparing combat...</Text>
+        </View>
+      </FullScreenBackground>
     );
   }
 
   if (!combatLog) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Failed to load combat data</Text>
-      </View>
+      <FullScreenBackground
+        backgroundImage={getDungeonBackground(params.dungeonCode)}
+        backgroundColor="#1a120a"
+      >
+        <StatusBar style="light" translucent backgroundColor="transparent" />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Failed to load combat data</Text>
+        </View>
+      </FullScreenBackground>
     );
   }
 
   return (
-    <CombatScene
-      combatLog={combatLog}
-      onCombatComplete={handleCombatComplete}
-      onClose={handleClose}
-    />
+    <FullScreenBackground
+      backgroundImage={getDungeonBackground(params.dungeonCode)}
+      backgroundColor="#1a120a"
+    >
+      <StatusBar style="light" translucent backgroundColor="transparent" />
+      <CombatScene
+        combatLog={combatLog}
+        onCombatComplete={handleCombatComplete}
+        onClose={handleClose}
+      />
+    </FullScreenBackground>
   );
 }
 

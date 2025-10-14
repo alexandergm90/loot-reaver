@@ -7,9 +7,8 @@ import EmberField from '@/components/ui/EmberField';
 import LoadingAnimation from '@/components/ui/LoadingAnimation';
 import { Asset } from 'expo-asset';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, ImageBackground, StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const IntroScreen = () => {
@@ -54,16 +53,7 @@ const IntroScreen = () => {
     }, [isLoading]);
 
     return (
-        <View style={{ flex: 1, backgroundColor: '#1a120a' }}>
-            {/* Draw UI under system bars */}
-            <StatusBar style="light" translucent backgroundColor="transparent" />
-
-            {/* Background fills entire screen including safe areas */}
-            <ImageBackground
-                source={require('@/assets/images/dark_leather.png')}
-                style={StyleSheet.absoluteFill}
-                imageStyle={{ resizeMode: 'cover' }}
-            />
+        <>
             <LinearGradient
                 pointerEvents="none"
                 colors={['transparent', 'rgba(0,0,0,0.35)']}
@@ -101,7 +91,7 @@ const IntroScreen = () => {
                     </View>
                 </View>
             </View>
-        </View>
+        </>
     );
 };
 

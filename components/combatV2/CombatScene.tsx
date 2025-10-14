@@ -164,13 +164,12 @@ export function CombatScene({ combatLog, onCombatComplete, onClose }: CombatScen
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a0f0a', // Dark brown background
+    // Removed background color - now handled by parent page
   },
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1a0f0a',
   },
   loadingText: {
     fontSize: 18,
@@ -180,7 +179,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1a0f0a',
   },
   errorText: {
     fontSize: 18,
