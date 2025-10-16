@@ -50,11 +50,6 @@ export function adaptCombatLogToFrameQueue(log: CombatLogV2): {
     
     // Process end frames
     round.endFrames.forEach((frame, frameIndex) => {
-      // Skip end_round frames when combat ends (end_battle present)
-      if (hasEndBattle && frame.type === 'round_end') {
-        return;
-      }
-      
       const frameId = `round_${round.roundNumber}_end_${frameIndex}`;
       
       // Handle status ticks in round_end frames
@@ -63,6 +58,13 @@ export function adaptCombatLogToFrameQueue(log: CombatLogV2): {
         frame.statusTicks.forEach(tick => {
           hpAfter[tick.targetId] = tick.hpAfter;
         });
+      }
+      // Map death frames to zero HP for their targets
+      if (frame.type === 'death') {
+        const deathTargets = (frame as any).targets as string[] | undefined;
+        if (Array.isArray(deathTargets)) {
+          deathTargets.forEach(tid => { hpAfter[tid] = 0; });
+        }
       }
       
       queue.push({

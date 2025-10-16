@@ -76,7 +76,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.8)', // Add background to make it more visible
     zIndex: 999, // Ensure it's on top
   },
   content: {
