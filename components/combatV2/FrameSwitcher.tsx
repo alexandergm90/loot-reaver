@@ -3,7 +3,6 @@ import React from 'react';
 import { ActionCard } from './cards/ActionCard';
 import { DeathCard } from './cards/DeathCard';
 import { EndBattleCard } from './cards/EndBattleCard';
-import { EndRoundCard } from './cards/EndRoundCard';
 import { StatusCard } from './cards/StatusCard';
 
 interface FrameSwitcherProps {
@@ -15,7 +14,19 @@ interface FrameSwitcherProps {
 }
 
 export function FrameSwitcher({ frame, actors, onComplete, speed, onCombatEnd }: FrameSwitcherProps) {
+  // Handle round_end frames by immediately advancing - hooks must be at top level
+  React.useEffect(() => {
+    if (frame?.type === 'round_end') {
+      onComplete();
+    }
+  }, [frame?.type, onComplete]);
+
   if (!frame) {
+    return null;
+  }
+  
+  // Skip round_end frames - they block combat flow
+  if (frame.type === 'round_end') {
     return null;
   }
   
@@ -23,9 +34,6 @@ export function FrameSwitcher({ frame, actors, onComplete, speed, onCombatEnd }:
   switch (frame.type) {
     case 'action':
       return <ActionCard frame={frame} actors={actors} onComplete={onComplete} speed={speed} />;
-      
-    case 'round_end':
-      return <EndRoundCard frame={frame} actors={actors} onComplete={onComplete} speed={speed} />;
       
     case 'death':
       return <DeathCard frame={frame} actors={actors} onComplete={onComplete} speed={speed} />;

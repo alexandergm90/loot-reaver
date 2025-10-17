@@ -68,7 +68,7 @@ const IntroScreen = () => {
                     <EmberField poolSize={8} motionScale={0.8} lifetimeScale={0.9} fadeOutAt={0.6} maxRiseFraction={0.55} />
                     {/* Near layer (quicker, shorter) */}
                     <EmberField poolSize={6} motionScale={0.5} lifetimeScale={0.8} fadeOutAt={0.5} maxRiseFraction={0.45} />
-                    <View style={{ marginTop: -50 }}>
+                    <View>
                         <AnimatedLogo />
                     </View>
                     <View style={styles.transitionContainer}>

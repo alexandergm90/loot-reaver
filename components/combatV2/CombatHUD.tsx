@@ -31,6 +31,8 @@ type HpBarProps = {
     trackH: number; // S(HP_TRACK_H)
     inset: number;
     dangerStops?: { mid: number; low: number };
+    prevHp?: number; // Previous HP for animation direction
+    isHealing?: boolean; // Whether this is a heal animation
 };
 
 // --- GLOBAL UI SCALE (20% smaller) ---
@@ -38,6 +40,12 @@ const UI_SCALE = 0.8; // <- change this 0.8 → 1.0 any time
 
 // --- BASE SCREEN SCALE (no upscaling) ---
 function useScreenScale(baseWidth: number) {
+    const { width } = useWindowDimensions();
+    return Math.min(1, width / baseWidth);
+}
+
+// --- FLOAT SCALE FOR TRANSFORMS ---
+function useFloatScale(baseWidth: number) {
     const { width } = useWindowDimensions();
     return Math.min(1, width / baseWidth);
 }
@@ -62,6 +70,10 @@ const HP_ROW_Y = 105,
 const PORTRAIT_SIZE = 220,
     HUD_Y_GAP = -50;
 
+// Fixed head canvas dimensions
+const HEAD_BASE_W = 160;
+const HEAD_BASE_H = 160;
+
 const RING_Z = 1,
     HUD_Z = 10,
     TEXT_Z = 20;
@@ -70,6 +82,18 @@ const NAME_BASE_PX = 18; // starting size you want
 const NAME_MIN_SCALE = 0.85; // floor = 85% of base (keeps parity)
 const NAME_LETTER_SP = 1.2; // base letter spacing in px
 
+// Color tokens for consistent theming
+const COLORS = {
+    goldText: '#F3D77A',      // names/values
+    hpGreen: '#38b16a',        // fill
+    chip: 'rgba(255,120,40,.65)', // damage trail
+    healGlow: 'rgba(76, 175, 80, .25)', // track bg pulse
+    blockBlue: '#6aa7ff',      // shield/absorb
+    damageRed: '#8B0000',      // damage text
+    parchmentBrown: '#3a2a18', // card text
+    darkBrown: '#2a1d0d',      // secondary text
+};
+
 export function HpBar({
     curHp,
     maxHp,
@@ -77,22 +101,43 @@ export function HpBar({
     trackH,
     inset = 0,
     dangerStops = { mid: 0.5, low: 0.25 },
+    prevHp,
+    isHealing = false,
 }: HpBarProps) {
     const ratio = maxHp > 0 ? Math.max(0, Math.min(1, curHp / maxHp)) : 0;
     const target = Math.round((trackW - inset * 2) * ratio);
+    const prevTarget = prevHp ? Math.round((trackW - inset * 2) * Math.max(0, Math.min(1, prevHp / maxHp))) : target;
 
     const widthAnim = useRef(new Animated.Value(target)).current;
+    const healGlowAnim = useRef(new Animated.Value(0)).current;
+
     useEffect(() => {
+        // Animate HP bar width
         Animated.timing(widthAnim, {
             toValue: target,
-            duration: 180,
+            duration: isHealing ? 220 : 180, // Slightly longer for heal
             useNativeDriver: false,
         }).start();
-    }, [target]);
 
-    // simple color ramp
-    const barColor =
-        ratio > dangerStops.mid ? '#28C04A' : ratio > dangerStops.low ? '#D7B43A' : '#C43A2E';
+        // Heal glow animation
+        if (isHealing && curHp > (prevHp || 0)) {
+            Animated.sequence([
+                Animated.timing(healGlowAnim, {
+                    toValue: 1,
+                    duration: 120,
+                    useNativeDriver: false,
+                }),
+                Animated.timing(healGlowAnim, {
+                    toValue: 0,
+                    duration: 100,
+                    useNativeDriver: false,
+                }),
+            ]).start();
+        }
+    }, [target, isHealing]);
+
+    // HP bar color based on health percentage
+    const barColor = ratio > dangerStops.mid ? COLORS.hpGreen : ratio > dangerStops.low ? '#D7B43A' : '#C43A2E';
 
     return (
         <View
@@ -101,13 +146,28 @@ export function HpBar({
                 height: trackH + 2, // a hair taller so it breathes
                 paddingHorizontal: inset,
                 borderRadius: (trackH + 2) / 2,
-                backgroundColor: 'rgba(0,0,0,0.35)', // “socket” background
+                backgroundColor: 'rgba(0,0,0,0.35)', // "socket" background
                 borderWidth: 1,
                 borderColor: 'rgba(0,0,0,0.45)',
                 overflow: 'hidden',
                 justifyContent: 'center',
             }}
         >
+            {/* Heal glow background */}
+            {isHealing && (
+                <Animated.View
+                    style={{
+                        position: 'absolute',
+                        width: trackW - inset * 2,
+                        height: trackH + 2,
+                        backgroundColor: COLORS.healGlow,
+                        borderRadius: (trackH + 2) / 2,
+                        opacity: healGlowAnim,
+                    }}
+                />
+            )}
+            
+            {/* HP bar fill */}
             <Animated.View
                 style={{
                     width: widthAnim,
@@ -122,22 +182,35 @@ export function HpBar({
 
 export function HudSide({ name, curHp, maxHp, ringSrc, isPlayer = false, enemyCode }: SideProps) {
     const SCREEN_SCALE = useScreenScale(BASE_W);
+    const SCREEN_SCALE_FLOAT = useFloatScale(BASE_W);
     const S = (n: number) => Math.round(n * SCREEN_SCALE * UI_SCALE);
+    const Sf = (n: number) => n * SCREEN_SCALE_FLOAT * UI_SCALE; // Float scale for transforms
     const { player } = usePlayerStore();
 
     const [trackW, setTrackW] = useState<number>(S(HP_TRACK_W));
 
     // Get character head based on whether it's player or enemy
     const getCharacterHead = () => {
-        const innerSize = S(PORTRAIT_SIZE - 40);
+        const innerSize = Sf(PORTRAIT_SIZE - 40); // Use float scale
         if (isPlayer && player?.character?.appearance) {
-            // Player head: complex layered group
-            const offsetX = Math.round(innerSize * -0.04);
-            const offsetY = Math.round(innerSize * -0.3);
+            // inner area inside the ring
+            const innerSize = Sf(PORTRAIT_SIZE - 40);      // float scaling for transforms
+            const targetSize = innerSize;           // Larger size
+            const scale = targetSize / HEAD_BASE_W;        // scale from fixed canvas to target
+
+            // offsets relative to inner area (repositioned)
+            const tx = innerSize * 0.45;  // More to the left
+            const ty = innerSize * 0.15;  // Higher up
+
             return (
                 <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
-                    <View style={{ transform: [{ translateX: offsetX }, { translateY: offsetY }, { scale: 0.6 }] }}>
-                        {buildHeadLayers(player.character.appearance)}
+                    {/* translate wrapper (NOT scaled) */}
+                    <View style={{ transform: [{ translateX: tx }, { translateY: ty }] }}>
+                        {/* scale a FIXED canvas so iOS/Android match */}
+                        <View style={{ width: HEAD_BASE_W, height: HEAD_BASE_H, transform: [{ scale }] }}>
+                            {/* IMPORTANT: head layers should use absolute positioning within this box */}
+                            {buildHeadLayers(player.character.appearance)}
+                        </View>
                     </View>
                 </View>
             );
@@ -152,7 +225,7 @@ export function HudSide({ name, curHp, maxHp, ringSrc, isPlayer = false, enemyCo
 
             const enemyHeadSrc = getEnemyHeadSource(enemyCode);
             if (enemyHeadSrc) {
-                const offsetX = Math.round(innerSize * 0.4);
+                const offsetX = Math.round(innerSize * 0.35);
                 const offsetY = Math.round(innerSize * 0.03);
                 return (
                     <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
@@ -256,7 +329,7 @@ export function HudSide({ name, curHp, maxHp, ringSrc, isPlayer = false, enemyCo
                             fontSize: S(NAME_BASE_PX),
                             // keep letterSpacing proportional to current screen/UI scale
                             letterSpacing: S(NAME_LETTER_SP),
-                            color: '#F3D77A',
+                            color: COLORS.goldText,
                             textAlign: 'center',
                             includeFontPadding: false,
                             textShadowColor: 'rgba(0,0,0,0.65)',
@@ -304,9 +377,24 @@ export function HudSide({ name, curHp, maxHp, ringSrc, isPlayer = false, enemyCo
                         maxHp={maxHp}
                         trackW={trackW} // measured width between left/right safe edges
                         trackH={S(HP_TRACK_H)} // keep your current size helper
-                        inset={S(2)} // tiny inner padding so it doesn’t touch the frame
+                        inset={S(2)} // tiny inner padding so it doesn't touch the frame
                     />
                 </View>
+
+                {/* Status row reservation (20-24px) */}
+                <View
+                    style={{
+                        position: 'absolute',
+                        top: S(HP_ROW_Y) + S(HP_TRACK_H) + S(4), // Below HP bar
+                        left: S(SAFE_LR),
+                        right: S(SAFE_LR),
+                        height: S(22), // 20-24px as requested
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'flex-start',
+                        // Future-proof: ready for status chips
+                    }}
+                />
             </ImageBackground>
         </View>
     );
@@ -325,6 +413,8 @@ export function CombatHUD({ actors, playerId, enemyIds, currentHealth }: CombatH
                 paddingHorizontal: 12,
                 paddingTop: 8,
                 paddingBottom: 12,
+                // Ensure HUD respects safe area - add small top margin for iPhone notch
+                marginTop: 8, // Small buffer from safe area
             }}
         >
             <HudSide

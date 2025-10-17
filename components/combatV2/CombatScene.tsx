@@ -1,11 +1,14 @@
+import { useCombatState } from '@/hooks/useCombatState';
 import { useFramePlayer } from '@/hooks/useFramePlayer';
-import { CombatLogV2 } from '@/types/combatV2';
+import { CombatLogV2, CombatSpeed } from '@/types/combatV2';
 import { adaptCombatLogToFrameQueue, getEnemyActors, getPlayerActor } from '@/utils/combatLogAdapter';
 import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { CombatActionBar } from './CombatActionBar';
 import { CombatHUD } from './CombatHUD';
 import { CombatStage } from './CombatStage';
+import { RoundToast } from './RoundToast';
+import { VersusOverlay } from './VersusOverlay';
 
 interface CombatSceneProps {
   combatLog: CombatLogV2;
@@ -16,6 +19,17 @@ interface CombatSceneProps {
 export function CombatScene({ combatLog, onCombatComplete, onClose }: CombatSceneProps) {
   const [frameQueue, setFrameQueue] = useState<ReturnType<typeof adaptCombatLogToFrameQueue> | null>(null);
   const [currentHealth, setCurrentHealth] = useState<Record<string, number>>({});
+  const [speed, setSpeed] = useState<CombatSpeed>(1);
+  
+  // Combat state management
+  const combatState = useCombatState(
+    frameQueue?.queue || [],
+    speed
+  );
+  
+  // Round toast state
+  const [showRoundToast, setShowRoundToast] = useState(false);
+  const [roundToastData, setRoundToastData] = useState<{roundNumber: number; type: 'start' | 'complete'} | null>(null);
   
   // Initialize frame queue from combat log
   useEffect(() => {
@@ -45,6 +59,46 @@ export function CombatScene({ combatLog, onCombatComplete, onClose }: CombatScen
       onCombatComplete(outcome, rewards);
     }
   });
+
+  // Don't start combat until versus overlay completes
+  // After that, combat should ALWAYS be visible (cards never disappear)
+  const shouldStartCombat = combatState.state === 'actionIntro' || combatState.state === 'actionOutro' || combatState.state === 'roundStart';
+
+  // Handle state transitions
+  useEffect(() => {
+    if (combatState.state === 'actionIntro') {
+      // Start the first action when transitioning from versus overlay
+      if (framePlayer.state === 'idle') {
+        framePlayer.nextFrame(); // Start the first frame
+      }
+    }
+  }, [combatState.state, framePlayer]);
+
+  // Update frame index in combat state
+  useEffect(() => {
+    combatState.updateFrameIndex(framePlayer.currentFrameIndex);
+  }, [framePlayer.currentFrameIndex, combatState]);
+
+  // Detect round completions and show toast
+  useEffect(() => {
+    const currentFrame = framePlayer.currentFrame;
+    if (!currentFrame) return;
+
+    // Check if this is a round_end frame that was skipped
+    if (currentFrame.type === 'round_end') {
+      setRoundToastData({
+        roundNumber: currentFrame.roundNumber || 1,
+        type: 'complete'
+      });
+      setShowRoundToast(true);
+      
+      // Auto-hide toast after delay
+      setTimeout(() => {
+        setShowRoundToast(false);
+      }, 2000); // Show for 2 seconds
+    }
+  }, [framePlayer.currentFrame]);
+
 
   // Handle skip - update HP to final values
   const handleSkip = () => {
@@ -140,20 +194,44 @@ export function CombatScene({ combatLog, onCombatComplete, onClose }: CombatScen
         currentHealth={currentHealth}
       />
       
-      {/* Main stage area */}
-      <CombatStage 
-        currentFrame={framePlayer.currentFrame}
-        actors={frameQueue.actors}
-        onFrameComplete={framePlayer.nextFrame}
-        speed={framePlayer.speed}
-        onCombatEnd={onCombatComplete}
+      {/* Main stage area - only show when combat should start */}
+      {shouldStartCombat && (
+        <CombatStage 
+          currentFrame={framePlayer.currentFrame}
+          actors={frameQueue.actors}
+          onFrameComplete={framePlayer.nextFrame}
+          speed={speed}
+          onCombatEnd={onCombatComplete}
+        />
+      )}
+      
+      {/* Round Toast - show when rounds complete */}
+      {roundToastData && (
+        <RoundToast
+          roundNumber={roundToastData.roundNumber}
+          type={roundToastData.type}
+          visible={showRoundToast}
+          speed={speed}
+          onComplete={() => setShowRoundToast(false)}
+          onSkip={() => setShowRoundToast(false)}
+        />
+      )}
+      
+      {/* Versus Overlay - only show at match start */}
+      <VersusOverlay
+        playerName={player.name}
+        enemyName={enemies[0]?.name || 'Enemy'}
+        visible={combatState.state === 'matchIntro'}
+        speed={speed}
+        onComplete={() => combatState.transitionTo('actionIntro')}
+        onSkip={() => combatState.skipOverlay()}
       />
       
       {/* Action bar at bottom - only show when combat is playing */}
-      {framePlayer.state === 'playing' && (
+      {shouldStartCombat && framePlayer.state === 'playing' && (
         <CombatActionBar 
-          speed={framePlayer.speed}
-          onSpeedChange={framePlayer.setSpeed}
+          speed={speed}
+          onSpeedChange={setSpeed}
           onSkip={handleSkip}
         />
       )}

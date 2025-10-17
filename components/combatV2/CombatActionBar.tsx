@@ -1,4 +1,5 @@
 import { CombatActionBarProps, CombatSpeed } from '@/types/combatV2';
+import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -7,32 +8,48 @@ export function CombatActionBar({
   onSpeedChange, 
   onSkip 
 }: Omit<CombatActionBarProps, 'isAuto' | 'onToggleAuto'>) {
+  const isPaused = speed === 0;
+
+  const handleSpeedChange = (newSpeed: CombatSpeed) => {
+    Haptics.selectionAsync(); // Selection change haptic
+    onSpeedChange(newSpeed);
+  };
+  
   return (
     <View style={styles.container}>
-      {/* Speed Controls - Pill Buttons */}
+      {/* Speed Controls - Segmented Control Style */}
       <View style={styles.speedControls}>
-        {([1, 2, 3] as CombatSpeed[]).map((speedOption) => (
+        {([0, 1, 2, 3] as CombatSpeed[]).map((speedOption) => (
           <TouchableOpacity
             key={speedOption}
             style={[
               styles.pillButton,
               speed === speedOption && styles.pillButtonActive
             ]}
-            onPress={() => onSpeedChange(speedOption)}
+            onPress={() => handleSpeedChange(speedOption)}
           >
             <Text style={[
               styles.pillButtonText,
               speed === speedOption && styles.pillButtonTextActive
             ]}>
-              {speedOption}×
+              {speedOption === 0 ? (isPaused ? '▶' : '⏸') : `${speedOption}×`}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
       
-      {/* High-contrast SKIP button */}
-      <TouchableOpacity style={styles.skipButton} onPress={onSkip}>
-        <Text style={styles.skipButtonText}>SKIP</Text>
+      {/* SKIP button - less visual weight when paused */}
+      <TouchableOpacity 
+        style={[
+          styles.skipButton,
+          isPaused && styles.skipButtonPaused
+        ]} 
+        onPress={onSkip}
+      >
+        <Text style={[
+          styles.skipButtonText,
+          isPaused && styles.skipButtonTextPaused
+        ]}>SKIP</Text>
       </TouchableOpacity>
     </View>
   );
@@ -59,14 +76,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(139, 69, 19, 0.3)',
     borderRadius: 20, // Pill shape
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.1)', // Thin inner border
     minWidth: 50,
+    minHeight: 44, // Ensure tap target ≥44px
     alignItems: 'center',
     justifyContent: 'center',
   },
   pillButtonActive: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#FFD700', // Filled state
     borderColor: '#FFA500',
+    borderWidth: 2, // Thicker border for active
     shadowColor: '#FFD700',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.4,
@@ -102,5 +121,12 @@ const styles = StyleSheet.create({
     color: '#000',
     textAlign: 'center',
     letterSpacing: 0.5,
+  },
+  skipButtonPaused: {
+    backgroundColor: 'rgba(255, 215, 0, 0.6)', // Less visual weight when paused
+    borderColor: 'rgba(255, 165, 0, 0.6)',
+  },
+  skipButtonTextPaused: {
+    color: 'rgba(0, 0, 0, 0.7)', // Dimmed text when paused
   },
 });

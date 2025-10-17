@@ -10,6 +10,7 @@ export function adaptCombatLogToFrameQueue(log: CombatLogV2): {
 } {
   const queue: FrameQueueItem[] = [];
   const actors = new Map<string, CombatActor>();
+  let actionCounter = 0; // Track action count across all rounds
   
   // Build actors map
   log.actors.forEach(actor => {
@@ -23,6 +24,7 @@ export function adaptCombatLogToFrameQueue(log: CombatLogV2): {
     
     // Process actions in the round
     round.actions.forEach(action => {
+      actionCounter++; // Increment for each action
       action.frames.forEach((frame, frameIndex) => {
         const frameId = `${action.actionId}_frame_${frameIndex}`;
         
@@ -44,6 +46,8 @@ export function adaptCombatLogToFrameQueue(log: CombatLogV2): {
           results: frame.type === 'action' ? frame.results : undefined,
           isRoundBoundary: false,
           roundNumber: round.roundNumber,
+          ability: action.ability, // Include ability information
+          actionIndex: actionCounter, // Include action index
         });
       });
     });

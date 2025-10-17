@@ -123,6 +123,8 @@ export interface FrameQueueItem {
   hpAfter?: Record<string, number>;
   isRoundBoundary?: boolean;
   roundNumber?: number;
+  ability?: string; // Ability name for action frames
+  actionIndex?: number; // Index of the action in the combat log
   // For action frames
   results?: Array<{
     targetId: string;
@@ -155,7 +157,7 @@ export interface FrameQueueItem {
 export type CombatPlayerState = 'idle' | 'loading' | 'playing' | 'ended';
 
 // Speed settings
-export type CombatSpeed = 1 | 2 | 3;
+export type CombatSpeed = 0 | 1 | 2 | 3;
 
 // Frame card props
 export interface FrameCardProps {
