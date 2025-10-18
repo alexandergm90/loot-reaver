@@ -9,6 +9,10 @@ import Animated, {
 
 const BG_NORMAL = require('@/assets/images/ui/medium_button_simple.png');
 const BG_PRESSED = require('@/assets/images/ui/medium_button_hover.png');
+const BG_SMALL_NORMAL = require('@/assets/images/ui/small_button_simple.png');
+const BG_SMALL_PRESSED = require('@/assets/images/ui/small_button_hover.png');
+const BG_ROUNDED_NORMAL = require('@/assets/images/ui/rounded_button_simple.png');
+const BG_ROUNDED_PRESSED = require('@/assets/images/ui/rounded_button_hover.png');
 
  type Props = {
     onPress: () => void;
@@ -17,10 +21,12 @@ const BG_PRESSED = require('@/assets/images/ui/medium_button_hover.png');
     textStyle?: TextStyle;
     enableHaptics?: boolean;
     disabled?: boolean;
-    size?: 'sm' | 'md' | 'lg';
+    size?: 'xs' | 'sm' | 'md' | 'lg' | 'square';
+    variant?: 'default' | 'rounded';
+    isActive?: boolean;
  };
 
-const WIDTHS = { sm: 160, md: 220, lg: 320 } as const;
+const WIDTHS = { xs: 120, sm: 160, md: 220, lg: 320, square: 48 } as const;
 
 const AppButton: React.FC<Props> = ({
     onPress,
@@ -30,6 +36,8 @@ const AppButton: React.FC<Props> = ({
     enableHaptics = true,
     disabled = false,
     size = 'md',
+    variant = 'default',
+    isActive = false,
 }) => {
     const isPressed = useSharedValue(false);
     const [hovered, setHovered] = useState(false);
@@ -57,7 +65,26 @@ const AppButton: React.FC<Props> = ({
         onPress();
     };
 
-    const active = glow || pressed || hovered || focused;
+    const active = isActive || glow || pressed || hovered || focused;
+    
+    // Layout calculations
+    const isSquare = size === 'square';
+    const contentWidth = isSquare ? 48 : WIDTHS[size];
+    const contentHeight = isSquare ? 48 : 64;
+    const contentPaddingH = isSquare ? 0 : 24;
+    
+    // Select background images based on size and variant
+    let bgNormal, bgPressed;
+    if (variant === 'rounded') {
+        bgNormal = BG_ROUNDED_NORMAL;
+        bgPressed = BG_ROUNDED_PRESSED;
+    } else if (size === 'xs') {
+        bgNormal = BG_SMALL_NORMAL;
+        bgPressed = BG_SMALL_PRESSED;
+    } else {
+        bgNormal = BG_NORMAL;
+        bgPressed = BG_PRESSED;
+    }
 
     return (
         <Pressable
@@ -74,20 +101,32 @@ const AppButton: React.FC<Props> = ({
         >
             <Animated.View style={[styles.container, animatedStyle, disabled && styles.disabledButton, style]}>
                 <ImageBackground
-                    source={active ? BG_PRESSED : BG_NORMAL}
-                    style={[styles.bg, { width: WIDTHS[size] }]}
+                    source={active ? bgPressed : bgNormal}
+                    style={[
+                        styles.bg,
+                        { 
+                            width: contentWidth, 
+                            height: contentHeight, 
+                            paddingHorizontal: contentPaddingH 
+                        }
+                    ]}
                     imageStyle={{ resizeMode: 'stretch' }}
                 >
                     {typeof children === 'string' ? (
                         <Text
                             style={[
                                 styles.label,
+                                size === 'xs' && styles.labelXs,
                                 size === 'sm' && styles.labelSm,
                                 size === 'lg' && styles.labelLg,
+                                size === 'square' && styles.labelSquare,
                                 disabled && styles.disabledText,
                                 glow && { textShadowRadius: 5 },
                                 textStyle,
                             ]}
+                            numberOfLines={1}
+                            adjustsFontSizeToFit={true}
+                            minimumFontScale={0.8}
                         >
                             {children}
                         </Text>
@@ -125,8 +164,10 @@ const styles = StyleSheet.create({
         textShadowOffset: { width: 0, height: 2 },
         textShadowRadius: 3,
     },
+    labelXs: { fontSize: 16 },
     labelSm: { fontSize: 16 },
     labelLg: { fontSize: 24 },
+    labelSquare: { fontSize: 13, letterSpacing: 0.2 },
     disabledButton: {
         opacity: 0.6,
     },
