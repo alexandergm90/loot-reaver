@@ -90,10 +90,18 @@ export function useCombatState(
     }
   }, [state, transitionTo]);
 
-  // Update frame index
+  // Update frame index and track current round
   const updateFrameIndex = useCallback((index: number) => {
     currentFrameIndexRef.current = index;
-  }, []);
+    
+    // Update current round based on frame
+    if (index < frames.length) {
+      const frame = frames[index];
+      if (frame && frame.roundNumber) {
+        setCurrentRound(frame.roundNumber);
+      }
+    }
+  }, [frames]);
 
   // Initialize combat flow
   useEffect(() => {

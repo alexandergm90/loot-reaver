@@ -7,7 +7,7 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 import { CombatActionBar } from './CombatActionBar';
 import { CombatHUD } from './CombatHUD';
 import { CombatStage } from './CombatStage';
-import { RoundToast } from './RoundToast';
+import { FixedRoundIndicator } from './FixedRoundIndicator';
 import { VersusOverlay } from './VersusOverlay';
 
 interface CombatSceneProps {
@@ -21,15 +21,9 @@ export function CombatScene({ combatLog, onCombatComplete, onClose }: CombatScen
   const [currentHealth, setCurrentHealth] = useState<Record<string, number>>({});
   const [speed, setSpeed] = useState<CombatSpeed>(1);
   
-  // Combat state management
-  const combatState = useCombatState(
-    frameQueue?.queue || [],
-    speed
-  );
-  
-  // Round toast state
-  const [showRoundToast, setShowRoundToast] = useState(false);
-  const [roundToastData, setRoundToastData] = useState<{roundNumber: number; type: 'start' | 'complete'} | null>(null);
+  // Combat state management - use stable frames reference
+  const frames = frameQueue?.queue || [];
+  const combatState = useCombatState(frames, speed);
   
   // Initialize frame queue from combat log
   useEffect(() => {
@@ -62,7 +56,18 @@ export function CombatScene({ combatLog, onCombatComplete, onClose }: CombatScen
 
   // Don't start combat until versus overlay completes
   // After that, combat should ALWAYS be visible (cards never disappear)
-  const shouldStartCombat = combatState.state === 'actionIntro' || combatState.state === 'actionOutro' || combatState.state === 'roundStart';
+  // Track if combat has ever started to prevent flicker
+  const [hasCombatStarted, setHasCombatStarted] = useState(false);
+  
+  // Update hasCombatStarted when combat begins
+  useEffect(() => {
+    if (combatState.state === 'actionIntro' && !hasCombatStarted) {
+      setHasCombatStarted(true);
+    }
+  }, [combatState.state, hasCombatStarted]);
+  
+  // Once combat starts, it should ALWAYS be visible (cards never disappear)
+  const shouldStartCombat = hasCombatStarted || (combatState.state !== 'matchIntro' && combatState.state !== 'idle');
 
   // Handle state transitions
   useEffect(() => {
@@ -78,27 +83,6 @@ export function CombatScene({ combatLog, onCombatComplete, onClose }: CombatScen
   useEffect(() => {
     combatState.updateFrameIndex(framePlayer.currentFrameIndex);
   }, [framePlayer.currentFrameIndex, combatState]);
-
-  // Detect round completions and show toast
-  useEffect(() => {
-    const currentFrame = framePlayer.currentFrame;
-    if (!currentFrame) return;
-
-    // Check if this is a round_end frame that was skipped
-    if (currentFrame.type === 'round_end') {
-      setRoundToastData({
-        roundNumber: currentFrame.roundNumber || 1,
-        type: 'complete'
-      });
-      setShowRoundToast(true);
-      
-      // Auto-hide toast after delay
-      setTimeout(() => {
-        setShowRoundToast(false);
-      }, 2000); // Show for 2 seconds
-    }
-  }, [framePlayer.currentFrame]);
-
 
   // Handle skip - update HP to final values
   const handleSkip = () => {
@@ -145,9 +129,9 @@ export function CombatScene({ combatLog, onCombatComplete, onClose }: CombatScen
     framePlayer.skipToEnd();
   };
   
-  // Update health when damage frames are processed
+  // Update health when damage frames are processed - only after combat starts
   useEffect(() => {
-    if (framePlayer.currentFrame?.hpAfter) {
+    if (hasCombatStarted && framePlayer.currentFrame?.hpAfter) {
       setCurrentHealth(prev => {
         const newHealth = { ...prev };
         Object.entries(framePlayer.currentFrame!.hpAfter!).forEach(([actorId, hp]) => {
@@ -156,7 +140,7 @@ export function CombatScene({ combatLog, onCombatComplete, onClose }: CombatScen
         return newHealth;
       });
     }
-  }, [framePlayer.currentFrame]);
+  }, [framePlayer.currentFrame, hasCombatStarted]);
   
   // Debug: Log when combat state changes
   useEffect(() => {
@@ -194,6 +178,11 @@ export function CombatScene({ combatLog, onCombatComplete, onClose }: CombatScen
         currentHealth={currentHealth}
       />
       
+      {/* Fixed round indicator - only show when combat starts */}
+      {shouldStartCombat && (
+        <FixedRoundIndicator round={combatState.currentRound} speed={speed} />
+      )}
+      
       {/* Main stage area - only show when combat should start */}
       {shouldStartCombat && (
         <CombatStage 
@@ -202,18 +191,6 @@ export function CombatScene({ combatLog, onCombatComplete, onClose }: CombatScen
           onFrameComplete={framePlayer.nextFrame}
           speed={speed}
           onCombatEnd={onCombatComplete}
-        />
-      )}
-      
-      {/* Round Toast - show when rounds complete */}
-      {roundToastData && (
-        <RoundToast
-          roundNumber={roundToastData.roundNumber}
-          type={roundToastData.type}
-          visible={showRoundToast}
-          speed={speed}
-          onComplete={() => setShowRoundToast(false)}
-          onSkip={() => setShowRoundToast(false)}
         />
       )}
       

@@ -87,11 +87,11 @@ function useCardShake(speed = 1) {
 function useFlipLite(speed = 1) {
   const t = (ms: number) => ms / Math.max(0.25, speed);
 
-  const sc = useSharedValue(0.7);   // Start much smaller for dramatic effect
-  const ty = useSharedValue(50);   // Start further down
-  const op = useSharedValue(0);    // Start invisible
-  const rot = useSharedValue(-15); // Subtle rotation for dynamic feel
-  const shadow = useSharedValue(0); // Shadow opacity for depth
+  const sc = useSharedValue(1.0);  // Start at normal size
+  const ty = useSharedValue(0);    // Start at normal position
+  const op = useSharedValue(1);    // Start visible
+  const rot = useSharedValue(0);   // Start at normal rotation
+  const shadow = useSharedValue(1); // Start with shadow
 
   const intro = (onDone?: () => void) => {
     // Reset values to start position for each animation
@@ -168,43 +168,39 @@ function CardStackGhosts({ width, height, frameSrc, actionCount = 1, drift }: {
   
   return (
     <>
-      {/* older history */}
-      {actionCount >= 3 && (
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              width,
-              height,
-              opacity: 0.28,
-              zIndex: 5,
-              elevation: 5,
-            },
-            ghost1Style
-          ]}
-        >
-          <Image source={frameSrc} style={{ width, height }} resizeMode="contain" />
-        </Animated.View>
-      )}
+      {/* older history - always render but control visibility */}
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            width,
+            height,
+            opacity: actionCount >= 3 ? 0.28 : 0, // Control visibility with opacity
+            zIndex: 5,
+            elevation: 5,
+          },
+          ghost1Style
+        ]}
+      >
+        <Image source={frameSrc} style={{ width, height }} resizeMode="contain" />
+      </Animated.View>
 
-      {/* most recent history */}
-      {actionCount >= 2 && (
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              width,
-              height,
-              opacity: 0.42,
-              zIndex: 10,
-              elevation: 10,
-            },
-            ghost2Style
-          ]}
-        >
-          <Image source={frameSrc} style={{ width, height }} resizeMode="contain" />
+      {/* most recent history - always render but control visibility */}
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            width,
+            height,
+            opacity: actionCount >= 2 ? 0.42 : 0, // Control visibility with opacity
+            zIndex: 10,
+            elevation: 10,
+          },
+          ghost2Style
+        ]}
+      >
+        <Image source={frameSrc} style={{ width, height }} resizeMode="contain" />
           </Animated.View>
-      )}
     </>
   );
 }

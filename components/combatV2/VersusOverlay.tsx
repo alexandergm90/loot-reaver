@@ -1,13 +1,12 @@
-import * as Haptics from 'expo-haptics';
-import React, { useEffect } from 'react';
-import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
-    Easing,
-    useAnimatedStyle,
-    useSharedValue,
-    withSequence,
-    withTiming,
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming
 } from 'react-native-reanimated';
+import VsBadge from './VsBadge';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -28,85 +27,69 @@ export function VersusOverlay({
   onComplete, 
   onSkip 
 }: VersusOverlayProps) {
-  const t = (ms: number) => ms / Math.max(0.25, speed);
+  const t = (ms: number) => ms / Math.max(0.25, speed); // Reset to normal timing
   
   // Animation values
-  const opacity = useSharedValue(0);
-  const scale = useSharedValue(0.86);
-  const translateY = useSharedValue(18);
-  const rotate = useSharedValue(2);
-  const playerNameX = useSharedValue(-screenWidth * 0.3);
-  const enemyNameX = useSharedValue(screenWidth * 0.3);
+  const dimmerOpacity = useSharedValue(0);
+  const playerNameX = useSharedValue(-screenWidth);
+  const enemyNameX = useSharedValue(screenWidth);
   const vsOpacity = useSharedValue(0);
+  const vsScale = useSharedValue(0);
+  
+  // Exit animation values
+  const exitOpacity = useSharedValue(1);
+  const exitTranslateY = useSharedValue(0);
 
-  // Background dimming
-  const bgOpacity = useSharedValue(1);
+  // Layout calculations
+  const spacing = Math.max(8, Math.min(16, screenWidth * 0.02));
+  const badgeSize = Math.min(96, screenWidth * 0.22);
+  const maxNameWidth = screenWidth * 0.28; // Reduced from 0.36 to ensure names fit
+  
+  // State for animation phases
+  const [animationPhase, setAnimationPhase] = useState<'idle' | 'entering' | 'holding' | 'exiting'>('idle');
 
   useEffect(() => {
     if (visible) {
-      // Reset values
-      opacity.value = 0;
-      scale.value = 0.86;
-      translateY.value = 18;
-      rotate.value = 2;
-      playerNameX.value = -screenWidth * 0.3;
-      enemyNameX.value = screenWidth * 0.3;
-      vsOpacity.value = 0;
-      bgOpacity.value = 1;
-
-      // Entrance animation (~450ms)
-      opacity.value = withTiming(1, { duration: t(450), easing: Easing.out(Easing.cubic) });
-      scale.value = withTiming(1.0, { duration: t(450), easing: Easing.out(Easing.back(1.1)) });
-      translateY.value = withTiming(0, { duration: t(450), easing: Easing.out(Easing.cubic) });
-      rotate.value = withTiming(0, { duration: t(450), easing: Easing.out(Easing.cubic) });
-
-      // Name slide-in with overshoot
-      playerNameX.value = withSequence(
-        withTiming(0, { duration: t(300), easing: Easing.out(Easing.cubic) }),
-        withTiming(-8, { duration: t(100), easing: Easing.out(Easing.cubic) }),
-        withTiming(0, { duration: t(100), easing: Easing.out(Easing.cubic) })
-      );
+      setAnimationPhase('entering');
       
-      enemyNameX.value = withSequence(
-        withTiming(0, { duration: t(300), easing: Easing.out(Easing.cubic) }),
-        withTiming(8, { duration: t(100), easing: Easing.out(Easing.cubic) }),
-        withTiming(0, { duration: t(100), easing: Easing.out(Easing.cubic) })
-      );
+      // Reset all values
+      dimmerOpacity.value = 0;
+      playerNameX.value = -screenWidth;
+      enemyNameX.value = screenWidth;
+      vsOpacity.value = 0;
+      vsScale.value = 0;
+      exitOpacity.value = 1;
+      exitTranslateY.value = 0;
 
-      // VS sweep effect
-      vsOpacity.value = withTiming(1, { duration: t(200), easing: Easing.out(Easing.cubic) });
+      // Step 1: Player name scrolls in from left to right (0.3 seconds)
+      playerNameX.value = withTiming(0, { duration: t(300), easing: Easing.out(Easing.cubic) });
 
-      // Background dimming
-      bgOpacity.value = withTiming(0.85, { duration: t(120), easing: Easing.out(Easing.cubic) });
-
-      // Hold phase (~900ms)
+      // Step 2: After 0.5 seconds delay, VS image pops in (0.2 seconds zoom)
       setTimeout(() => {
-        // Exit animation (~350ms)
-        scale.value = withTiming(0.96, { duration: t(350), easing: Easing.in(Easing.cubic) });
-        opacity.value = withTiming(0, { duration: t(350), easing: Easing.in(Easing.cubic) });
-        translateY.value = withTiming(-12, { duration: t(350), easing: Easing.in(Easing.cubic) });
-        
-        // Background undimming
-        bgOpacity.value = withTiming(1, { duration: t(120), easing: Easing.out(Easing.cubic) });
+        vsOpacity.value = withTiming(1, { duration: t(200), easing: Easing.out(Easing.cubic) });
+        vsScale.value = withTiming(1, { duration: t(200), easing: Easing.out(Easing.back(1.2)) });
+      }, t(500));
 
-        // Complete after exit
+      // Step 3: After another 0.5 seconds delay, enemy name scrolls from right to left
+      setTimeout(() => {
+        enemyNameX.value = withTiming(0, { duration: t(300), easing: Easing.out(Easing.cubic) });
+      }, t(1000)); // 500ms + 500ms delay
+
+      // Step 4: After 1 second delay longer, VS overlay fades out
+      setTimeout(() => {
+        setAnimationPhase('exiting');
+        exitOpacity.value = withTiming(0, { duration: t(300), easing: Easing.in(Easing.cubic) });
+        dimmerOpacity.value = withTiming(0, { duration: t(300), easing: Easing.in(Easing.cubic) });
+        
         setTimeout(() => {
           onComplete();
-        }, t(350));
-      }, t(900));
-
-      // Haptics
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }, t(300));
+      }, t(2000)); // 1000ms + 1000ms delay
     }
   }, [visible, speed]);
 
-  const overlayStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [
-      { scale: scale.value },
-      { translateY: translateY.value },
-      { rotate: `${rotate.value}deg` },
-    ],
+  const dimmerStyle = useAnimatedStyle(() => ({
+    opacity: dimmerOpacity.value,
   }));
 
   const playerNameStyle = useAnimatedStyle(() => ({
@@ -119,63 +102,56 @@ export function VersusOverlay({
 
   const vsStyle = useAnimatedStyle(() => ({
     opacity: vsOpacity.value,
+    transform: [{ scale: vsScale.value }],
   }));
 
-  const backgroundStyle = useAnimatedStyle(() => ({
-    opacity: bgOpacity.value,
+  const exitStyle = useAnimatedStyle(() => ({
+    opacity: exitOpacity.value,
+    transform: [{ translateY: exitTranslateY.value }],
   }));
 
   if (!visible) return null;
 
   return (
     <>
-      {/* Background dimming */}
+      {/* Background dimmer */}
       <Animated.View 
-        style={[StyleSheet.absoluteFillObject, backgroundStyle]}
+        style={[StyleSheet.absoluteFillObject, dimmerStyle]}
         pointerEvents="none"
       >
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.15)' }]} />
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.13)' }]} />
       </Animated.View>
 
-      {/* Versus overlay */}
+      {/* Main overlay container */}
       <TouchableOpacity 
         style={styles.overlayContainer}
         activeOpacity={1}
         onPress={onSkip}
       >
-        <Animated.View style={[styles.versusCard, overlayStyle]}>
-          {/* Parchment background */}
-          <Image
-            source={require('@/assets/images/parchment_texture_orange.png')}
-            style={styles.parchmentBackground}
-            resizeMode="cover"
-          />
-          
-          {/* Content */}
-          <View style={styles.content}>
-            {/* Player name */}
-            <Animated.View style={[styles.nameContainer, playerNameStyle]}>
-              <Text style={styles.playerName}>{playerName}</Text>
-            </Animated.View>
+        <Animated.View style={[styles.contentContainer, exitStyle]}>
+          {/* Player name - above VS */}
+          <Animated.View style={[styles.playerNameContainer, playerNameStyle]}>
+            <Text style={styles.nameText}>
+              {playerName.toUpperCase()}
+            </Text>
+          </Animated.View>
 
-            {/* VS */}
-            <Animated.View style={[styles.vsContainer, vsStyle]}>
-              <Text style={styles.vsText}>VS</Text>
-            </Animated.View>
+          {/* VS Badge - center */}
+          <Animated.View style={[styles.vsContainer, vsStyle]}>
+            <VsBadge size={badgeSize} animated={true} />
+          </Animated.View>
 
-            {/* Enemy name */}
-            <Animated.View style={[styles.nameContainer, enemyNameStyle]}>
-              <Text style={styles.enemyName}>{enemyName}</Text>
-            </Animated.View>
-          </View>
+          {/* Enemy name - below VS */}
+          <Animated.View style={[styles.enemyNameContainer, enemyNameStyle]}>
+            <Text style={styles.nameText}>
+              {enemyName.toUpperCase()}
+            </Text>
+          </Animated.View>
         </Animated.View>
       </TouchableOpacity>
     </>
   );
 }
-
-const CARD_WIDTH = Math.min(screenWidth * 0.85, 400);
-const CARD_HEIGHT = 120;
 
 const styles = StyleSheet.create({
   overlayContainer: {
@@ -189,63 +165,39 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     elevation: 1000,
   },
-  versusCard: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  parchmentBackground: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
-  content: {
-    flex: 1,
-    flexDirection: 'row',
+  contentContainer: {
+    flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    height: 300, // Increased height for vertical layout
   },
-  nameContainer: {
-    flex: 1,
+  playerNameContainer: {
     alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20, // Space between player name and VS
   },
-  playerName: {
-    fontFamily: 'Cinzel-Bold',
-    fontSize: 18,
-    color: '#3a2a18',
-    textAlign: 'center',
-    textShadowColor: 'rgba(255,255,255,0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
+  enemyNameContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20, // Space between VS and enemy name
   },
-  enemyName: {
-    fontFamily: 'Cinzel-Bold',
-    fontSize: 18,
-    color: '#3a2a18',
+  nameText: {
+    fontFamily: 'Cinzel-Black',
+    fontWeight: '900',
+    fontSize: 24, // Reduced from 36px to fit screen bounds
+    color: '#F3D77A', // Same as HUD goldText
     textAlign: 'center',
-    textShadowColor: 'rgba(255,255,255,0.3)',
+    letterSpacing: 1.6, // Reduced proportionally (1.2 * 1.33)
+    textShadowColor: 'rgba(0,0,0,0.65)', // Same as HUD
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
+    textShadowRadius: 2,
+    includeFontPadding: false,
   },
   vsContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-  },
-  vsText: {
-    fontFamily: 'Cinzel-Black',
-    fontSize: 24,
-    color: '#8B0000',
-    fontWeight: '900',
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+    marginHorizontal: 12,
+    position: 'relative',
   },
 });

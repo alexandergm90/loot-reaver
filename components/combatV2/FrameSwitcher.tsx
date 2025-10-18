@@ -14,38 +14,81 @@ interface FrameSwitcherProps {
 }
 
 export function FrameSwitcher({ frame, actors, onComplete, speed, onCombatEnd }: FrameSwitcherProps) {
-  // Handle round_end frames by immediately advancing - hooks must be at top level
+  // 1) Remember the last *playable* (non-round_end) frame
+  const lastPlayableRef = React.useRef<FrameQueueItem | null>(null);
+
+  React.useEffect(() => {
+    if (frame && frame.type !== 'round_end') {
+      lastPlayableRef.current = frame;
+    }
+  }, [frame]);
+
+  // 2) Auto-advance when a round_end arrives (as you already do)
   React.useEffect(() => {
     if (frame?.type === 'round_end') {
+      // Advance queue but DO NOT change what's on screen
       onComplete();
     }
   }, [frame?.type, onComplete]);
 
-  if (!frame) {
+  if (!frame && !lastPlayableRef.current) {
     return null;
   }
-  
-  // Skip round_end frames - they block combat flow
-  if (frame.type === 'round_end') {
-    return null;
-  }
-  
-  // Only mount one card at a time for performance
-  switch (frame.type) {
+
+  // 3) Decide what to show: freeze on the last playable frame during round_end
+  const visualFrame: FrameQueueItem | null =
+    frame?.type === 'round_end' ? lastPlayableRef.current : frame;
+
+  if (!visualFrame) return null;
+
+  // 4) Render based on the visual frame (keyed by id so it doesn't remount during round_end)
+  switch (visualFrame.type) {
     case 'action':
-      return <ActionCard frame={frame} actors={actors} onComplete={onComplete} speed={speed} />;
-      
+      return (
+        <ActionCard
+          key={visualFrame.id}
+          frame={visualFrame}
+          actors={actors}
+          onComplete={onComplete}
+          speed={speed}
+        />
+      );
+
     case 'death':
-      return <DeathCard frame={frame} actors={actors} onComplete={onComplete} speed={speed} />;
-      
+      return (
+        <DeathCard
+          key={visualFrame.id}
+          frame={visualFrame}
+          actors={actors}
+          onComplete={onComplete}
+          speed={speed}
+        />
+      );
+
     case 'end_battle':
-      return <EndBattleCard frame={frame} actors={actors} onComplete={onComplete} speed={speed} onCombatEnd={onCombatEnd} />;
-      
+      return (
+        <EndBattleCard
+          key={visualFrame.id}
+          frame={visualFrame}
+          actors={actors}
+          onComplete={onComplete}
+          speed={speed}
+          onCombatEnd={onCombatEnd}
+        />
+      );
+
     case 'status_tick':
-      return <StatusCard frame={frame} actors={actors} onComplete={onComplete} speed={speed} />;
-      
+      return (
+        <StatusCard
+          key={visualFrame.id}
+          frame={visualFrame}
+          actors={actors}
+          onComplete={onComplete}
+          speed={speed}
+        />
+      );
+
     default:
-      console.warn('Unknown frame type:', frame.type, 'Frame data:', JSON.stringify(frame, null, 2));
       return null;
   }
 }
