@@ -54,10 +54,8 @@ export function CombatScene({ combatLog, onCombatComplete, onClose }: CombatScen
   const framePlayer = useFramePlayer({
     queue: frameQueue?.queue || [],
     onComplete: () => {
-      // Combat finished
-      const outcome = combatLog.outcome;
-      const rewards = combatLog.rewards;
-      onCombatComplete(outcome, rewards);
+      // Combat finished - EndBattleCard will handle the UI
+      console.log('Combat finished, EndBattleCard will handle the rest');
     }
   });
 

@@ -69,8 +69,22 @@ export function adaptCombatResultToV2(combatResult: CombatResult): CombatLogV2 {
         }],
       });
       
-      // Death frame (if kill)
-      if (action.kill) {
+      // Death frame (if kill OR if HP reaches 0)
+      // Check if any result in the action's frames causes death
+      console.log('🔍 Checking action for death:', action.actionId, 'frames:', action.frames?.length);
+      
+      const hasDeath = action.frames?.some(frame => {
+        console.log('🔍 Checking frame:', frame.type, 'results:', frame.results?.length);
+        return frame.type === 'action' && frame.results?.some(result => {
+          console.log('🔍 Checking result:', result.targetId, 'kill:', result.kill, 'hpAfter:', result.hpAfter);
+          return result.kill || result.hpAfter <= 0;
+        });
+      });
+      
+      console.log('🔍 Has death:', hasDeath);
+      
+      if (hasDeath) {
+        console.log('💀 Creating death frame for:', action.targetId);
         frames.push({
           type: 'death',
           targets: [action.targetId],

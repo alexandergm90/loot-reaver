@@ -1,134 +1,248 @@
+import AppButton from '@/components/ui/AppButton';
 import { EndBattleFrame, FrameCardProps } from '@/types/combatV2';
-import React, { useEffect } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React from 'react';
+import { Dimensions, Image, StyleSheet, Text, View } from 'react-native';
+// Import the standalone resolver
+import resolveAssetSource from 'react-native/Libraries/Image/resolveAssetSource';
 
-export function EndBattleCard({ frame, actors, onComplete, speed, onCombatEnd }: FrameCardProps) {
-  console.log('🏆 EndBattleCard rendering:', frame.payload);
+const { width: screenWidth } = Dimensions.get('window');
+
+const VICTORY_BG = require('@/assets/images/combat/victory_card.png');
+const DEFEAT_BG = require('@/assets/images/combat/defeat_card.png');
+
+const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+
+function useCardMetrics(src: number) {
+  // Use the same sizing logic as ActionCard
+  const asset = resolveAssetSource(src);
+  const aspect = asset?.width && asset?.height ? asset.width / asset.height : 1;
   
-  // Calculate timing based on speed setting
-  const getTiming = (speed: number) => {
-    const baseTime = 3000; // Base 3 seconds
-    return baseTime / speed; // Speed 1 = 3s, Speed 2 = 1.5s, Speed 3 = 1s
-  };
+  // Same logic as ActionCard: screenWidth * 0.9 with max 420px
+  const MAX_W = Math.min(screenWidth * 0.9, 420);
+  const cardW = MAX_W;
+  const cardH = cardW / aspect;
   
-  const handleOKPress = () => {
-    if (onCombatEnd) {
-      const battleFrame = frame.payload as EndBattleFrame;
-      const outcome = battleFrame.outcome || 'victory';
-      const rewards = battleFrame.rewards || { gold: 0, xp: 0 };
-      onCombatEnd(outcome as 'victory' | 'defeat', rewards);
-    }
-  };
-  
-  useEffect(() => {
-    console.log('🏆 EndBattleCard useEffect triggered');
-    
-    // No auto-redirect - user must click OK button
-    // Removed fallback timer to prevent automatic redirect
-  }, [speed]);
-  
-  const battleFrame = frame.payload as EndBattleFrame;
-  const outcome = battleFrame.outcome || 'victory';
-  const rewards = battleFrame.rewards || { gold: 0, xp: 0 };
+  return { aspect, cardW, cardH };
+}
+
+export function EndBattleCard({ frame, onCombatEnd }: FrameCardProps) {
+  const battle = frame.payload as EndBattleFrame;
+  const outcome = battle.outcome || 'victory';
+  const rewards = battle.rewards || { gold: 0, xp: 0 };
   const isVictory = outcome === 'victory';
-  
-  // Fallback to ensure we always show something
-  if (!frame.payload) {
-    console.error('EndBattleCard: No payload data!', frame);
-    return (
-      <View style={styles.container}>
-        <View style={styles.content}>
-          <Text style={styles.outcome}>COMBAT ENDED</Text>
-          <TouchableOpacity style={styles.okButton} onPress={handleOKPress}>
-            <Text style={styles.okButtonText}>OK</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-  
+
+  const { cardW, cardH } = useCardMetrics(VICTORY_BG);
+
+  // Tune these once to your PNG (they are % of the card).
+  // If your art has extra transparent padding at top/bottom for the diamond,
+  // include that in these values. Start with these and nudge by ±0.01 as needed.
+  const CONTENT = { top: 0.15, bottom: 0.19, left: 0.10, right: 0.10 };
+
+  const contentW = cardW * (1 - CONTENT.left - CONTENT.right);
+  const titleSize = clamp(contentW * 0.16, 22, 40);
+  const rewardsTitleSize = clamp(contentW * 0.08, 14, 22);
+  const rewardIcon = clamp(contentW * 0.12, 18, 28);
+  const rewardFont = clamp(contentW * 0.09, 14, 20);
+  const btnMaxW = clamp(contentW * 0.44, 140, 200);
+  const gapSm = clamp(contentW * 0.03, 6, 12);
+  const gapMd = clamp(contentW * 0.05, 8, 16);
+
+  // Custom styling for defeat card
+  const defeatTitleTop = cardH * 0.05; // Push title down to 25% of card height
+  const defeatButtonTop = cardH * 0.45; // Push button up to 75% of card height
+  const defeatSkullTop = cardH * 0.20; // Position skull at 45% of card height
+
+  const onComplete = () => onCombatEnd?.(outcome as 'victory' | 'defeat', rewards);
+
   return (
-    <View style={styles.container}>
-      <View style={[styles.content, { borderColor: isVictory ? '#00ff00' : '#ff4444' }]}>
-        <Text style={styles.outcome}>
-          {isVictory ? '🏆 VICTORY!' : '💀 DEFEAT'}
-        </Text>
-        
-        {rewards && (
-          <View style={styles.rewards}>
-            <Text style={styles.rewardText}>
-              Gold: {rewards.gold} • XP: {rewards.xp}
-            </Text>
-          </View>
-        )}
-        
-        {/* OK Button - User controls when to leave combat */}
-        <TouchableOpacity style={styles.okButton} onPress={handleOKPress}>
-          <Text style={styles.okButtonText}>OK</Text>
-        </TouchableOpacity>
+    // FULLSCREEN OVERLAY - immediately takes control to prevent flicker
+    <View style={styles.overlay}>
+      <View style={styles.frameRoot}>
+        <View style={[styles.cardBox, { width: cardW, height: cardH }]}>
+          {/* Background image - same pattern as ActionCard */}
+          <Image 
+            source={isVictory ? VICTORY_BG : DEFEAT_BG} 
+            style={[styles.frameImage, { width: cardW, height: cardH }]} 
+            resizeMode="contain" 
+          />
+
+          {/* Content area pinned by % insets */}
+          <View
+            style={{
+              position: 'absolute',
+              left: cardW * CONTENT.left,
+              right: cardW * CONTENT.right,
+              top: cardH * CONTENT.top,
+              bottom: cardH * CONTENT.bottom,
+            }}
+          >
+          {isVictory ? (
+            <>
+              <View style={{ alignItems: 'center' }}>
+                <Text style={[styles.victoryTitle, { fontSize: titleSize, letterSpacing: Math.round(titleSize * 0.08) }]}>
+                  VICTORY!
+                </Text>
+              </View>
+
+              <View style={{ alignItems: 'center', marginTop: gapSm }}>
+                <Image
+                  source={require('@/assets/images/icons/cup_simple.png')}
+                  style={{ width: rewardIcon * 3, height: rewardIcon * 3 }}
+                  resizeMode="contain"
+                />
+              </View>
+
+              <View style={{ alignItems: 'center', marginTop: gapMd }}>
+                <Text style={[styles.rewardsTitle, { fontSize: rewardsTitleSize }]}>REWARDS</Text>
+
+                <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', columnGap: gapSm, marginTop: gapSm, flexWrap: 'wrap' }}>
+                  <View style={styles.rewardPill}>
+                    <Image source={require('@/assets/images/icons/gold_icon.png')} style={{ width: rewardIcon, height: rewardIcon, marginRight: 6 }} />
+                    <Text style={[styles.rewardText, { fontSize: rewardFont }]}>{rewards.gold}</Text>
+                  </View>
+
+                  <View style={styles.rewardPill}>
+                    <Image source={require('@/assets/images/icons/exp_scroll.png')} style={{ width: rewardIcon, height: rewardIcon, marginRight: 6 }} />
+                    <Text style={[styles.rewardText, { fontSize: rewardFont }]}>{rewards.xp}</Text>
+                  </View>
+
+                  <View style={styles.rewardPill}>
+                    <View style={{
+                      width: rewardIcon, height: rewardIcon, borderRadius: rewardIcon/2,
+                      backgroundColor: 'rgba(255,215,0,0.22)', alignItems: 'center', justifyContent: 'center',
+                      marginRight: 6, borderWidth: 1, borderColor: 'rgba(255,215,0,0.45)'
+                    }}>
+                      <Text style={[styles.rewardText, { fontSize: rewardFont * 0.8 }]}>?</Text>
+                    </View>
+                    <Text style={[styles.rewardText, { fontSize: rewardFont * 0.9 }]}>Item</Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={{ flex: 1 }} />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', columnGap: gapSm }}>
+                <View style={{ flex: 1, alignItems: 'center', maxWidth: btnMaxW }}>
+                  <AppButton size="xs" onPress={onComplete} optionalLabel="+30% Rewards">WATCH AD</AppButton>
+                </View>
+                <View style={{ flex: 1, alignItems: 'center', maxWidth: btnMaxW }}>
+                  <AppButton size="xs" onPress={onComplete}>COMPLETE</AppButton>
+                </View>
+              </View>
+            </>
+          ) : (
+            <>
+              {/* DEFEAT! Title - positioned at 25% of card height */}
+              <View style={{ 
+                position: 'absolute', 
+                top: defeatTitleTop, 
+                left: 0, 
+                right: 0, 
+                alignItems: 'center' 
+              }}>
+                <Text style={[styles.defeatTitle, { fontSize: titleSize, letterSpacing: Math.round(titleSize * 0.08) }]}>
+                  DEFEAT!
+                </Text>
+              </View>
+
+              {/* Skull Icon - positioned at 45% of card height */}
+              <View style={{ 
+                position: 'absolute', 
+                top: defeatSkullTop, 
+                left: 0, 
+                right: 0, 
+                alignItems: 'center' 
+              }}>
+                <Image
+                  source={require('@/assets/images/icons/cup_broken.png')}
+                  style={{ width: rewardIcon * 3, height: rewardIcon * 3 }}
+                  resizeMode="contain"
+                />
+              </View>
+
+              {/* Complete Button - positioned at 75% of card height */}
+              <View style={{ 
+                position: 'absolute', 
+                top: defeatButtonTop, 
+                left: 0, 
+                right: 0, 
+                alignItems: 'center' 
+              }}>
+                <AppButton size="xs" onPress={onComplete}>Complete</AppButton>
+              </View>
+            </>
+          )}
+        </View>
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  overlay: {
+    position: 'absolute',   // ← true overlay
+    left: 0, right: 0, top: 0, bottom: 0,
+    zIndex: 9999,
+    backgroundColor: 'rgba(0,0,0,0.80)',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 999, // Ensure it's on top
+    // Ensure it completely overrides parent positioning
+    elevation: 9999,
+    // Force immediate positioning to prevent flicker
+    transform: [{ translateX: 0 }, { translateY: 0 }],
   },
-  content: {
+  frameRoot: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 24,
-    backgroundColor: 'rgba(139, 69, 19, 0.95)', // Parchment background
-    borderRadius: 16,
-    borderWidth: 4,
-    borderColor: '#FFD700', // Gold border
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    elevation: 8,
+    // Remove any inherited positioning
+    position: 'relative',
   },
-  outcome: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#FFD700', // Gold color
-    textAlign: 'center',
-    textShadowColor: '#000',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 4,
-    marginBottom: 16,
+  cardBox: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  rewards: {
-    marginTop: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
-    borderRadius: 8,
+  frameImage: {
+    position: 'absolute',
+  },
+  victoryTitle: {
+    fontFamily: 'Cinzel-Black',
+    color: '#FFD700',
+    textShadowColor: 'rgba(0,0,0,0.9)',
+    textShadowOffset: { width: 3, height: 3 },
+    textShadowRadius: 6,
+  },
+  rewardsTitle: {
+    fontFamily: 'Cinzel-Bold',
+    color: '#FFD700',
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  rewardPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,215,0,0.12)',
     borderWidth: 1,
-    borderColor: '#ffd700',
+    borderColor: 'rgba(255,215,0,0.35)',
   },
   rewardText: {
-    fontSize: 16,
-    color: '#ffd700',
-    fontWeight: '600',
+    fontFamily: 'Cinzel-Bold',
+    color: '#FFD700',
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
-  okButton: {
-    marginTop: 20,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    backgroundColor: '#4CAF50',
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#45a049',
-  },
-  okButtonText: {
-    fontSize: 18,
-    color: '#fff',
-    fontWeight: 'bold',
-    textAlign: 'center',
+  defeatTitle: {
+    fontFamily: 'Cinzel-Black',
+    color: '#8B4513', // Dark red-grey color
+    textShadowColor: 'rgba(0,0,0,0.9)',
+    textShadowOffset: { width: 3, height: 3 },
+    textShadowRadius: 6,
+    letterSpacing: 3,
   },
 });

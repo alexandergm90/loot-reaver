@@ -24,6 +24,7 @@ const BG_ROUNDED_PRESSED = require('@/assets/images/ui/rounded_button_hover.png'
     size?: 'xs' | 'sm' | 'md' | 'lg' | 'square';
     variant?: 'default' | 'rounded';
     isActive?: boolean;
+    optionalLabel?: string; // New prop for optional label below button
  };
 
 const WIDTHS = { xs: 120, sm: 160, md: 220, lg: 320, square: 48 } as const;
@@ -38,6 +39,7 @@ const AppButton: React.FC<Props> = ({
     size = 'md',
     variant = 'default',
     isActive = false,
+    optionalLabel,
 }) => {
     const isPressed = useSharedValue(false);
     const [hovered, setHovered] = useState(false);
@@ -134,6 +136,13 @@ const AppButton: React.FC<Props> = ({
                         children
                     )}
                 </ImageBackground>
+                
+                {/* Optional label below button - always reserve space if optionalLabel prop exists */}
+                {optionalLabel !== undefined && (
+                    <Text style={styles.optionalLabel}>
+                        {optionalLabel}
+                    </Text>
+                )}
             </Animated.View>
         </Pressable>
     );
@@ -173,5 +182,16 @@ const styles = StyleSheet.create({
     },
     disabledText: {
         color: '#aaa',
+    },
+    optionalLabel: {
+        fontFamily: 'Cinzel-Regular',
+        fontSize: 11,
+        color: '#FFD700',
+        textAlign: 'center',
+        marginTop: 4,
+        textShadowColor: 'rgba(0, 0, 0, 0.8)',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 2,
+        minHeight: 16, // Ensure consistent height even for empty strings
     },
 });

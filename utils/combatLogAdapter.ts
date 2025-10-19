@@ -1,6 +1,40 @@
 import { CombatActor, CombatLogV2, FrameQueueItem } from '@/types/combatV2';
 
 /**
+ * Converts v2-lean format to v2-frames format
+ */
+function convertLeanToFrames(leanLog: any): CombatLogV2 {
+  const frames: any[] = [];
+  
+  leanLog.rounds.forEach((round: any) => {
+    round.actions.forEach((action: any) => {
+      // Process each frame in the action
+      action.frames.forEach((frame: any) => {
+        frames.push({
+          ...frame,
+          actionId: action.actionId,
+          actorId: action.actorId,
+          ability: action.ability,
+          targets: action.targets,
+          tags: action.tags,
+        });
+      });
+    });
+    
+    // Add end frames
+    round.endFrames.forEach((frame: any) => {
+      frames.push(frame);
+    });
+  });
+  
+  return {
+    ...leanLog,
+    version: 'v2-frames',
+    frames,
+  };
+}
+
+/**
  * Converts a v2-lean combat log into a flat queue of renderable frames
  * in the exact order they should be displayed
  */
@@ -8,17 +42,20 @@ export function adaptCombatLogToFrameQueue(log: CombatLogV2): {
   queue: FrameQueueItem[];
   actors: Map<string, CombatActor>;
 } {
+  // Convert v2-lean to v2-frames if needed
+  const framesLog = log.version === 'v2-lean' ? convertLeanToFrames(log) : log;
+  
   const queue: FrameQueueItem[] = [];
   const actors = new Map<string, CombatActor>();
   let actionCounter = 0; // Track action count across all rounds
   
   // Build actors map
-  log.actors.forEach(actor => {
+  framesLog.actors.forEach(actor => {
     actors.set(actor.id, actor);
   });
   
   // Process each round
-  log.rounds.forEach(round => {
+  framesLog.rounds.forEach(round => {
     // Check if this round has an end_battle frame
     const hasEndBattle = round.endFrames.some(frame => frame.type === 'end_battle');
     
@@ -27,6 +64,7 @@ export function adaptCombatLogToFrameQueue(log: CombatLogV2): {
       actionCounter++; // Increment for each action
       action.frames.forEach((frame, frameIndex) => {
         const frameId = `${action.actionId}_frame_${frameIndex}`;
+        
         
         // Convert hpBefore/hpAfter from results to a single hpAfter object
         const hpAfter: Record<string, number> = {};
@@ -49,6 +87,30 @@ export function adaptCombatLogToFrameQueue(log: CombatLogV2): {
           ability: action.ability, // Include ability information
           actionIndex: actionCounter, // Include action index
         });
+        
+        // Create death frame if this action kills someone
+        if (frame.type === 'action' && frame.results) {
+          frame.results.forEach(result => {
+            if (result.kill || result.hpAfter <= 0) {
+              queue.push({
+                id: `${frameId}_death`,
+                type: 'death',
+                actorId: action.actorId,
+                targets: [result.targetId],
+                payload: {
+                  type: 'death',
+                  targets: [result.targetId],
+                  cause: action.ability,
+                },
+                hpAfter: { [result.targetId]: 0 },
+                isRoundBoundary: false,
+                roundNumber: round.roundNumber,
+                ability: action.ability,
+                actionIndex: actionCounter,
+              });
+            }
+          });
+        }
       });
     });
     
