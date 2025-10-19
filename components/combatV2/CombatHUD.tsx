@@ -1,8 +1,8 @@
 import { buildHeadLayers } from '@/components/character/CharacterFullPreview.helpers';
 import IdleHead from '@/components/ui/IdleHead';
 import { usePlayerStore } from '@/store/playerStore';
-import { CombatHUDProps } from '@/types/combatV2';
-import React, { useEffect, useRef, useState } from 'react';
+import { CombatHUDProps, Effect } from '@/types/combatV2';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import {
     Animated,
     Image,
@@ -13,6 +13,8 @@ import {
     View,
     useWindowDimensions,
 } from 'react-native';
+import { EffectContainer } from './EffectContainer';
+import { FloatingTextItem, FloatingTextManager } from './FloatingTextManager';
 
 type SideProps = {
     name: string;
@@ -22,6 +24,10 @@ type SideProps = {
     align?: 'left' | 'right'; // optional, if you ever mirror
     isPlayer?: boolean; // to determine if we need player head or enemy head
     enemyCode?: string; // enemy code for enemy head
+    effects?: Effect[]; // Current active effects
+    onEffectRemove?: (effectId: string) => void;
+    showEffects?: boolean; // Control when effects are visible
+    floatingTextRef?: React.RefObject<{ addFloatingText: (item: Omit<FloatingTextItem, 'id'>) => void } | null>;
 };
 
 type HpBarProps = {
@@ -180,7 +186,7 @@ export function HpBar({
     );
 }
 
-export function HudSide({ name, curHp, maxHp, ringSrc, isPlayer = false, enemyCode }: SideProps) {
+export function HudSide({ name, curHp, maxHp, ringSrc, isPlayer = false, enemyCode, effects = [], onEffectRemove, showEffects = true, floatingTextRef }: SideProps) {
     const SCREEN_SCALE = useScreenScale(BASE_W);
     const SCREEN_SCALE_FLOAT = useFloatScale(BASE_W);
     const S = (n: number) => Math.round(n * SCREEN_SCALE * UI_SCALE);
@@ -251,6 +257,50 @@ export function HudSide({ name, curHp, maxHp, ringSrc, isPlayer = false, enemyCo
 
     return (
         <View style={styles.side}>
+            {/* Floating text manager - covers the entire HUD area */}
+            {floatingTextRef && (
+                <View
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: S(HUD_W), // Use HUD width instead of PORTRAIT_SIZE
+                        height: S(PORTRAIT_SIZE) + S(HUD_H) + S(HUD_Y_GAP),
+                        zIndex: 1000,
+                        elevation: 1000,
+                        pointerEvents: 'none',
+                    }}
+                >
+                    <FloatingTextManager
+                        ref={floatingTextRef}
+                        containerHeight={S(PORTRAIT_SIZE) + S(HUD_H) + S(HUD_Y_GAP)}
+                        containerWidth={S(HUD_W)} // Use HUD width instead of PORTRAIT_SIZE
+                    />
+                </View>
+            )}
+
+            {/* Effects container - positioned left of avatar for player, right for enemy */}
+            {showEffects && (
+                <View
+                    style={{
+                        position: 'absolute',
+                        top: S(-10), // Move up slightly
+                        [isPlayer ? 'left' : 'right']: S(2), // Left for player, right for enemy
+                        width: S(32),
+                        height: S(PORTRAIT_SIZE),
+                        zIndex: RING_Z + 2,
+                        alignItems: 'center',
+                        justifyContent: 'flex-start',
+                    }}
+                >
+                    <EffectContainer
+                        effects={effects}
+                        maxVisible={2}
+                        onEffectRemove={onEffectRemove}
+                    />
+                </View>
+            )}
+
             {/* Ring (behind) */}
             <Image
                 source={ringSrc}
@@ -400,10 +450,34 @@ export function HudSide({ name, curHp, maxHp, ringSrc, isPlayer = false, enemyCo
     );
 }
 
-export function CombatHUD({ actors, playerId, enemyIds, currentHealth }: CombatHUDProps) {
+export interface CombatHUDRef {
+    addFloatingText: (actorId: string, item: Omit<FloatingTextItem, 'id'>) => void;
+}
+
+export const CombatHUD = forwardRef<CombatHUDRef, CombatHUDProps>(({ actors, playerId, enemyIds, currentHealth, onEffectRemove, showEffects = true }, ref) => {
     const player = actors.get(playerId);
     const enemy = enemyIds.map((id: string) => actors.get(id)).find(Boolean);
+    
+    // Refs for floating text managers
+    const playerFloatingTextRef = useRef<{ addFloatingText: (item: Omit<FloatingTextItem, 'id'>) => void } | null>(null);
+    const enemyFloatingTextRef = useRef<{ addFloatingText: (item: Omit<FloatingTextItem, 'id'>) => void } | null>(null);
+
+    // Expose floating text functionality
+    useImperativeHandle(ref, () => ({
+        addFloatingText: (actorId: string, item: Omit<FloatingTextItem, 'id'>) => {
+            if (actorId === playerId && playerFloatingTextRef.current) {
+                playerFloatingTextRef.current.addFloatingText(item);
+            } else if (enemyIds.includes(actorId) && enemyFloatingTextRef.current) {
+                enemyFloatingTextRef.current.addFloatingText(item);
+            }
+        },
+    }));
+
     if (!player || !enemy) return null;
+
+    const handleEffectRemove = (actorId: string, effectId: string) => {
+        onEffectRemove?.(actorId, effectId);
+    };
 
     return (
         <View
@@ -423,6 +497,10 @@ export function CombatHUD({ actors, playerId, enemyIds, currentHealth }: CombatH
                 maxHp={player.maxHp}
                 ringSrc={require('@/assets/images/character_borders/rank1.png')}
                 isPlayer={true}
+                effects={player.effects || []}
+                onEffectRemove={(effectId) => handleEffectRemove(playerId, effectId)}
+                showEffects={showEffects}
+                floatingTextRef={playerFloatingTextRef}
             />
             <HudSide
                 name={enemy.name}
@@ -431,10 +509,14 @@ export function CombatHUD({ actors, playerId, enemyIds, currentHealth }: CombatH
                 ringSrc={require('@/assets/images/character_borders/enemy_low.png')}
                 isPlayer={false}
                 enemyCode={enemy.code}
+                effects={enemy.effects || []}
+                onEffectRemove={(effectId) => handleEffectRemove(enemy.id, effectId)}
+                showEffects={showEffects}
+                floatingTextRef={enemyFloatingTextRef}
             />
         </View>
     );
-}
+});
 
 const styles = StyleSheet.create({
     container: {

@@ -14,6 +14,15 @@ export interface CombatLogV2 {
   };
 }
 
+export interface Effect {
+  id: string;
+  type: 'buff' | 'debuff';
+  icon: any; // ImageSourcePropType
+  stacks: number;
+  duration: number; // in rounds
+  name: string;
+}
+
 export interface CombatActor {
   id: string;
   name: string;
@@ -25,6 +34,7 @@ export interface CombatActor {
     stacks: number;
     duration: number;
   }>;
+  effects: Effect[]; // Current active effects
   code?: string; // For enemies
 }
 
@@ -174,6 +184,8 @@ export interface CombatHUDProps {
   playerId: string;
   enemyIds: string[];
   currentHealth: Record<string, number>;
+  onEffectRemove?: (actorId: string, effectId: string) => void;
+  showEffects?: boolean; // Control when effects are visible
 }
 
 // Stage props

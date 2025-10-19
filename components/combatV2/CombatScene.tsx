@@ -1,11 +1,12 @@
 import { useCombatState } from '@/hooks/useCombatState';
 import { useFramePlayer } from '@/hooks/useFramePlayer';
 import { CombatLogV2, CombatSpeed } from '@/types/combatV2';
+import { CombatEffectsManager } from '@/utils/combatEffectsManager';
 import { adaptCombatLogToFrameQueue, getEnemyActors, getPlayerActor } from '@/utils/combatLogAdapter';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { CombatActionBar } from './CombatActionBar';
-import { CombatHUD } from './CombatHUD';
+import { CombatHUD, CombatHUDRef } from './CombatHUD';
 import { CombatStage } from './CombatStage';
 import { FixedRoundIndicator } from './FixedRoundIndicator';
 import { VersusOverlay } from './VersusOverlay';
@@ -20,6 +21,8 @@ export function CombatScene({ combatLog, onCombatComplete, onClose }: CombatScen
   const [frameQueue, setFrameQueue] = useState<ReturnType<typeof adaptCombatLogToFrameQueue> | null>(null);
   const [currentHealth, setCurrentHealth] = useState<Record<string, number>>({});
   const [speed, setSpeed] = useState<CombatSpeed>(1);
+  const [effectsManager, setEffectsManager] = useState<CombatEffectsManager | null>(null);
+  const combatHUDRef = useRef<CombatHUDRef>(null);
   
   // Combat state management - use stable frames reference
   const frames = frameQueue?.queue || [];
@@ -30,6 +33,10 @@ export function CombatScene({ combatLog, onCombatComplete, onClose }: CombatScen
     try {
       const queue = adaptCombatLogToFrameQueue(combatLog);
       setFrameQueue(queue);
+      
+      // Initialize effects manager
+      const manager = new CombatEffectsManager(queue.actors);
+      setEffectsManager(manager);
       
       // Initialize health tracking with starting HP
       const healthObject: Record<string, number> = {};
@@ -58,6 +65,68 @@ export function CombatScene({ combatLog, onCombatComplete, onClose }: CombatScen
   // After that, combat should ALWAYS be visible (cards never disappear)
   // Track if combat has ever started to prevent flicker
   const [hasCombatStarted, setHasCombatStarted] = useState(false);
+
+  // Process effects and floating text when frames change - only after combat starts
+  useEffect(() => {
+    if (effectsManager && framePlayer.currentFrame && hasCombatStarted && combatHUDRef.current) {
+      effectsManager.applyFrameEffects(framePlayer.currentFrame);
+      effectsManager.updateActorEffects(frameQueue?.actors || new Map());
+      
+      // Process floating text for current frame
+      const frame = framePlayer.currentFrame;
+      
+      // Handle damage/healing from action frames
+      if (frame.type === 'action' && frame.results) {
+        frame.results.forEach(result => {
+          if (result.amount > 0) {
+            // Damage - center position
+            combatHUDRef.current?.addFloatingText(result.targetId, {
+              text: `-${result.amount}`,
+              type: 'damage',
+              amount: result.amount,
+              position: 'center',
+            });
+          } else if (result.amount < 0) {
+            // Healing - center position
+            combatHUDRef.current?.addFloatingText(result.targetId, {
+              text: `+${Math.abs(result.amount)}`,
+              type: 'healing',
+              amount: Math.abs(result.amount),
+              position: 'center',
+            });
+          }
+          
+          // Handle status applied - left position
+          if (result.statusApplied) {
+            result.statusApplied.forEach(status => {
+              const effectType = status.id === 'bleed' || status.id === 'poison' || status.id === 'weakness' ? 'debuff' : 'buff';
+              combatHUDRef.current?.addFloatingText(result.targetId, {
+                text: `${status.id.toUpperCase()}${status.stacks > 1 ? ` x${status.stacks}` : ''}`,
+                type: effectType,
+                stacks: status.stacks,
+                duration: status.duration,
+                position: 'left',
+              });
+            });
+          }
+        });
+      }
+      
+      // Handle status ticks from round_end frames - right position
+      if (frame.type === 'round_end' && frame.statusTicks) {
+        frame.statusTicks.forEach(tick => {
+          combatHUDRef.current?.addFloatingText(tick.targetId, {
+            text: `-${tick.amount}`,
+            type: 'status_tick',
+            amount: tick.amount,
+            stacks: tick.stacksBefore,
+            duration: tick.durationAfter,
+            position: 'right',
+          });
+        });
+      }
+    }
+  }, [framePlayer.currentFrame, effectsManager, frameQueue?.actors, hasCombatStarted]);
   
   // Update hasCombatStarted when combat begins
   useEffect(() => {
@@ -128,6 +197,13 @@ export function CombatScene({ combatLog, onCombatComplete, onClose }: CombatScen
     // Call the original skip function
     framePlayer.skipToEnd();
   };
+
+  const handleEffectRemove = (actorId: string, effectId: string) => {
+    if (effectsManager) {
+      effectsManager.removeEffect(actorId, effectId);
+      effectsManager.updateActorEffects(frameQueue?.actors || new Map());
+    }
+  };
   
   // Update health when damage frames are processed - only after combat starts
   useEffect(() => {
@@ -172,10 +248,13 @@ export function CombatScene({ combatLog, onCombatComplete, onClose }: CombatScen
     <View style={styles.container}>
       {/* HUD at top */}
       <CombatHUD 
+        ref={combatHUDRef}
         actors={frameQueue.actors}
         playerId={player.id}
         enemyIds={enemies.map(e => e.id)}
         currentHealth={currentHealth}
+        onEffectRemove={handleEffectRemove}
+        showEffects={hasCombatStarted}
       />
       
       {/* Fixed round indicator - only show when combat starts */}

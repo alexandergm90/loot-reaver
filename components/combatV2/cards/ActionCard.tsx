@@ -1,14 +1,16 @@
+import { createEffect } from '@/data/effects';
 import { FrameCardProps } from '@/types/combatV2';
 import * as Haptics from 'expo-haptics';
 import React, { useEffect, useMemo } from 'react';
 import { Dimensions, Image, StyleSheet, Text, View } from 'react-native';
 import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withTiming
+    Easing,
+    useAnimatedStyle,
+    useSharedValue,
+    withSequence,
+    withTiming
 } from 'react-native-reanimated';
+import { PlaceholderIcon } from '../PlaceholderIcon';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -252,20 +254,42 @@ export function ActionCard({ frame, actors, onComplete, speed }: FrameCardProps)
   const abilityType = frame.ability || 'slashes';
   const abilityImage = abilityImageMap[abilityType];
 
-  // Extract applied debuffs from results
-  const appliedDebuffs = useMemo(() => {
-    const debuffs: string[] = [];
+  // Extract applied effects from results
+  const appliedEffects = useMemo(() => {
+    const effects: Array<{ id: string; stacks: number; duration: number }> = [];
     (frame.results || []).forEach(result => {
       if (result.statusApplied) {
         result.statusApplied.forEach(status => {
-          if (status.id === 'bleed' && !debuffs.includes('bleed')) {
-            debuffs.push('bleed');
+          const existingIndex = effects.findIndex(e => e.id === status.id);
+          if (existingIndex >= 0) {
+            // Stack existing effect
+            effects[existingIndex].stacks += status.stacks;
+            effects[existingIndex].duration = Math.max(effects[existingIndex].duration, status.duration);
+          } else {
+            // Add new effect
+            effects.push({
+              id: status.id,
+              stacks: status.stacks,
+              duration: status.duration,
+            });
           }
         });
       }
     });
-    return debuffs;
+    return effects;
   }, [frame.results]);
+
+  // Extract applied debuffs from results (for backward compatibility)
+  const appliedDebuffs = useMemo(() => {
+    const debuffs: string[] = [];
+    appliedEffects.forEach(effect => {
+      const effectDef = createEffect(effect.id);
+      if (effectDef?.type === 'debuff' && !debuffs.includes(effect.id)) {
+        debuffs.push(effect.id);
+      }
+    });
+    return debuffs;
+  }, [appliedEffects]);
 
   const cardDuration = speed === 0 ? 0 : Math.max(900, Math.round(2400 / speed));
 
@@ -415,22 +439,40 @@ export function ActionCard({ frame, actors, onComplete, speed }: FrameCardProps)
           <Text style={styles.damageLabel}> DAMAGE</Text>
         </View>
 
-        {/* Debuff icons */}
-        {appliedDebuffs.length > 0 && (
-          <View style={styles.debuffsRow}>
-            {appliedDebuffs.map((debuffType, index) => {
-              const debuffImage = debuffImageMap[debuffType];
-              return debuffImage ? (
-                <Image
-                  key={index}
-                  source={debuffImage}
-                  style={styles.debuffIcon}
-                  resizeMode="contain"
-                />
-              ) : null;
+        {/* Status ticks from round_end frames */}
+        {frame.type === 'round_end' && frame.statusTicks && frame.statusTicks.length > 0 && (
+          <View style={styles.statusTicksRow}>
+            {frame.statusTicks.map((tick, index) => {
+              const effectDef = createEffect(tick.status);
+              if (!effectDef) return null;
+              
+              return (
+                <View key={`${tick.status}-${index}`} style={styles.statusTickContainer}>
+                  {typeof effectDef.icon === 'string' ? (
+                    <PlaceholderIcon
+                      name={effectDef.name}
+                      type={effectDef.type}
+                      size={32}
+                    />
+                  ) : (
+                    <Image
+                      source={effectDef.icon}
+                      style={styles.statusTickIcon}
+                      resizeMode="contain"
+                    />
+                  )}
+                  <Text style={styles.statusTickAmount}>-{tick.amount}</Text>
+                  {tick.stacksBefore > 1 && (
+                    <Text style={styles.statusTickStacks}>{tick.stacksBefore}×</Text>
+                  )}
+                  {tick.durationAfter > 0 && (
+                    <Text style={styles.statusTickDuration}>{tick.durationAfter}</Text>
+                  )}
+                </View>
+              );
             })}
-            </View>
-          )}
+          </View>
+        )}
         </View>
       </Animated.View>
       </View>
@@ -534,17 +576,94 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 0.5 },
     textShadowRadius: 1,
   },
-  debuffsRow: {
+  effectsRow: {
     marginTop: CARD_H * 0.001, // Moved up above damage
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
     width: '100%',
     paddingLeft: CARD_W * 0.25, // Add left padding to start from left side
+    flexWrap: 'wrap',
   },
-  debuffIcon: {
-    width: 40,
-    height: 40,
-    marginRight: 8, // Space between debuffs
+  effectIconContainer: {
+    position: 'relative',
+    marginRight: 8, // Space between effects
+    marginBottom: 4,
+  },
+  effectIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  effectStackText: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    borderRadius: 6,
+    paddingHorizontal: 2,
+    paddingVertical: 1,
+    fontFamily: 'Cinzel-Bold',
+    fontWeight: '700',
+    fontSize: 8,
+    color: COLORS.goldText,
+    textShadowColor: 'rgba(0,0,0,0.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
+    minWidth: 10,
+    textAlign: 'center',
+  },
+  statusTicksRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 8,
+  },
+  statusTickContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  statusTickIcon: {
+    width: 32,
+    height: 32,
+  },
+  statusTickAmount: {
+    position: 'absolute',
+    bottom: -8,
+    left: '50%',
+    transform: [{ translateX: -20 }],
+    fontFamily: 'Cinzel-Bold',
+    fontWeight: '700',
+    fontSize: 12,
+    color: '#FF6B6B',
+    textShadowColor: 'rgba(0,0,0,0.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  statusTickStacks: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    fontFamily: 'Cinzel-Bold',
+    fontWeight: '700',
+    fontSize: 9,
+    color: '#FFD700',
+    textShadowColor: 'rgba(0,0,0,0.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
+  },
+  statusTickDuration: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    fontFamily: 'Cinzel-Bold',
+    fontWeight: '700',
+    fontSize: 9,
+    color: '#FFD700',
+    textShadowColor: 'rgba(0,0,0,0.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
   },
 });

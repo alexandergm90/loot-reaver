@@ -34,7 +34,9 @@ export function adaptCombatResultToV2(combatResult: CombatResult): CombatLogV2 {
           name: entity.name,
           isPlayer: entity.isPlayer,
           maxHp: entity.maxHp,
-          hp: entity.currentHp,
+          startHp: entity.currentHp,
+          statuses: [], // Initialize empty statuses array
+          effects: [], // Initialize empty effects array
           code: entity.code,
         };
         actors.push(actor);
@@ -49,35 +51,23 @@ export function adaptCombatResultToV2(combatResult: CombatResult): CombatLogV2 {
       // Convert action to v2 frames
       const frames: CombatFrame[] = [];
       
-      // Attack frame
+      // Single action frame with all results
       frames.push({
-        type: 'attack',
+        type: 'action',
+        results: [{
+          targetId: action.targetId,
+          amount: action.damage,
+          crit: action.crit,
+          hpBefore: action.targetHpBefore,
+          hpAfter: action.targetHpAfter,
+          kill: action.kill,
+          statusApplied: action.statusApplied?.map(status => ({
+            id: status.id || 'unknown',
+            stacks: status.stacks || 1,
+            duration: status.duration || 1,
+          })),
+        }],
       });
-      
-      // Damage frame
-      frames.push({
-        type: 'damage',
-        amount: action.damage,
-        crit: action.crit,
-        hpBefore: { [action.targetId]: action.targetHpBefore },
-        hpAfter: { [action.targetId]: action.targetHpAfter },
-        kill: action.kill,
-      });
-      
-      // Status frames (if any)
-      if (action.statusApplied && action.statusApplied.length > 0) {
-        action.statusApplied.forEach(status => {
-          frames.push({
-            type: 'status_apply',
-            targetId: action.targetId,
-            status: {
-              id: status.id || 'unknown',
-              stacks: status.stacks || 1,
-              duration: status.duration || 1,
-            },
-          });
-        });
-      }
       
       // Death frame (if kill)
       if (action.kill) {
@@ -102,7 +92,7 @@ export function adaptCombatResultToV2(combatResult: CombatResult): CombatLogV2 {
     // End frames for the round
     const endFrames: CombatFrame[] = [
       {
-        type: 'end_round',
+        type: 'round_end',
         roundNumber: round.roundNumber,
       },
     ];
