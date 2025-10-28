@@ -1,7 +1,7 @@
 import { CharacterAppearance } from '@/types/player';
 import React, { useCallback, useMemo, useState } from 'react';
 import { LayoutChangeEvent, Platform, StyleSheet, View } from 'react-native';
-import Animated, { Easing, runOnUI, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { buildEquipmentGroups, buildHeadLayers, computeAutoOffsetX, EquippedMap } from './CharacterFullPreview.helpers';
 
 // EquippedMap is imported from helpers
@@ -57,73 +57,8 @@ const CharacterFullPreview: React.FC<Props> = ({
     const rightHandY = useSharedValue(0);
     const feetY = useSharedValue(0);
 
-    // Small randomization for more organic motion
-    const rand = React.useCallback((min: number, max: number) => min + Math.random() * (max - min), []);
-    const motion = React.useMemo(() => ({
-        parentBobDur: Math.round(rand(1300, 1700)),
-        parentRotDur: Math.round(rand(1200, 1550)),
-        parentBreathDur: Math.round(rand(1400, 2000)),
-        parentSideDur: Math.round(rand(1500, 1800)),
-        parentYAmp: rand(0.6, 1.2),
-        parentRAmp: rand(0.5, 0.9),
-        parentXAmt: rand(0.4, 1.0),
-        breathAmp: rand(0.004, 0.010),
-        delayHead: Math.round(rand(0, 250)),
-        delayHands: Math.round(rand(120, 300)),
-        delayFeet: Math.round(rand(80, 260)),
-    }), [rand]);
-
-    React.useEffect(() => {
-        runOnUI(() => {
-            'worklet';
-            const m = motion; // capture
-
-            bodyY.value = headY.value = headR.value = rightHandX.value = rightHandY.value = feetY.value = 0;
-            parentY.value = 0; parentX.value = 0; parentR.value = 0; parentS.value = 1;
-
-            parentY.value = withRepeat(withSequence(
-                withTiming(-m.parentYAmp, { duration: m.parentBobDur, easing: Easing.inOut(Easing.sin) }),
-                withTiming(m.parentYAmp,  { duration: m.parentBobDur, easing: Easing.inOut(Easing.sin) }),
-            ), -1, true);
-            parentX.value = withRepeat(withSequence(
-                withTiming(-m.parentXAmt, { duration: m.parentSideDur, easing: Easing.inOut(Easing.sin) }),
-                withTiming(m.parentXAmt,  { duration: m.parentSideDur, easing: Easing.inOut(Easing.sin) }),
-            ), -1, true);
-            parentR.value = withRepeat(withSequence(
-                withTiming(m.parentRAmp,  { duration: m.parentRotDur, easing: Easing.inOut(Easing.ease) }),
-                withTiming(-m.parentRAmp, { duration: m.parentRotDur, easing: Easing.inOut(Easing.ease) }),
-            ), -1, true);
-            parentS.value = withRepeat(withSequence(
-                withTiming(1 + m.breathAmp, { duration: m.parentBreathDur, easing: Easing.inOut(Easing.sin) }),
-                withTiming(1 - m.breathAmp, { duration: m.parentBreathDur, easing: Easing.inOut(Easing.sin) }),
-            ), -1, true);
-
-            bodyY.value = withDelay(m.delayHands, withRepeat(withSequence(
-                withTiming(-0.6, { duration: 1400, easing: Easing.inOut(Easing.sin) }),
-                withTiming(0.6,  { duration: 1400, easing: Easing.inOut(Easing.sin) }),
-            ), -1, true));
-            headY.value = withDelay(m.delayHead, withRepeat(withSequence(
-                withTiming(0.9,  { duration: 900, easing: Easing.inOut(Easing.quad) }),
-                withTiming(-0.9, { duration: 900, easing: Easing.inOut(Easing.quad) }),
-            ), -1, true));
-            headR.value = withDelay(m.delayHead, withRepeat(withSequence(
-                withTiming(0.9, { duration: 1100 }),
-                withTiming(-0.9, { duration: 1100 }),
-            ), -1, true));
-            rightHandX.value = withDelay(m.delayHands, withRepeat(withSequence(
-                withTiming(1.8, { duration: 1000, easing: Easing.inOut(Easing.quad) }),
-                withTiming(-1.8,{ duration: 1000, easing: Easing.inOut(Easing.quad) }),
-            ), -1, true));
-            rightHandY.value = withDelay(m.delayHands, withRepeat(withSequence(
-                withTiming(1.1,  { duration: 1000 }),
-                withTiming(-1.1, { duration: 1000 }),
-            ), -1, true));
-            feetY.value = withDelay(m.delayFeet, withRepeat(withSequence(
-                withTiming(0.5,  { duration: 1600, easing: Easing.inOut(Easing.sin) }),
-                withTiming(-0.5, { duration: 1600, easing: Easing.inOut(Easing.sin) }),
-            ), -1, true));
-        })();
-    }, [motion]);
+    // All animations disabled - character remains static
+    // All shared values remain at their default 0 values, keeping the character static
 
     // ---------- computed styles ----------
     const outerStyle = useMemo(() => {
