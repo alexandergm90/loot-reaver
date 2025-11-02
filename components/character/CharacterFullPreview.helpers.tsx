@@ -31,6 +31,22 @@ export const buildHeadLayers = (appearance: CharacterAppearance | null | undefin
     ));
 };
 
+export const buildBodyLayers = (appearance: CharacterAppearance | null | undefined) => {
+    if (!appearance) return null;
+    const gender = appearance.gender;
+    const bodyData = characterAssets[gender]?.body?.[appearance.skinTone];
+    
+    if (!bodyData) return null;
+    
+    // Render arms first (behind), then body (on top)
+    // Left arm, body, right arm
+    return [
+        <Image key="body_left_arm" source={bodyData.left_arm.source} style={getAssetStyle(bodyData.left_arm.width, bodyData.left_arm.height, bodyData.left_arm.top, bodyData.left_arm.left)} resizeMode="contain" />,
+        <Image key="body_torso" source={bodyData.body.source} style={getAssetStyle(bodyData.body.width, bodyData.body.height, bodyData.body.top, bodyData.body.left)} resizeMode="contain" />,
+        <Image key="body_right_arm" source={bodyData.right_arm.source} style={getAssetStyle(bodyData.right_arm.width, bodyData.right_arm.height, bodyData.right_arm.top, bodyData.right_arm.left)} resizeMode="contain" />,
+    ];
+};
+
 export const buildEquipmentGroups = (equipment: EquippedMap | null | undefined) => {
     const g: Record<string, React.ReactNode[]> = { back: [], body: [], feet: [], weapon: [], hands: [] };
     if (!equipment) return g;

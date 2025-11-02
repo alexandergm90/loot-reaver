@@ -102,6 +102,9 @@ export default function StyledHomeMockup(){
 						appearance={player?.character?.appearance || null}
 						containerHeight={300}
 						equipment={equipment}
+						headScale={0.9}
+						headOffsetX={-10}
+						headOffsetY={-5}
 					/>
 				</View>
 

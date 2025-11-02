@@ -19,6 +19,12 @@ export type CharacterAsset = {
     previewColor?: string;
 };
 
+export type BodyAssets = {
+    body: CharacterAsset;
+    left_arm: CharacterAsset;
+    right_arm: CharacterAsset;
+};
+
 export type CharacterAssets = {
     male: {
         head: Record<string, CharacterAsset>;
@@ -27,6 +33,7 @@ export type CharacterAssets = {
         beards: Record<string, CharacterAsset>;
         mouth: Record<string, CharacterAsset>;
         markings: Record<string, CharacterAsset>;
+        body?: Record<string, BodyAssets>;
     };
     female: {
         head: Record<string, CharacterAsset>;
@@ -34,5 +41,6 @@ export type CharacterAssets = {
         hair: Record<string, CharacterAsset>;
         mouth: Record<string, CharacterAsset>;
         markings: Record<string, CharacterAsset>;
+        body?: Record<string, BodyAssets>;
     };
 };

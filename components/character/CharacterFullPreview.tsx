@@ -2,7 +2,7 @@ import { CharacterAppearance } from '@/types/player';
 import React, { useCallback, useMemo, useState } from 'react';
 import { LayoutChangeEvent, Platform, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
-import { buildEquipmentGroups, buildHeadLayers, computeAutoOffsetX, EquippedMap } from './CharacterFullPreview.helpers';
+import { buildBodyLayers, buildEquipmentGroups, buildHeadLayers, computeAutoOffsetX, EquippedMap } from './CharacterFullPreview.helpers';
 
 // EquippedMap is imported from helpers
 
@@ -15,6 +15,11 @@ type Props = {
     /** If you pass a fixed height, we’ll honor it; otherwise we stretch. */
     containerHeight?: number;
     containerLeftPercent?: number;
+    /** Scale multiplier for the head group only (1 = 100%) */
+    headScale?: number;
+    /** Optional absolute pixel nudges for head only */
+    headOffsetX?: number;
+    headOffsetY?: number;
 };
 
 const BASE_CANVAS = 300;
@@ -25,6 +30,9 @@ const CharacterFullPreview: React.FC<Props> = ({
                                                    appearance, equipment = null,
                                                    offsetX = 0, offsetY = 0,
                                                    containerHeight, containerLeftPercent,
+                                                   headScale = 1,
+                                                   headOffsetX = 0,
+                                                   headOffsetY = 0,
                                                }) => {
     // ---- measure the actual box we’re given
     const [box, setBox] = useState<{ w: number; h: number } | null>(null);
@@ -91,12 +99,13 @@ const CharacterFullPreview: React.FC<Props> = ({
         ],
     }));
     const bodyStyle = useAnimatedStyle(() => ({ transform: [{ translateY: bodyY.value }] }));
-    const headStyle = useAnimatedStyle(() => ({ transform: [{ translateY: headY.value }, { rotateZ: `${headR.value}deg` }] }));
+    const headStyle = useAnimatedStyle(() => ({ transform: [{ translateX: headOffsetX }, { translateY: headOffsetY + headY.value }, { rotateZ: `${headR.value}deg` }, { scale: headScale }] }));
     const rightHandStyle = useAnimatedStyle(() => ({ transform: [{ translateX: rightHandX.value }, { translateY: rightHandY.value }] }));
     const feetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: feetY.value }] }));
 
     // ---------- head layers ----------
     const headLayers = useMemo(() => buildHeadLayers(appearance), [appearance]);
+    const bodyLayers = useMemo(() => buildBodyLayers(appearance), [appearance]);
 
     const groups = useMemo(() => buildEquipmentGroups(equipment), [equipment]);
 
@@ -109,10 +118,13 @@ const CharacterFullPreview: React.FC<Props> = ({
             <Animated.View style={[styles.stack, { width: BASE_CANVAS, height: BASE_CANVAS, transform: [{ scale: scaleToFit }] }]} collapsable={false}>
                 {/* inner wrapper receives combined centering and animations */}
                 <Animated.View style={[styles.layersWrapper, combinedStyle]} collapsable={false}>
-                    <Animated.View style={[styles.layer, bodyStyle]} collapsable={false}>{groups.back}{groups.body}</Animated.View>
-                    <Animated.View style={[styles.layer, feetStyle]} collapsable={false}>{groups.feet}</Animated.View>
-                    <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.weapon}</Animated.View>
-                    <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.hands}</Animated.View>
+                    {/* Equipment temporarily hidden to position body parts */}
+                    {/* <Animated.View style={[styles.layer]} collapsable={false}>{groups.back}</Animated.View> */}
+                    <Animated.View style={[styles.layer, bodyStyle]} collapsable={false}>{bodyLayers}</Animated.View>
+                    {/* <Animated.View style={[styles.layer]} collapsable={false}>{groups.body}</Animated.View> */}
+                    {/* <Animated.View style={[styles.layer, feetStyle]} collapsable={false}>{groups.feet}</Animated.View> */}
+                    {/* <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.weapon}</Animated.View> */}
+                    {/* <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.hands}</Animated.View> */}
                     <Animated.View style={[styles.layer, headStyle]} collapsable={false}>{headLayers}</Animated.View>
                 </Animated.View>
             </Animated.View>

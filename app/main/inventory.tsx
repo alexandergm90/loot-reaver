@@ -101,6 +101,7 @@ export default function InventoryScreen() {
                         appearance={player?.character?.appearance || null}
                         containerHeight={300}
                         equipment={equipmentCodes}
+                        headScale={0.9}
                     />
                     {/* Equipped Slots Around Character */}
                     <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}>
