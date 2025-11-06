@@ -26,7 +26,7 @@ export default function MainLayout() {
     // Normal layout for other pages with global background
     return (
         <FullScreenBackground
-            backgroundImage={require('@/assets/images/parchment_texture_orange.png')}
+            backgroundImage={require('@/assets/images/runed_rock.png')}
             backgroundColor="#111"
         >
             <SafeAreaView style={{ flex: 1 }}>

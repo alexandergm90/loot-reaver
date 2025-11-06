@@ -1,5 +1,5 @@
 import React from 'react';
-import { ImageBackground, StyleSheet, View, ViewStyle } from 'react-native';
+import { Dimensions, ImageBackground, StyleSheet, View, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface FullScreenBackgroundProps {
@@ -16,14 +16,15 @@ export default function FullScreenBackground({
   contentStyle,
 }: FullScreenBackgroundProps) {
   const insets = useSafeAreaInsets();
+  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
       {backgroundImage && (
         <ImageBackground
           source={backgroundImage}
-          style={StyleSheet.absoluteFill}
-          imageStyle={{ resizeMode: 'cover' }}
+          style={[StyleSheet.absoluteFill, { width: screenWidth, height: screenHeight }]}
+          resizeMode="cover"
         />
       )}
       <View style={[

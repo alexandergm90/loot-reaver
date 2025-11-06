@@ -290,8 +290,282 @@ export const bodyAssets: Record<'male' | 'female', Record<string, BodyAssets>> =
         },
     },
     female: {
-        // Female body assets can be added here when they become available
-        // light3: { ... }
+        light1: {
+            body: {
+                source: require('@/assets/images/character/female/body/skin/light1/body.png'),
+                width: 188, // TODO: Measure actual image dimensions
+                height: 388, // TODO: Measure actual image dimensions
+                top: 74, // Positioned below head (head height is 109)
+                left: -25, // TODO: Center based on actual dimensions
+            },
+            left_arm: {
+                source: require('@/assets/images/character/female/body/skin/light1/left_arm.png'),
+                width: 38, // TODO: Measure actual image dimensions
+                height: 50, // TODO: Measure actual image dimensions
+                top: 227, // Aligned with body
+                left: -25, // TODO: Position based on actual dimensions
+            },
+            right_arm: {
+                source: require('@/assets/images/character/female/body/skin/light1/right_arm.png'),
+                width: 38, // TODO: Measure actual image dimensions
+                height: 45, // TODO: Measure actual image dimensions
+                top: 235, // Aligned with body
+                left: 134, // TODO: Position based on actual dimensions
+            },
+        },
+        light2: {
+            body: {
+                source: require('@/assets/images/character/female/body/skin/light2/body.png'),
+                width: 188, // TODO: Measure actual image dimensions
+                height: 388, // TODO: Measure actual image dimensions
+                top: 74, // Positioned below head (head height is 109)
+                left: -25, // TODO: Center based on actual dimensions
+            },
+            left_arm: {
+                source: require('@/assets/images/character/female/body/skin/light2/left_arm.png'),
+                width: 38, // TODO: Measure actual image dimensions
+                height: 50, // TODO: Measure actual image dimensions
+                top: 227, // Aligned with body
+                left: -25, // TODO: Position based on actual dimensions
+            },
+            right_arm: {
+                source: require('@/assets/images/character/female/body/skin/light2/right_arm.png'),
+                width: 38, // TODO: Measure actual image dimensions
+                height: 45, // TODO: Measure actual image dimensions
+                top: 235, // Aligned with body
+                left: 134, // TODO: Position based on actual dimensions
+            },
+        },
+        light3: {
+            body: {
+                source: require('@/assets/images/character/female/body/skin/light3/body.png'),
+                width: 190, // TODO: Measure actual image dimensions
+                height: 388, // TODO: Measure actual image dimensions
+                top: 74, // Positioned below head (head height is 109)
+                left: -25, // TODO: Center based on actual dimensions
+            },
+            left_arm: {
+                source: require('@/assets/images/character/female/body/skin/light3/left_arm.png'),
+                width: 39, // TODO: Measure actual image dimensions
+                height: 48, // TODO: Measure actual image dimensions
+                top: 227, // Aligned with body
+                left: -25, // TODO: Position based on actual dimensions
+            },
+            right_arm: {
+                source: require('@/assets/images/character/female/body/skin/light3/right_arm.png'),
+                width: 38, // TODO: Measure actual image dimensions
+                height: 45, // TODO: Measure actual image dimensions
+                top: 235, // Aligned with body
+                left: 134, // TODO: Position based on actual dimensions
+            },
+        },
+        light4: {
+            body: {
+                source: require('@/assets/images/character/female/body/skin/light4/body.png'),
+                width: 190, // TODO: Measure actual image dimensions
+                height: 388, // TODO: Measure actual image dimensions
+                top: 74, // Positioned below head (head height is 109)
+                left: -25, // TODO: Center based on actual dimensions
+            },
+            left_arm: {
+                source: require('@/assets/images/character/female/body/skin/light4/left_arm.png'),
+                width: 39, // TODO: Measure actual image dimensions
+                height: 48, // TODO: Measure actual image dimensions
+                top: 227, // Aligned with body
+                left: -25, // TODO: Position based on actual dimensions
+            },
+            right_arm: {
+                source: require('@/assets/images/character/female/body/skin/light4/right_arm.png'),
+                width: 38, // TODO: Measure actual image dimensions
+                height: 45, // TODO: Measure actual image dimensions
+                top: 235, // Aligned with body
+                left: 134, // TODO: Position based on actual dimensions
+            },
+        },
+        light5: {
+            body: {
+                source: require('@/assets/images/character/female/body/skin/light5/body.png'),
+                width: 190, // TODO: Measure actual image dimensions
+                height: 388, // TODO: Measure actual image dimensions
+                top: 75, // Positioned below head (head height is 109)
+                left: -27, // TODO: Center based on actual dimensions
+            },
+            left_arm: {
+                source: require('@/assets/images/character/female/body/skin/light5/left_arm.png'),
+                width: 39, // TODO: Measure actual image dimensions
+                height: 48, // TODO: Measure actual image dimensions
+                top: 230, // Aligned with body
+                left: -25, // TODO: Position based on actual dimensions
+            },
+            right_arm: {
+                source: require('@/assets/images/character/female/body/skin/light5/right_arm.png'),
+                width: 38, // TODO: Measure actual image dimensions
+                height: 45, // TODO: Measure actual image dimensions
+                top: 233, // Aligned with body
+                left: 132, // TODO: Position based on actual dimensions
+            },
+        },
+        light6: {
+            body: {
+                source: require('@/assets/images/character/female/body/skin/light6/body.png'),
+                width: 189, // TODO: Measure actual image dimensions
+                height: 388, // TODO: Measure actual image dimensions
+                top: 74, // Positioned below head (head height is 109)
+                left: -26, // TODO: Center based on actual dimensions
+            },
+            left_arm: {
+                source: require('@/assets/images/character/female/body/skin/light6/left_arm.png'),
+                width: 39, // TODO: Measure actual image dimensions
+                height: 50, // TODO: Measure actual image dimensions
+                top: 228, // Aligned with body
+                left: -26, // TODO: Position based on actual dimensions
+            },
+            right_arm: {
+                source: require('@/assets/images/character/female/body/skin/light6/right_arm.png'),
+                width: 40, // TODO: Measure actual image dimensions
+                height: 51, // TODO: Measure actual image dimensions
+                top: 234, // Aligned with body
+                left: 134, // TODO: Position based on actual dimensions
+            },
+        },
+        blue: {
+            body: {
+                source: require('@/assets/images/character/female/body/skin/blue/body.png'),
+                width: 185, // TODO: Measure actual image dimensions
+                height: 388, // TODO: Measure actual image dimensions
+                top: 75, // Positioned below head (head height is 109)
+                left: -25, // TODO: Center based on actual dimensions
+            },
+            left_arm: {
+                source: require('@/assets/images/character/female/body/skin/blue/left_arm.png'),
+                width: 41, // TODO: Measure actual image dimensions
+                height: 46, // TODO: Measure actual image dimensions
+                top: 231, // Aligned with body
+                left: -25, // TODO: Position based on actual dimensionsnpm
+            },
+            right_arm: {
+                source: require('@/assets/images/character/female/body/skin/blue/right_arm.png'),
+                width: 37, // TODO: Measure actual image dimensions
+                height: 51, // TODO: Measure actual image dimensions
+                top: 229, // Aligned with body
+                left: 131, // TODO: Position based on actual dimensions
+            },
+        },
+        red: {
+            body: {
+                source: require('@/assets/images/character/female/body/skin/red/body.png'),
+                width: 189, // TODO: Measure actual image dimensions
+                height: 388, // TODO: Measure actual image dimensions
+                top: 74, // Positioned below head (head height is 109)
+                left: -26, // TODO: Center based on actual dimensions
+            },
+            left_arm: {
+                source: require('@/assets/images/character/female/body/skin/red/left_arm.png'),
+                width: 39, // TODO: Measure actual image dimensions
+                height: 50, // TODO: Measure actual image dimensions
+                top: 228, // Aligned with body
+                left: -26, // TODO: Position based on actual dimensions
+            },
+            right_arm: {
+                source: require('@/assets/images/character/female/body/skin/red/right_arm.png'),
+                width: 40, // TODO: Measure actual image dimensions
+                height: 51, // TODO: Measure actual image dimensions
+                top: 234, // Aligned with body
+                left: 134, // TODO: Position based on actual dimensions
+            },
+        },
+        purple: {
+            body: {
+                source: require('@/assets/images/character/female/body/skin/purple/body.png'),
+                width: 189, // TODO: Measure actual image dimensions
+                height: 388, // TODO: Measure actual image dimensions
+                top: 74, // Positioned below head (head height is 109)
+                left: -26, // TODO: Center based on actual dimensions
+            },
+            left_arm: {
+                source: require('@/assets/images/character/female/body/skin/purple/left_arm.png'),
+                width: 39, // TODO: Measure actual image dimensions
+                height: 50, // TODO: Measure actual image dimensions
+                top: 230, // Aligned with body
+                left: -26, // TODO: Position based on actual dimensions
+            },
+            right_arm: {
+                source: require('@/assets/images/character/female/body/skin/purple/right_arm.png'),
+                width: 40, // TODO: Measure actual image dimensions
+                height: 51, // TODO: Measure actual image dimensions
+                top: 234, // Aligned with body
+                left: 134, // TODO: Position based on actual dimensions
+            },
+        },
+        green: {
+            body: {
+                source: require('@/assets/images/character/female/body/skin/green/body.png'),
+                width: 189, // TODO: Measure actual image dimensions
+                height: 388, // TODO: Measure actual image dimensions
+                top: 76, // Positioned below head (head height is 109)
+                left: -25, // TODO: Center based on actual dimensions
+            },
+            left_arm: {
+                source: require('@/assets/images/character/female/body/skin/green/left_arm.png'),
+                width: 39, // TODO: Measure actual image dimensions
+                height: 50, // TODO: Measure actual image dimensions
+                top: 234, // Aligned with body
+                left: -25, // TODO: Position based on actual dimensions
+            },
+            right_arm: {
+                source: require('@/assets/images/character/female/body/skin/green/right_arm.png'),
+                width: 41, // TODO: Measure actual image dimensions
+                height: 49, // TODO: Measure actual image dimensions
+                top: 238, // Aligned with body
+                left: 133, // TODO: Position based on actual dimensions
+            },
+        },
+        celestial: {
+            body: {
+                source: require('@/assets/images/character/female/body/skin/celestial/body.png'),
+                width: 189, // TODO: Measure actual image dimensions
+                height: 388, // TODO: Measure actual image dimensions
+                top: 76, // Positioned below head (head height is 109)
+                left: -25, // TODO: Center based on actual dimensions
+            },
+            left_arm: {
+                source: require('@/assets/images/character/female/body/skin/celestial/left_arm.png'),
+                width: 39, // TODO: Measure actual image dimensions
+                height: 50, // TODO: Measure actual image dimensions
+                top: 231, // Aligned with body
+                left: -25, // TODO: Position based on actual dimensions
+            },
+            right_arm: {
+                source: require('@/assets/images/character/female/body/skin/celestial/right_arm.png'),
+                width: 41, // TODO: Measure actual image dimensions
+                height: 49, // TODO: Measure actual image dimensions
+                top: 236, // Aligned with body
+                left: 133, // TODO: Position based on actual dimensions
+            },
+        },
+        gray: {
+            body: {
+                source: require('@/assets/images/character/female/body/skin/gray/body.png'),
+                width: 192, // TODO: Measure actual image dimensions
+                height: 388, // TODO: Measure actual image dimensions
+                top: 76, // Positioned below head (head height is 109)
+                left: -25, // TODO: Center based on actual dimensions
+            },
+            left_arm: {
+                source: require('@/assets/images/character/female/body/skin/gray/left_arm.png'),
+                width: 39, // TODO: Measure actual image dimensions
+                height: 50, // TODO: Measure actual image dimensions
+                top: 231, // Aligned with body
+                left: -25, // TODO: Position based on actual dimensions
+            },
+            right_arm: {
+                source: require('@/assets/images/character/female/body/skin/gray/right_arm.png'),
+                width: 41, // TODO: Measure actual image dimensions
+                height: 49, // TODO: Measure actual image dimensions
+                top: 236, // Aligned with body
+                left: 133, // TODO: Position based on actual dimensions
+            },
+        },
     },
 };
 

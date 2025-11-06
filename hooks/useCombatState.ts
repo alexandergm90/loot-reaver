@@ -17,8 +17,6 @@ export interface CombatStateMachine {
   transitionTo: (newState: CombatState) => void;
   skipOverlay: () => void;
   isOverlayVisible: boolean;
-  shouldShowRoundToast: boolean;
-  roundToastType: 'start' | 'complete';
   updateFrameIndex: (index: number) => void;
 }
 
@@ -31,8 +29,6 @@ export function useCombatState(
   const [isFirstAction, setIsFirstAction] = useState(true);
   const [isEndOfRound, setIsEndOfRound] = useState(false);
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
-  const [shouldShowRoundToast, setShouldShowRoundToast] = useState(false);
-  const [roundToastType, setRoundToastType] = useState<'start' | 'complete'>('start');
   
   const skipRequestedRef = useRef(false);
   const currentFrameIndexRef = useRef(0);
@@ -118,8 +114,6 @@ export function useCombatState(
     transitionTo,
     skipOverlay,
     isOverlayVisible,
-    shouldShowRoundToast,
-    roundToastType,
     updateFrameIndex,
   };
 }
