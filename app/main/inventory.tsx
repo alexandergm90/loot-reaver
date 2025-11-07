@@ -1,13 +1,11 @@
 import CharacterFullPreview from '@/components/character/CharacterFullPreview';
 import ItemInfoModal from '@/components/ui/ItemInfoModal';
 import SlotChip from '@/components/ui/SlotChip';
-import { ROUTES } from '@/constants/routes';
 import { useEquippedFromCharacter } from '@/hooks/useEquippedFromCharacter';
 import { getPlayerCharacter, getPlayerInventory } from '@/services/playerService';
 import { usePlayerStore } from '@/store/playerStore';
-import { router } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, ImageBackground, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, ImageBackground, Text, View } from 'react-native';
 
 type InventoryItem = {
     id: string;
@@ -87,56 +85,58 @@ export default function InventoryScreen() {
 
     return (
         <View style={{ flex: 1 }}>
-            <View className="px-3 pb-2 pt-1 flex-row items-center justify-between">
-                <Pressable onPress={() => router.push(ROUTES.main.home)} className="rounded-xl border-2 border-stone-900 bg-stone-200 px-3 py-1">
-                    <Text className="font-bold">Back</Text>
-                </Pressable>
-                <Text className="font-extrabold">Inventory</Text>
-                <View style={{ width: 60 }} />
-            </View>
-
-            <View className="px-3">
-                <View className="mt-1 h-[300px] items-center justify-center" collapsable={false}>
-                    <CharacterFullPreview
-                        appearance={player?.character?.appearance || null}
-                        containerHeight={300}
-                        equipment={equipmentCodes}
-                        headScale={0.9}
-                    />
-                    {/* Equipped Slots Around Character */}
-                    <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}>
-                        {/* Top row: Helmet / Body / Cape */}
-                        <View className="absolute left-3 right-3 top-2 flex-row justify-between">
-                            <SlotChip label="Helmet" item={equippedItems.helmet} onPress={setSelectedItem} fallback="Helmet" />
-                            <SlotChip label="Body" item={equippedItems.body} onPress={setSelectedItem} fallback="Body" />
-                            <SlotChip label="Cape" item={equippedItems.cape} onPress={setSelectedItem} fallback="Cape" />
+            <View className="px-3" style={{ flex: 1 }}>
+                <View className="mt-5 items-center justify-center" style={{ overflow: 'hidden' }}>
+                    <ImageBackground
+                        source={require('@/assets/images/equipment/equipment_background.png')}
+                        resizeMode="contain"
+                        style={{ width: '100%', height: 390 }}
+                    >
+                    <View style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 20 }} collapsable={false}>
+                        <View style={{ transform: [{ scale: 0.65 }], marginBottom: -10 }}>
+                            <CharacterFullPreview
+                                appearance={player?.character?.appearance || null}
+                                containerHeight={300}
+                                equipment={equipmentCodes}
+                                headScale={0.9}
+                                headOffsetX={-10}
+                                headOffsetY={-5}
+                            />
                         </View>
-                        {/* Mid sides: Main Hand / Off Hand */}
-                        <View className="absolute left-2 top-[120px]">
-                            <SlotChip label="Main Hand" item={equippedItems.mainHand} onPress={setSelectedItem} fallback="Main Hand" />
-                        </View>
-                        <View className="absolute right-2 top-[120px]">
-                            <SlotChip label="Off Hand" item={equippedItems.offHand} onPress={setSelectedItem} fallback="Off Hand" />
-                        </View>
-                        {/* Hands / Feet */}
-                        <View className="absolute left-2 bottom-[100px]">
-                            <SlotChip label="Hands" item={equippedItems.hands} onPress={setSelectedItem} fallback="Hands" />
-                        </View>
-                        <View className="absolute right-2 bottom-[100px]">
-                            <SlotChip label="Feet" item={equippedItems.feet} onPress={setSelectedItem} fallback="Feet" />
-                        </View>
-                        {/* Bottom: Neck / Ring1 / Ring2 */}
-                        <View className="absolute left-3 right-3 bottom-2 flex-row justify-between">
-                            <SlotChip label="Neck" item={equippedItems.neck} onPress={setSelectedItem} fallback="Neck" />
-                            <SlotChip label="Ring 1" item={equippedItems.ring1} onPress={setSelectedItem} fallback="Ring 1" />
-                            <SlotChip label="Ring 2" item={equippedItems.ring2} onPress={setSelectedItem} fallback="Ring 2" />
+                        {/* Equipped Slots Around Character */}
+                        <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}>
+                            {/* Top row: Helmet / Body / Cape */}
+                            <View className="absolute left-3 right-3 top-2 flex-row justify-between">
+                                <SlotChip label="Helmet" item={equippedItems.helmet} onPress={setSelectedItem} fallback="Helmet" />
+                                <SlotChip label="Body" item={equippedItems.body} onPress={setSelectedItem} fallback="Body" />
+                                <SlotChip label="Cape" item={equippedItems.cape} onPress={setSelectedItem} fallback="Cape" />
+                            </View>
+                            {/* Mid sides: Main Hand / Off Hand */}
+                            <View className="absolute left-2 top-[120px]">
+                                <SlotChip label="Main Hand" item={equippedItems.mainHand} onPress={setSelectedItem} fallback="Main Hand" />
+                            </View>
+                            <View className="absolute right-2 top-[120px]">
+                                <SlotChip label="Off Hand" item={equippedItems.offHand} onPress={setSelectedItem} fallback="Off Hand" />
+                            </View>
+                            {/* Hands / Feet */}
+                            <View className="absolute left-2 bottom-[100px]">
+                                <SlotChip label="Hands" item={equippedItems.hands} onPress={setSelectedItem} fallback="Hands" />
+                            </View>
+                            <View className="absolute right-2 bottom-[100px]">
+                                <SlotChip label="Feet" item={equippedItems.feet} onPress={setSelectedItem} fallback="Feet" />
+                            </View>
+                            {/* Bottom: Neck / Ring1 / Ring2 */}
+                            <View className="absolute left-3 right-3 bottom-2 flex-row justify-between">
+                                <SlotChip label="Neck" item={equippedItems.neck} onPress={setSelectedItem} fallback="Neck" />
+                                <SlotChip label="Ring 1" item={equippedItems.ring1} onPress={setSelectedItem} fallback="Ring 1" />
+                                <SlotChip label="Ring 2" item={equippedItems.ring2} onPress={setSelectedItem} fallback="Ring 2" />
+                            </View>
                         </View>
                     </View>
+                    </ImageBackground>
                 </View>
 
-                <Text className="mt-3 mb-1 font-extrabold">Bag</Text>
-
-                <View className="rounded-2xl border-2 border-stone-900 overflow-hidden">
+                <View className="rounded-2xl border-2 border-stone-900 overflow-hidden mt-3">
                     <ImageBackground
                         source={require('@/assets/images/dark_leather.png')}
                         resizeMode="cover"
@@ -155,7 +155,7 @@ export default function InventoryScreen() {
                                 keyExtractor={(it) => it.id}
                                 numColumns={5}
                                 columnWrapperStyle={{ gap: 8 }}
-                                contentContainerStyle={{ paddingBottom: 16 }}
+                                contentContainerStyle={{ paddingBottom: 100 }}
                                 ListEmptyComponent={<Text className="text-center text-[12px] opacity-70 py-6">No items</Text>}
                                 onEndReachedThreshold={0.5}
                                 renderItem={({ item }) => (

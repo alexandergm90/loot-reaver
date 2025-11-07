@@ -1,7 +1,5 @@
 import CharacterFullPreview from '@/components/character/CharacterFullPreview';
-import { ROUTES } from '@/constants/routes';
 import { usePlayerStore } from '@/store/playerStore';
-import { router } from 'expo-router';
 import React, { useMemo, useState } from "react";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 
@@ -159,24 +157,6 @@ export default function StyledHomeMockup(){
             {/* Footer tiny info */}
 						<Text className="mt-4 mb-24 text-center text-[10px] opacity-60">v0.1.5 • EU Server</Text>
 					</ScrollView>
-				</View>
-
-          {/* Bottom Nav (persistent) */}
-				<View className="absolute bottom-0 left-0 right-0 px-3 pb-4">
-					<View className="rounded-2xl border-2 border-stone-900 bg-transparent px-4 py-2 flex flex-row items-center justify-between">
-						{["Home","Skills","Inventory","Dungeon","Shop","Guild"].map((label)=> {
-							const onPress = () => {
-								if (label === 'Inventory') router.push(ROUTES.main.inventory);
-								if (label === 'Dungeon') router.push(ROUTES.main.dungeon);
-							};
-							return (
-								<Pressable key={label} onPress={onPress} className="flex flex-col items-center">
-									<IconBox className="mb-1"/>
-									<Text className="text-[11px] font-semibold">{label}</Text>
-								</Pressable>
-							);
-						})}
-					</View>
 				</View>
 			</View>
 		</View>

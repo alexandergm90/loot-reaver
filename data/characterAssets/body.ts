@@ -548,21 +548,21 @@ export const bodyAssets: Record<'male' | 'female', Record<string, BodyAssets>> =
                 source: require('@/assets/images/character/female/body/skin/gray/body.png'),
                 width: 192, // TODO: Measure actual image dimensions
                 height: 388, // TODO: Measure actual image dimensions
-                top: 76, // Positioned below head (head height is 109)
+                top: 72, // Positioned below head (head height is 109)
                 left: -25, // TODO: Center based on actual dimensions
             },
             left_arm: {
                 source: require('@/assets/images/character/female/body/skin/gray/left_arm.png'),
                 width: 39, // TODO: Measure actual image dimensions
                 height: 50, // TODO: Measure actual image dimensions
-                top: 231, // Aligned with body
+                top: 227, // Aligned with body
                 left: -25, // TODO: Position based on actual dimensions
             },
             right_arm: {
                 source: require('@/assets/images/character/female/body/skin/gray/right_arm.png'),
                 width: 41, // TODO: Measure actual image dimensions
                 height: 49, // TODO: Measure actual image dimensions
-                top: 236, // Aligned with body
+                top: 232, // Aligned with body
                 left: 133, // TODO: Position based on actual dimensions
             },
         },

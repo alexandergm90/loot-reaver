@@ -13,6 +13,7 @@ import {
     View,
     useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EffectContainer } from './EffectContainer';
 import { FloatingTextItem, FloatingTextManager } from './FloatingTextManager';
 
@@ -455,6 +456,7 @@ export interface CombatHUDRef {
 }
 
 export const CombatHUD = forwardRef<CombatHUDRef, CombatHUDProps>(({ actors, playerId, enemyIds, currentHealth, onEffectRemove, showEffects = true }, ref) => {
+    const insets = useSafeAreaInsets();
     const player = actors.get(playerId);
     const enemy = enemyIds.map((id: string) => actors.get(id)).find(Boolean);
     
@@ -485,10 +487,8 @@ export const CombatHUD = forwardRef<CombatHUDRef, CombatHUDProps>(({ actors, pla
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 paddingHorizontal: 12,
-                paddingTop: 8,
+                paddingTop: Math.max(8, insets.top + 8), // Use safe area top inset + padding
                 paddingBottom: 12,
-                // Ensure HUD respects safe area - add small top margin for iPhone notch
-                marginTop: 8, // Small buffer from safe area
             }}
         >
             <HudSide

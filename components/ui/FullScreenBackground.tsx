@@ -29,7 +29,7 @@ export default function FullScreenBackground({
       )}
       <View style={[
         styles.content,
-        { paddingTop: insets.top, paddingBottom: insets.bottom },
+        { paddingBottom: insets.bottom },
         contentStyle
       ]}>
         {children}

@@ -229,7 +229,7 @@ export const TopBar: React.FC<{ onRuneRefill?: (data: TopbarData) => void }> = (
     const height = w ? (w * PSD_H) / PSD_W : 0;
 
     return (
-        <View style={{ paddingTop: 10 }}>
+        <View style={{ paddingTop: 40 }}>
             <View onLayout={onLayout} style={{ width: '100%' }}>
                 {scale > 0 && (
                     <ImageBackground
@@ -237,13 +237,6 @@ export const TopBar: React.FC<{ onRuneRefill?: (data: TopbarData) => void }> = (
                         style={{ width: w, height }}
                         imageStyle={{ resizeMode: 'contain' }}
                     >
-                        {/* Debug overlay - remove in production */}
-                         {/*<DebugBox box={SPEC.levelBadge} scale={scale} color="rgba(255,0,0,.2)" />
-                        <DebugBox box={SPEC.goldChip} scale={scale} color="rgba(0,255,0,.2)" />
-                        <DebugBox box={SPEC.scrapChip} scale={scale} color="rgba(0,0,255,.2)" />
-                        <DebugBox box={SPEC.xp} scale={scale} color="rgba(255,255,0,.2)" />
-                        <DebugBox box={SPEC.runesBlock} scale={scale} color="rgba(255,0,255,.2)" />*/}
-
                         {/* Level number */}
                         <Place box={SPEC.levelBadge} scale={scale}>
                             <View
