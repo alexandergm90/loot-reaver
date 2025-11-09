@@ -70,6 +70,7 @@ export default function StyledHomeMockup(){
         case 'shield':
           eq.shield = code;
           break;
+        // Note: 'neck', 'ring', 'legs' are not used in equipmentCodes for character rendering
       }
     }
     return eq;

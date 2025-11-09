@@ -1,23 +1,113 @@
+import { EquipmentSlotType, isValidEquipmentSlot } from '@/types/slot';
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Image, ImageBackground, Pressable, StyleSheet, View } from 'react-native';
 
 type Props = {
     label: string;
     item?: any | null;
+    slotType?: EquipmentSlotType; // Preferred: use slot type from API
     onPress?: (i: any) => void;
     fallback?: string;
 };
 
-const SlotChip: React.FC<Props> = ({ label, item, onPress, fallback }) => {
-    const text = item?.template?.name || fallback || label;
+// Map slot types to placeholder icon paths
+const getPlaceholderIcon = (slotType: EquipmentSlotType): any => {
+    const iconMap: Record<EquipmentSlotType, any> = {
+        helmet: require('@/assets/images/equipment/placeholder_icons/helmet.png'),
+        chest: require('@/assets/images/equipment/placeholder_icons/chest.png'),
+        glove: require('@/assets/images/equipment/placeholder_icons/glove.png'),
+        feet: require('@/assets/images/equipment/placeholder_icons/feet.png'),
+        weapon: require('@/assets/images/equipment/placeholder_icons/weapon.png'),
+        shield: require('@/assets/images/equipment/placeholder_icons/shield.png'),
+        cape: require('@/assets/images/equipment/placeholder_icons/cape.png'),
+        ring: require('@/assets/images/equipment/placeholder_icons/ring.png'),
+        neck: require('@/assets/images/equipment/placeholder_icons/neck.png'),
+        legs: require('@/assets/images/equipment/placeholder_icons/legs.png'),
+    };
+    return iconMap[slotType] || iconMap.chest;
+};
+
+const SlotChip: React.FC<Props> = ({ label, item, slotType, onPress, fallback }) => {
     const clickable = !!item;
     const Comp: any = clickable ? Pressable : View;
+    
+    // Determine slot type: prefer prop, then item.slot, then fallback to label matching
+    const resolvedSlotType: EquipmentSlotType = (() => {
+        if (slotType && isValidEquipmentSlot(slotType)) {
+            return slotType;
+        }
+        if (item?.slot && isValidEquipmentSlot(item.slot)) {
+            return item.slot as EquipmentSlotType;
+        }
+        // Fallback: try to infer from label (for backwards compatibility)
+        const labelLower = label.toLowerCase();
+        if (labelLower.includes('helmet')) return 'helmet';
+        if (labelLower.includes('cape')) return 'cape';
+        if (labelLower.includes('chest') || labelLower.includes('body')) return 'chest';
+        if (labelLower.includes('neck')) return 'neck';
+        if (labelLower.includes('glove') || (labelLower.includes('hand') && !labelLower.includes('main') && !labelLower.includes('off'))) return 'glove';
+        if (labelLower.includes('ring')) return 'ring';
+        if (labelLower.includes('leg') || labelLower.includes('pant')) return 'legs';
+        if (labelLower.includes('feet') || labelLower.includes('boot')) return 'feet';
+        if (labelLower.includes('main hand') || labelLower.includes('weapon')) return 'weapon';
+        if (labelLower.includes('off hand') || labelLower.includes('shield')) return 'shield';
+        return 'chest'; // Default fallback
+    })();
+    
+    const placeholderIcon = getPlaceholderIcon(resolvedSlotType);
+    const hasItem = !!item;
+    const itemIconUrl = item?.template?.iconUrl;
+    
     return (
-        <Comp onPress={clickable ? () => onPress && onPress(item) : undefined} className="px-2 py-1 rounded-xl border-2 border-stone-900 bg-amber-100/80">
-            <Text className="text-[10px] font-black">{text}</Text>
+        <Comp onPress={clickable ? () => onPress && onPress(item) : undefined} style={styles.container}>
+            <ImageBackground
+                source={require('@/assets/images/equipment/equipment_slot.png')}
+                resizeMode="contain"
+                style={styles.background}
+            >
+                <View style={styles.content}>
+                    {hasItem && itemIconUrl ? (
+                        // Show item icon when equipped
+                        <Image 
+                            source={{ uri: itemIconUrl }} 
+                            style={styles.icon}
+                            resizeMode="contain"
+                        />
+                    ) : (
+                        // Show placeholder icon when empty
+                        <Image 
+                            source={placeholderIcon} 
+                            style={styles.icon}
+                            resizeMode="contain"
+                        />
+                    )}
+                </View>
+            </ImageBackground>
         </Comp>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        width: 60,
+        height: 60,
+    },
+    background: {
+        width: '100%',
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    content: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 4,
+    },
+    icon: {
+        width: 30,
+        height: 30,
+    },
+});
 
 export default SlotChip;
 

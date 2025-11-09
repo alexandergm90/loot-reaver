@@ -1,8 +1,9 @@
+import { EquipmentSlotType } from '@/types/slot';
 import { useMemo } from 'react';
 
 type CharacterItem = {
     id: string;
-    slot: string;
+    slot: EquipmentSlotType;
     template?: { code?: string; name?: string; rarity?: string; baseStats?: Record<string, number> };
 };
 
@@ -10,8 +11,8 @@ export const useEquippedFromCharacter = (character: any) => {
     const items: CharacterItem[] = (character?.items as any[]) || [];
 
     const equippedItems = useMemo(() => {
-        const findOne = (slot: string) => items.find((i) => i.slot === slot) || null;
-        const findMany = (slot: string) => items.filter((i) => i.slot === slot);
+        const findOne = (slot: EquipmentSlotType) => items.find((i) => i.slot === slot) || null;
+        const findMany = (slot: EquipmentSlotType) => items.filter((i) => i.slot === slot);
         const rings = findMany('ring');
         return {
             helmet: findOne('helmet'),
@@ -22,6 +23,7 @@ export const useEquippedFromCharacter = (character: any) => {
             offHand: findOne('shield'),
             feet: findOne('feet'),
             neck: findOne('neck'),
+            legs: findOne('legs'), // Fixed: 'pants' → 'legs' to match API
             ring1: rings[0] || null,
             ring2: rings[1] || null,
         } as Record<string, CharacterItem | null>;
@@ -31,7 +33,7 @@ export const useEquippedFromCharacter = (character: any) => {
         const eq: Record<string, string> = {};
         for (const it of items) {
             const code = it?.template?.code as string | undefined;
-            const slot = it?.slot as string | undefined;
+            const slot = it?.slot as EquipmentSlotType | undefined;
             if (!code || !slot) continue;
             switch (slot) {
                 case 'chest':
@@ -48,6 +50,7 @@ export const useEquippedFromCharacter = (character: any) => {
                     eq.weapon_main = code; break;
                 case 'shield':
                     eq.shield = code; break;
+                // Note: 'neck', 'ring', 'legs' are not used in equipmentCodes for character rendering
             }
         }
         return eq;

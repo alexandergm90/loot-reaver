@@ -4,7 +4,7 @@ import SlotChip from '@/components/ui/SlotChip';
 import { useEquippedFromCharacter } from '@/hooks/useEquippedFromCharacter';
 import { getPlayerCharacter, getPlayerInventory } from '@/services/playerService';
 import { usePlayerStore } from '@/store/playerStore';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, ImageBackground, Text, View } from 'react-native';
 
 type InventoryItem = {
@@ -63,37 +63,20 @@ export default function InventoryScreen() {
         };
     }, []);
 
-    // Map equipped character items for quick access (including duplicates like rings)
-    const equippedList = (player as any)?.character?.items as any[] | undefined || [];
-    const equipped = useMemo(() => {
-        const findOne = (slot: string) => equippedList.find((i) => i.slot === slot);
-        const findMany = (slot: string) => equippedList.filter((i) => i.slot === slot);
-        const rings = findMany('ring');
-        return {
-            helmet: findOne('helmet') || null,
-            body: findOne('chest') || null,
-            cape: findOne('cape') || null,
-            hands: findOne('glove') || null,
-            mainHand: findOne('weapon') || null,
-            offHand: findOne('shield') || null,
-            feet: findOne('feet') || null,
-            neck: findOne('neck') || null,
-            ring1: rings[0] || null,
-            ring2: rings[1] || null,
-        } as Record<string, any | null>;
-    }, [equippedList]);
+    // Note: This duplicate logic is now handled by useEquippedFromCharacter hook
+    // Keeping for backwards compatibility if needed, but should use equippedItems from hook instead
 
     return (
         <View style={{ flex: 1 }}>
             <View className="px-3" style={{ flex: 1 }}>
-                <View className="mt-5 items-center justify-center" style={{ overflow: 'hidden' }}>
+                <View className="mt-5 items-center justify-center" style={{ position: 'relative' }}>
                     <ImageBackground
                         source={require('@/assets/images/equipment/equipment_background.png')}
                         resizeMode="contain"
-                        style={{ width: '100%', height: 390 }}
+                        style={{ width: '100%', height: 390, overflow: 'hidden' }}
                     >
-                    <View style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 20 }} collapsable={false}>
-                        <View style={{ transform: [{ scale: 0.65 }], marginBottom: -10 }}>
+                    <View style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 100, paddingLeft: 10 }} collapsable={false}>
+                        <View style={{ transform: [{ scale: 0.6 }] }}>
                             <CharacterFullPreview
                                 appearance={player?.character?.appearance || null}
                                 containerHeight={300}
@@ -103,37 +86,49 @@ export default function InventoryScreen() {
                                 headOffsetY={-5}
                             />
                         </View>
-                        {/* Equipped Slots Around Character */}
-                        <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}>
-                            {/* Top row: Helmet / Body / Cape */}
-                            <View className="absolute left-3 right-3 top-2 flex-row justify-between">
-                                <SlotChip label="Helmet" item={equippedItems.helmet} onPress={setSelectedItem} fallback="Helmet" />
-                                <SlotChip label="Body" item={equippedItems.body} onPress={setSelectedItem} fallback="Body" />
-                                <SlotChip label="Cape" item={equippedItems.cape} onPress={setSelectedItem} fallback="Cape" />
-                            </View>
-                            {/* Mid sides: Main Hand / Off Hand */}
-                            <View className="absolute left-2 top-[120px]">
-                                <SlotChip label="Main Hand" item={equippedItems.mainHand} onPress={setSelectedItem} fallback="Main Hand" />
-                            </View>
-                            <View className="absolute right-2 top-[120px]">
-                                <SlotChip label="Off Hand" item={equippedItems.offHand} onPress={setSelectedItem} fallback="Off Hand" />
-                            </View>
-                            {/* Hands / Feet */}
-                            <View className="absolute left-2 bottom-[100px]">
-                                <SlotChip label="Hands" item={equippedItems.hands} onPress={setSelectedItem} fallback="Hands" />
-                            </View>
-                            <View className="absolute right-2 bottom-[100px]">
-                                <SlotChip label="Feet" item={equippedItems.feet} onPress={setSelectedItem} fallback="Feet" />
-                            </View>
-                            {/* Bottom: Neck / Ring1 / Ring2 */}
-                            <View className="absolute left-3 right-3 bottom-2 flex-row justify-between">
-                                <SlotChip label="Neck" item={equippedItems.neck} onPress={setSelectedItem} fallback="Neck" />
-                                <SlotChip label="Ring 1" item={equippedItems.ring1} onPress={setSelectedItem} fallback="Ring 1" />
-                                <SlotChip label="Ring 2" item={equippedItems.ring2} onPress={setSelectedItem} fallback="Ring 2" />
-                            </View>
-                        </View>
                     </View>
                     </ImageBackground>
+                    {/* Equipped Slots Around Character - outside ImageBackground to avoid clipping */}
+                    <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}>
+                            {/* Top: Helmet (centered, higher) */}
+                            <View className="absolute left-1/2 top-[-10px]" style={{ transform: [{ translateX: -30 }] }}>
+                                <SlotChip label="Helmet" item={equippedItems.helmet} slotType="helmet" onPress={setSelectedItem} fallback="Helmet" />
+                            </View>
+                            {/* Second row: Body / Cape (lower) */}
+                            <View className="absolute left-5 right-5 top-12 flex-row justify-between">
+                                <SlotChip label="Cape" item={equippedItems.cape} slotType="cape" onPress={setSelectedItem} fallback="Cape" />
+                                <SlotChip label="Body" item={equippedItems.body} slotType="chest" onPress={setSelectedItem} fallback="Body" />
+                            </View>
+                            {/* Left side (below cape): Neck / Gloves / Ring 1 */}
+                            <View className="absolute left-[5px] top-[120px]">
+                                <View className="mb-3">
+                                    <SlotChip label="Neck" item={equippedItems.neck} slotType="neck" onPress={setSelectedItem} fallback="Neck" />
+                                </View>
+                                <View className="mb-3">
+                                    <SlotChip label="Hands" item={equippedItems.hands} slotType="glove" onPress={setSelectedItem} fallback="Hands" />
+                                </View>
+                                <View>
+                                    <SlotChip label="Ring 1" item={equippedItems.ring1} slotType="ring" onPress={setSelectedItem} fallback="Ring 1" />
+                                </View>
+                            </View>
+                            {/* Right side (below body): Legs / Boots / Ring 2 */}
+                            <View className="absolute right-[5px] top-[120px]">
+                                <View className="mb-3">
+                                    <SlotChip label="Legs" item={equippedItems.legs} slotType="legs" onPress={setSelectedItem} fallback="Legs" />
+                                </View>
+                                <View className="mb-3">
+                                    <SlotChip label="Feet" item={equippedItems.feet} slotType="feet" onPress={setSelectedItem} fallback="Feet" />
+                                </View>
+                                <View>
+                                    <SlotChip label="Ring 2" item={equippedItems.ring2} slotType="ring" onPress={setSelectedItem} fallback="Ring 2" />
+                                </View>
+                            </View>
+                            {/* Bottom center: Main Hand / Off Hand */}
+                            <View className="absolute left-1/2 bottom-2 flex-row" style={{ transform: [{ translateX: -60 }], gap: 8 }}>
+                                <SlotChip label="Main Hand" item={equippedItems.mainHand} slotType="weapon" onPress={setSelectedItem} fallback="Main Hand" />
+                                <SlotChip label="Off Hand" item={equippedItems.offHand} slotType="shield" onPress={setSelectedItem} fallback="Off Hand" />
+                            </View>
+                        </View>
                 </View>
 
                 <View className="rounded-2xl border-2 border-stone-900 overflow-hidden mt-3">
