@@ -4,6 +4,7 @@ import SlotChip from '@/components/ui/SlotChip';
 import { useEquippedFromCharacter } from '@/hooks/useEquippedFromCharacter';
 import { getPlayerCharacter, getPlayerInventory } from '@/services/playerService';
 import { usePlayerStore } from '@/store/playerStore';
+import { getItemIcon } from '@/utils/getItemIcon';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, ImageBackground, Text, View } from 'react-native';
 
@@ -153,19 +154,23 @@ export default function InventoryScreen() {
                                 contentContainerStyle={{ paddingBottom: 100 }}
                                 ListEmptyComponent={<Text className="text-center text-[12px] opacity-70 py-6">No items</Text>}
                                 onEndReachedThreshold={0.5}
-                                renderItem={({ item }) => (
-                                    <View className="mb-2" style={{ flex: 1 }}>
-                                        <View className="aspect-square rounded-xl border-2 border-stone-900 bg-stone-200 items-center justify-center">
-                                            {item.template?.iconUrl ? (
-                                                <Image source={{ uri: item.template.iconUrl }} style={{ width: 48, height: 48 }} />
-                                            ) : (
-                                                <Text className="text-[10px]">{item.template?.name || item.slot}</Text>
-                                            )}
+                                renderItem={({ item }) => {
+                                    const itemCode = item.template?.code;
+                                    const itemIcon = getItemIcon(itemCode);
+                                    return (
+                                        <View className="mb-2" style={{ flex: 1 }}>
+                                            <View className="aspect-square rounded-xl border-2 border-stone-900 bg-stone-200 items-center justify-center">
+                                                {itemIcon ? (
+                                                    <Image source={itemIcon} style={{ width: 48, height: 48 }} resizeMode="contain" />
+                                                ) : (
+                                                    <Text className="text-[10px]">{item.template?.name || item.slot}</Text>
+                                                )}
+                                            </View>
+                                            <Text className="text-[11px] font-semibold mt-1" numberOfLines={1}>{item.template?.name}</Text>
+                                            <Text className="text-[10px] opacity-60">{item.durability}%</Text>
                                         </View>
-                                        <Text className="text-[11px] font-semibold mt-1" numberOfLines={1}>{item.template?.name}</Text>
-                                        <Text className="text-[10px] opacity-60">{item.durability}%</Text>
-                                    </View>
-                                )}
+                                    );
+                                }}
                             />
                         )}
                     </ImageBackground>

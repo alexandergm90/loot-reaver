@@ -50,7 +50,9 @@ export const useEquippedFromCharacter = (character: any) => {
                     eq.weapon_main = code; break;
                 case 'shield':
                     eq.shield = code; break;
-                // Note: 'neck', 'ring', 'legs' are not used in equipmentCodes for character rendering
+                case 'legs':
+                    eq.legs = code; break;
+                // Note: 'neck', 'ring' are not used in equipmentCodes for character rendering
             }
         }
         return eq;

@@ -22,4 +22,5 @@ export const itemSlotMeta: ItemSlotMeta = {
     shield: {
         left: { width: 100, height: 100, top: 48, left: 8 },
     },
+    legs: { width: 149, height: 145, top: 180, left: -20 },
 };

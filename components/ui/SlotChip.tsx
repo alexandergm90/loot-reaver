@@ -1,4 +1,5 @@
 import { EquipmentSlotType, isValidEquipmentSlot } from '@/types/slot';
+import { getItemIcon } from '@/utils/getItemIcon';
 import React from 'react';
 import { Image, ImageBackground, Pressable, StyleSheet, View } from 'react-native';
 
@@ -56,7 +57,8 @@ const SlotChip: React.FC<Props> = ({ label, item, slotType, onPress, fallback })
     
     const placeholderIcon = getPlaceholderIcon(resolvedSlotType);
     const hasItem = !!item;
-    const itemIconUrl = item?.template?.iconUrl;
+    const itemCode = item?.template?.code;
+    const itemIcon = getItemIcon(itemCode);
     
     return (
         <Comp onPress={clickable ? () => onPress && onPress(item) : undefined} style={styles.container}>
@@ -66,10 +68,10 @@ const SlotChip: React.FC<Props> = ({ label, item, slotType, onPress, fallback })
                 style={styles.background}
             >
                 <View style={styles.content}>
-                    {hasItem && itemIconUrl ? (
+                    {hasItem && itemIcon ? (
                         // Show item icon when equipped
                         <Image 
-                            source={{ uri: itemIconUrl }} 
+                            source={itemIcon} 
                             style={styles.icon}
                             resizeMode="contain"
                         />

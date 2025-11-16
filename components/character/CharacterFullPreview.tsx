@@ -99,15 +99,37 @@ const CharacterFullPreview: React.FC<Props> = ({
         ],
     }));
     const bodyStyle = useAnimatedStyle(() => ({ transform: [{ translateY: bodyY.value }] }));
-    const headStyle = useAnimatedStyle(() => ({ transform: [{ translateX: headOffsetX }, { translateY: headOffsetY + headY.value }, { rotateZ: `${headR.value}deg` }, { scale: headScale }] }));
+    
+    // Apply 10% scale reduction for male characters (0.9 scale)
+    // Also adjust X offset to compensate for scale change (scale down shifts center, so we need to shift back)
+    const { maleHeadScale, maleHeadOffsetX } = useMemo(() => {
+        const baseScale = headScale;
+        if (appearance?.gender === 'male') {
+            const scale = baseScale * 0.9;
+            // Compensate for scale: when scaling down by 10%, we need to shift left slightly
+            // The offset adjustment is roughly 5% of the head width to recenter it
+            // Using a small negative offset to shift it back left
+            const offsetAdjustment = -7; // Adjust this value if needed for proper alignment
+            return { 
+                maleHeadScale: scale, 
+                maleHeadOffsetX: headOffsetX + offsetAdjustment 
+            };
+        }
+        return { 
+            maleHeadScale: baseScale, 
+            maleHeadOffsetX: headOffsetX 
+        };
+    }, [headScale, headOffsetX, appearance?.gender]);
+    
+    const headStyle = useAnimatedStyle(() => ({ transform: [{ translateX: maleHeadOffsetX }, { translateY: headOffsetY + headY.value }, { rotateZ: `${headR.value}deg` }, { scale: maleHeadScale }] }));
     const rightHandStyle = useAnimatedStyle(() => ({ transform: [{ translateX: rightHandX.value }, { translateY: rightHandY.value }] }));
     const feetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: feetY.value }] }));
 
     // ---------- head layers ----------
-    const headLayers = useMemo(() => buildHeadLayers(appearance), [appearance]);
-    const bodyLayers = useMemo(() => buildBodyLayers(appearance), [appearance]);
+    const headLayers = useMemo(() => buildHeadLayers(appearance, equipment), [appearance, equipment]);
+    const bodyLayers = useMemo(() => buildBodyLayers(appearance, equipment), [appearance, equipment]);
 
-    const groups = useMemo(() => buildEquipmentGroups(equipment), [equipment]);
+    const groups = useMemo(() => buildEquipmentGroups(equipment, appearance), [equipment, appearance]);
 
 
     if (!appearance) return <View style={[styles.container, outerStyle]} onLayout={onLayout} />;
@@ -118,13 +140,13 @@ const CharacterFullPreview: React.FC<Props> = ({
             <Animated.View style={[styles.stack, { width: BASE_CANVAS, height: BASE_CANVAS, transform: [{ scale: scaleToFit }] }]} collapsable={false}>
                 {/* inner wrapper receives combined centering and animations */}
                 <Animated.View style={[styles.layersWrapper, combinedStyle]} collapsable={false}>
-                    {/* Equipment temporarily hidden to position body parts */}
-                    {/* <Animated.View style={[styles.layer]} collapsable={false}>{groups.back}</Animated.View> */}
+                    {/* Render order: back (cape back) -> body (torso, chest, legs) -> feet -> weapon -> hands (gloves) -> head */}
+                    <Animated.View style={[styles.layer]} collapsable={false}>{groups.back}</Animated.View>
                     <Animated.View style={[styles.layer, bodyStyle]} collapsable={false}>{bodyLayers}</Animated.View>
-                    {/* <Animated.View style={[styles.layer]} collapsable={false}>{groups.body}</Animated.View> */}
-                    {/* <Animated.View style={[styles.layer, feetStyle]} collapsable={false}>{groups.feet}</Animated.View> */}
-                    {/* <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.weapon}</Animated.View> */}
-                    {/* <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.hands}</Animated.View> */}
+                    <Animated.View style={[styles.layer]} collapsable={false}>{groups.body}</Animated.View>
+                    <Animated.View style={[styles.layer, feetStyle]} collapsable={false}>{groups.feet}</Animated.View>
+                    <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.weapon}</Animated.View>
+                    <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.hands}</Animated.View>
                     <Animated.View style={[styles.layer, headStyle]} collapsable={false}>{headLayers}</Animated.View>
                 </Animated.View>
             </Animated.View>

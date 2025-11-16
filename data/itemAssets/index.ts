@@ -4,6 +4,7 @@ import { chestAssets } from './chest';
 import { feetAssets } from './feet';
 import { gloveAssets } from './glove';
 import { helmetAssets } from './helmet';
+import { legsAssets } from './legs';
 import { neckAssets } from './neck';
 import { ringAssets } from './ring';
 import { shieldAssets } from './shield';
@@ -19,4 +20,5 @@ export const itemAssets = {
     neck: neckAssets,
     ring: ringAssets,
     feet: feetAssets,
+    legs: legsAssets,
 } as Record<string, EquipmentAssets>;

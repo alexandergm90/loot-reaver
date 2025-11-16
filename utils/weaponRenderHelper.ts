@@ -1,5 +1,5 @@
-import { itemSlotMeta } from '@/data/itemAssets/slotMeta';
-import { ItemAsset } from '@/types';
+import { ItemAsset, ItemPosition } from '@/types';
+import { getItemPosition } from './getItemAsset';
 
 export type WeaponType = 'main' | 'off' | 'twohanded';
 export type ItemType = 'weapon' | 'shield';
@@ -20,34 +20,47 @@ export interface RenderInstruction {
 export function getWeaponRenderInstructions(
     mainHand: EquippedItem | null,
     offHand: EquippedItem | null,
+    gender: 'male' | 'female',
 ): RenderInstruction[] {
     if (mainHand?.weaponType === 'twohanded') {
-        const meta = itemSlotMeta.weapon_twohanded.center;
-        return [{ source: mainHand.source, ...meta }];
+        // For two-handed weapons, use the main hand position
+        // TODO: Add twohanded-specific positioning to weapon assets if needed
+        const pos = getItemPosition(mainHand, gender);
+        if (pos) {
+            return [{ source: mainHand.source, ...pos }];
+        }
+        // Fallback positioning if not found
+        return [{ source: mainHand.source, width: 196, height: 128, top: 36, left: 30 }];
     }
 
     const instructions: RenderInstruction[] = [];
 
     if (mainHand?.weaponType === 'main' || mainHand?.itemType === 'weapon') {
-        const meta = itemSlotMeta.weapon.right;
-        // Adjust weapon position to match the moved hand pivot (15px down, 10px right)
-        instructions.push({
-            source: mainHand.source,
-            width: meta.width,
-            height: meta.height,
-            top: meta.top + 10,
-            left: meta.left + 5
-        });
+        const pos = getItemPosition(mainHand, gender);
+        if (pos) {
+            // Adjust weapon position to match the moved hand pivot (15px down, 10px right)
+            instructions.push({
+                source: mainHand.source,
+                width: pos.width,
+                height: pos.height,
+                top: pos.top + 10,
+                left: pos.left + 5
+            });
+        }
     }
 
     if (offHand?.itemType === 'weapon' && offHand?.weaponType !== 'twohanded') {
-        const meta = itemSlotMeta.weapon.left;
-        instructions.push({ source: offHand.source, ...meta });
+        const pos = getItemPosition(offHand, gender);
+        if (pos) {
+            instructions.push({ source: offHand.source, ...pos });
+        }
     }
 
     if (offHand?.itemType === 'shield') {
-        const meta = itemSlotMeta.shield.left;
-        instructions.push({ source: offHand.source, ...meta });
+        const pos = getItemPosition(offHand, gender);
+        if (pos) {
+            instructions.push({ source: offHand.source, ...pos });
+        }
     }
 
     return instructions;
