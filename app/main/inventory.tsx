@@ -4,7 +4,7 @@ import LRText from '@/components/ui/LRText';
 import RarityGradientBackground from '@/components/ui/RarityGradientBackground';
 import SlotChip from '@/components/ui/SlotChip';
 import { useEquippedFromCharacter } from '@/hooks/useEquippedFromCharacter';
-import { getPlayerCharacter, getPlayerInventory } from '@/services/playerService';
+import { getPlayerCharacter, getPlayerInventory, getPlayerItem } from '@/services/playerService';
 import { usePlayerStore } from '@/store/playerStore';
 import { getItemIcon } from '@/utils/getItemIcon';
 import React, { useEffect, useState } from 'react';
@@ -45,6 +45,8 @@ export default function InventoryScreen() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [selectedItem, setSelectedItem] = useState<any | null>(null);
+    const [itemDetails, setItemDetails] = useState<any | null>(null);
+    const [loadingItemDetails, setLoadingItemDetails] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [showFullList, setShowFullList] = useState(false);
     const [equipmentBottom, setEquipmentBottom] = useState<number | null>(null);
@@ -149,6 +151,40 @@ export default function InventoryScreen() {
             mounted = false;
         };
     }, []);
+
+    // Fetch item details when an item is selected
+    useEffect(() => {
+        if (!selectedItem?.id) {
+            setItemDetails(null);
+            return;
+        }
+
+        let mounted = true;
+        const fetchItemDetails = async () => {
+            setLoadingItemDetails(true);
+            try {
+                const details = await getPlayerItem(selectedItem.id);
+                if (mounted) {
+                    setItemDetails(details);
+                }
+            } catch (e: any) {
+                console.error('[Inventory] Failed to fetch item details:', e);
+                if (mounted) {
+                    // On error, still show the basic item info
+                    setItemDetails(selectedItem);
+                }
+            } finally {
+                if (mounted) {
+                    setLoadingItemDetails(false);
+                }
+            }
+        };
+
+        fetchItemDetails();
+        return () => {
+            mounted = false;
+        };
+    }, [selectedItem?.id]);
 
     // Note: This duplicate logic is now handled by useEquippedFromCharacter hook
     // Keeping for backwards compatibility if needed, but should use equippedItems from hook instead
@@ -344,7 +380,7 @@ export default function InventoryScreen() {
                             </Pressable>
 
                             {/* Content area */}
-                            <View style={{ padding: 8, minHeight: ITEM_ROW_HEIGHT }}>
+                            <View style={{ flex: 1, padding: 8, justifyContent: showFullList ? 'flex-start' : 'center' }}>
                                 {loading && (
                                     <View className="py-6 items-center justify-center">
                                         <ActivityIndicator color="#d4a574" />
@@ -367,7 +403,7 @@ export default function InventoryScreen() {
                                 )}
 
                         {!loading && !error && (
-                            <View style={{ minHeight: ITEM_ROW_HEIGHT, padding: 8 }}>
+                            <View>
                                 {showFullList ? (
                                     // Show full scrollable list when expanded
                                     <FlatList
@@ -398,18 +434,7 @@ export default function InventoryScreen() {
                                             const itemCode = item.template?.code;
                                             const itemIcon = getItemIcon(itemCode);
                                             // Try both item.rarity and item.template.rarity
-                                            const rarity = item.rarity || item.template?.rarity;
-                                            
-                                            // Debug: Log item structure to find where rarity actually is
-                                            if (__DEV__ && !rarity) {
-                                                console.log('[Inventory] Item missing rarity:', {
-                                                    id: item.id,
-                                                    hasRarity: !!item.rarity,
-                                                    hasTemplateRarity: !!item.template?.rarity,
-                                                    itemKeys: Object.keys(item),
-                                                    templateKeys: item.template ? Object.keys(item.template) : [],
-                                                });
-                                            }
+                                            const rarity = item.rarity;
                                             
                                             return (
                                                 <Pressable
@@ -464,7 +489,7 @@ export default function InventoryScreen() {
                                             const itemCode = item.template?.code;
                                             const itemIcon = getItemIcon(itemCode);
                                             // Try both item.rarity and item.template.rarity
-                                            const rarity = item.rarity || item.template?.rarity;
+                                            const rarity = item.rarity;
                                             return (
                                                 <Pressable
                                                     key={item.id}
@@ -536,7 +561,14 @@ export default function InventoryScreen() {
                 )}
             </View>
 
-            <ItemInfoModal item={selectedItem} onClose={() => setSelectedItem(null)} />
+            <ItemInfoModal 
+                item={itemDetails || selectedItem} 
+                loading={loadingItemDetails}
+                onClose={() => {
+                    setSelectedItem(null);
+                    setItemDetails(null);
+                }} 
+            />
         </View>
     );
 }

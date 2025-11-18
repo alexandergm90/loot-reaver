@@ -25,6 +25,17 @@ export async function getPlayerInventory() {
     return data;
 }
 
+export async function getPlayerItem(itemId: string) {
+    const token = await storage.getItem('access_token');
+    if (!token) throw new Error('Not authenticated');
+    const res = await fetch(`${API_BASE}/player/items/${itemId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.message || 'Failed to fetch item details');
+    return data;
+}
+
 export async function registerPlayerProfile({
     appearance,
     trait,
