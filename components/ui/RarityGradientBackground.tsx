@@ -1,15 +1,15 @@
 import React from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 
-type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythical';
+type Rarity = 'worn' | 'superior' | 'enchanted' | 'heroic' | 'relic' | 'celestial';
 
 const RARITY_GLOW: Record<Rarity, any> = {
-    common: require('@/assets/images/equipment/rarities_bg/common.png'),
-    uncommon: require('@/assets/images/equipment/rarities_bg/uncommon.png'),
-    rare: require('@/assets/images/equipment/rarities_bg/rare.png'),
-    epic: require('@/assets/images/equipment/rarities_bg/epic.png'),
-    legendary: require('@/assets/images/equipment/rarities_bg/legendary.png'),
-    mythical: require('@/assets/images/equipment/rarities_bg/mythical.png'),
+    worn: require('@/assets/images/equipment/rarities_bg/worn.png'),
+    superior: require('@/assets/images/equipment/rarities_bg/superior.png'),
+    enchanted: require('@/assets/images/equipment/rarities_bg/enchanted.png'),
+    heroic: require('@/assets/images/equipment/rarities_bg/heroic.png'),
+    relic: require('@/assets/images/equipment/rarities_bg/relic.png'),
+    celestial: require('@/assets/images/equipment/rarities_bg/celestial.png'),
 };
 
 interface RarityGradientBackgroundProps {
@@ -26,8 +26,8 @@ export const RarityGradientBackground: React.FC<RarityGradientBackgroundProps> =
     style,
     children,
 }) => {
-    // Default to common if rarity is not recognized
-    const normalizedRarity = (rarity?.toLowerCase() as Rarity) || 'common';
+    // Default to worn if rarity is not recognized
+    const normalizedRarity = (rarity?.toLowerCase() as Rarity) || 'worn';
     
     // Debug: Log rarity values to help diagnose cache/mapping issues
     if (__DEV__) {
@@ -38,7 +38,7 @@ export const RarityGradientBackground: React.FC<RarityGradientBackgroundProps> =
         });
     }
     
-    const glowImage = RARITY_GLOW[normalizedRarity] || RARITY_GLOW.common;
+    const glowImage = RARITY_GLOW[normalizedRarity] || RARITY_GLOW.worn;
 
     return (
         <View style={[styles.container, style]}>
