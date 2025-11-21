@@ -140,14 +140,28 @@ const CharacterFullPreview: React.FC<Props> = ({
             <Animated.View style={[styles.stack, { width: BASE_CANVAS, height: BASE_CANVAS, transform: [{ scale: scaleToFit }] }]} collapsable={false}>
                 {/* inner wrapper receives combined centering and animations */}
                 <Animated.View style={[styles.layersWrapper, combinedStyle]} collapsable={false}>
-                    {/* Render order: back (cape back) -> body (torso, chest, legs) -> feet -> weapon -> hands (gloves) -> head */}
+                    {/* Render order from back to front (z-index):
+                        1. Cape back (lowest, only thing behind body)
+                        2. Body (base character body - arms, torso)
+                        3. Legs/pants (in front of body, but low - behind other equipment)
+                        4. Chest armor (behind cape front)
+                        5. Weapons/shield (behind gloves, in front of chest & legs)
+                        6. Gloves (max z-index)
+                        7. Boots (max z-index)
+                        8. Cape front (max z-index)
+                        9. Head (base head layers)
+                        10. Helmet (max z-index, on top of everything)
+                    */}
                     <Animated.View style={[styles.layer]} collapsable={false}>{groups.back}</Animated.View>
                     <Animated.View style={[styles.layer, bodyStyle]} collapsable={false}>{bodyLayers}</Animated.View>
-                    <Animated.View style={[styles.layer]} collapsable={false}>{groups.body}</Animated.View>
-                    <Animated.View style={[styles.layer, feetStyle]} collapsable={false}>{groups.feet}</Animated.View>
+                    <Animated.View style={[styles.layer, bodyStyle]} collapsable={false}>{groups.legs}</Animated.View>
+                    <Animated.View style={[styles.layer, bodyStyle]} collapsable={false}>{groups.chest}</Animated.View>
                     <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.weapon}</Animated.View>
                     <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.hands}</Animated.View>
+                    <Animated.View style={[styles.layer, feetStyle]} collapsable={false}>{groups.feet}</Animated.View>
+                    <Animated.View style={[styles.layer]} collapsable={false}>{groups.capeFront}</Animated.View>
                     <Animated.View style={[styles.layer, headStyle]} collapsable={false}>{headLayers}</Animated.View>
+                    <Animated.View style={[styles.layer, headStyle]} collapsable={false}>{groups.helmet}</Animated.View>
                 </Animated.View>
             </Animated.View>
         </View>

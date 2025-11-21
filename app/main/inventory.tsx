@@ -275,7 +275,7 @@ export default function InventoryScreen() {
                                 <SlotChip label="Cape" item={equippedItems.cape} slotType="cape" onPress={setSelectedItem} fallback="Cape" />
                                 <SlotChip label="Body" item={equippedItems.body} slotType="chest" onPress={setSelectedItem} fallback="Body" />
                             </View>
-                            {/* Left side (below cape): Neck / Gloves / Ring 1 */}
+                            {/* Left side (below cape): Neck / Gloves / Ring Left */}
                             <View className="absolute left-[5px] top-[120px]">
                                 <View className="mb-3">
                                     <SlotChip label="Neck" item={equippedItems.neck} slotType="neck" onPress={setSelectedItem} fallback="Neck" />
@@ -284,10 +284,10 @@ export default function InventoryScreen() {
                                     <SlotChip label="Hands" item={equippedItems.hands} slotType="glove" onPress={setSelectedItem} fallback="Hands" />
                                 </View>
                                 <View>
-                                    <SlotChip label="Ring 1" item={equippedItems.ring1} slotType="ring" onPress={setSelectedItem} fallback="Ring 1" />
+                                    <SlotChip label="Ring L" item={equippedItems.ringLeft} slotType="ring" onPress={setSelectedItem} fallback="Ring L" />
                                 </View>
                             </View>
-                            {/* Right side (below body): Legs / Boots / Ring 2 */}
+                            {/* Right side (below body): Legs / Boots / Ring Right */}
                             <View className="absolute right-[5px] top-[120px]">
                                 <View className="mb-3">
                                     <SlotChip label="Legs" item={equippedItems.legs} slotType="legs" onPress={setSelectedItem} fallback="Legs" />
@@ -296,13 +296,22 @@ export default function InventoryScreen() {
                                     <SlotChip label="Feet" item={equippedItems.feet} slotType="feet" onPress={setSelectedItem} fallback="Feet" />
                                 </View>
                                 <View>
-                                    <SlotChip label="Ring 2" item={equippedItems.ring2} slotType="ring" onPress={setSelectedItem} fallback="Ring 2" />
+                                    <SlotChip label="Ring R" item={equippedItems.ringRight} slotType="ring" onPress={setSelectedItem} fallback="Ring R" />
                                 </View>
                             </View>
-                            {/* Bottom center: Main Hand / Off Hand */}
+                            {/* Bottom center: Weapon Left / Weapon Right or Two-Handed / Shield */}
                             <View className="absolute left-1/2 bottom-2 flex-row" style={{ transform: [{ translateX: -60 }], gap: 8 }}>
-                                <SlotChip label="Main Hand" item={equippedItems.mainHand} slotType="weapon" onPress={setSelectedItem} fallback="Main Hand" />
-                                <SlotChip label="Off Hand" item={equippedItems.offHand} slotType="shield" onPress={setSelectedItem} fallback="Off Hand" />
+                                {equippedItems.weaponTwoHanded ? (
+                                    <>
+                                        <SlotChip label="2H Weapon" item={equippedItems.weaponTwoHanded} slotType="weapon" onPress={setSelectedItem} fallback="2H Weapon" />
+                                        <SlotChip label="Off Hand" item={null} slotType="shield" onPress={setSelectedItem} fallback="Off Hand" />
+                                    </>
+                                ) : (
+                                    <>
+                                        <SlotChip label="Weapon L" item={equippedItems.weaponLeft} slotType="weapon" onPress={setSelectedItem} fallback="Weapon L" />
+                                        <SlotChip label={equippedItems.shield ? "Shield" : "Weapon R"} item={equippedItems.shield || equippedItems.weaponRight} slotType={equippedItems.shield ? "shield" : "weapon"} onPress={setSelectedItem} fallback={equippedItems.shield ? "Shield" : "Weapon R"} />
+                                    </>
+                                )}
                             </View>
                         </View>
                 </View>

@@ -1,13 +1,6 @@
-import { ItemAsset, ItemPosition } from '@/types';
-import { getItemPosition } from './getItemAsset';
-
-export type WeaponType = 'main' | 'off' | 'twohanded';
-export type ItemType = 'weapon' | 'shield';
-
-export interface EquippedItem extends ItemAsset {
-    weaponType?: WeaponType;
-    itemType?: ItemType;
-}
+import { ItemAsset } from '@/types';
+import { itemSlotMeta } from '@/data/itemAssets/slotMeta';
+import { getItemAsset } from './getItemAsset';
 
 export interface RenderInstruction {
     source: any;
@@ -18,48 +11,74 @@ export interface RenderInstruction {
 }
 
 export function getWeaponRenderInstructions(
-    mainHand: EquippedItem | null,
-    offHand: EquippedItem | null,
+    weaponLeft: string | undefined,
+    weaponRight: string | undefined,
+    weaponTwoHanded: string | undefined,
+    shield: string | undefined,
     gender: 'male' | 'female',
 ): RenderInstruction[] {
-    if (mainHand?.weaponType === 'twohanded') {
-        // For two-handed weapons, use the main hand position
-        // TODO: Add twohanded-specific positioning to weapon assets if needed
-        const pos = getItemPosition(mainHand, gender);
-        if (pos) {
-            return [{ source: mainHand.source, ...pos }];
-        }
-        // Fallback positioning if not found
-        return [{ source: mainHand.source, width: 196, height: 128, top: 36, left: 30 }];
-    }
-
     const instructions: RenderInstruction[] = [];
 
-    if (mainHand?.weaponType === 'main' || mainHand?.itemType === 'weapon') {
-        const pos = getItemPosition(mainHand, gender);
-        if (pos) {
-            // Adjust weapon position to match the moved hand pivot (15px down, 10px right)
+    // Two-handed weapons have highest priority
+    if (weaponTwoHanded) {
+        const asset = getItemAsset('weapon', weaponTwoHanded);
+        if (asset) {
+            // Use slotMeta position for two-handed weapons
+            const pos = itemSlotMeta.weapon_twohanded.center;
             instructions.push({
-                source: mainHand.source,
+                source: asset.source,
                 width: pos.width,
                 height: pos.height,
-                top: pos.top + 10,
-                left: pos.left + 5
+                top: pos.top,
+                left: pos.left,
+            });
+        }
+        // Return early - two-handed weapons occupy both hands
+        return instructions;
+    }
+
+    // Left weapon
+    if (weaponLeft) {
+        const asset = getItemAsset('weapon', weaponLeft);
+        if (asset) {
+            const pos = itemSlotMeta.weapon.left;
+            instructions.push({
+                source: asset.source,
+                width: pos.width,
+                height: pos.height,
+                top: pos.top,
+                left: pos.left,
             });
         }
     }
 
-    if (offHand?.itemType === 'weapon' && offHand?.weaponType !== 'twohanded') {
-        const pos = getItemPosition(offHand, gender);
-        if (pos) {
-            instructions.push({ source: offHand.source, ...pos });
+    // Right weapon
+    if (weaponRight) {
+        const asset = getItemAsset('weapon', weaponRight);
+        if (asset) {
+            const pos = itemSlotMeta.weapon.right;
+            instructions.push({
+                source: asset.source,
+                width: pos.width,
+                height: pos.height,
+                top: pos.top,
+                left: pos.left,
+            });
         }
     }
 
-    if (offHand?.itemType === 'shield') {
-        const pos = getItemPosition(offHand, gender);
-        if (pos) {
-            instructions.push({ source: offHand.source, ...pos });
+    // Shield (always left hand)
+    if (shield) {
+        const asset = getItemAsset('shield', shield);
+        if (asset) {
+            const pos = itemSlotMeta.shield.left;
+            instructions.push({
+                source: asset.source,
+                width: pos.width,
+                height: pos.height,
+                top: pos.top,
+                left: pos.left,
+            });
         }
     }
 

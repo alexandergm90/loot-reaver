@@ -8,7 +8,7 @@ export const chestAssets: EquipmentAssets = {
     },
     leather_tunic: {
         source: require('../../assets/images/items/chest/leather_tunic.png'),
-        male: { width: 149, height: 145, top: 90, left: -20 },
+        male: { width: 130, height: 154, top: 98, left: -4 },
         female: { width: 149, height: 145, top: 90, left: -20 },
     },
 };

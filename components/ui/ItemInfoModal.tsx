@@ -59,6 +59,7 @@ type ItemDetails = {
     socketedRunes: any | null;
     bonuses: any | null;
     createdAt: string;
+    isTwoHanded?: boolean;
     template: {
         id: string;
         code: string;
@@ -80,20 +81,46 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
     if (!item && !loading) return null;
 
     const [equipLoading, setEquipLoading] = useState(false);
+    const [selectedHand, setSelectedHand] = useState<'left' | 'right' | null>(null);
     const itemCode = item?.template?.code;
     const itemIcon = getItemIcon(itemCode);
     const rarity = item?.rarity || item?.template?.rarity || 'worn';
     const isEquipped = item?.equipped === true;
+    const slot = item?.slot || item?.template?.slot || '';
+    const isWeapon = slot?.toLowerCase() === 'weapon';
+    const isRing = slot?.toLowerCase() === 'ring';
+    const isShield = slot?.toLowerCase() === 'shield';
+    const isTwoHanded = item?.isTwoHanded === true;
+    
+    // Show hand selection for weapons (if not two-handed) and rings
+    const showHandSelection = !isEquipped && (isWeapon || isRing) && !isTwoHanded;
 
-    const handleEquipUnequip = async () => {
+    const handleEquipUnequip = async (hand?: 'left' | 'right') => {
         if (!item?.id) return;
+        
+        // For weapons and rings, require hand selection (unless two-handed)
+        if (!isEquipped && (isWeapon || isRing) && !isTwoHanded && !hand) {
+            Alert.alert('Select Hand', 'Please select which hand to equip this item to.');
+            return;
+        }
         
         setEquipLoading(true);
         try {
             if (isEquipped) {
                 await unequipItem(item.id);
             } else {
-                await equipItem(item.id);
+                // Determine slot parameter
+                let slotParam: string | undefined = undefined;
+                if (isWeapon && !isTwoHanded && hand) {
+                    slotParam = hand;
+                } else if (isRing && hand) {
+                    slotParam = hand;
+                } else if (isShield) {
+                    slotParam = 'left'; // Shield defaults to left
+                }
+                // For two-handed weapons, slot is ignored by API
+                
+                await equipItem(item.id, slotParam);
             }
             
             // Notify parent to refresh data
@@ -225,6 +252,11 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                                         // Left column: first 4 stats
                                         const leftStats = allStats.slice(0, 4);
                                         
+                                        // Return empty view if no stats to maintain layout
+                                        if (leftStats.length === 0) {
+                                            return <View key="empty-left" style={{ minHeight: 20 }} />;
+                                        }
+                                        
                                         return leftStats.map((stat) => {
                                             const statIcon = stat.icon;
                                             const formattedValue = formatStatValue(stat.key, stat.value as number);
@@ -298,6 +330,11 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                                         // Right column: stats 5-8 (or empty if less than 5)
                                         const rightStats = allStats.slice(4, 8);
                                         
+                                        // Return empty view if no stats to maintain layout
+                                        if (rightStats.length === 0) {
+                                            return <View key="empty-right" style={{ minHeight: 20 }} />;
+                                        }
+                                        
                                         return rightStats.map((stat) => {
                                             const statIcon = stat.icon;
                                             const formattedValue = formatStatValue(stat.key, stat.value as number);
@@ -355,33 +392,52 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
 
                             {/* Action Buttons */}
                             <View style={styles.actionsSection}>
+                                {/* Hand Selection for Weapons and Rings - always rendered but invisible for other items */}
+                                <View style={[styles.handSelectionContainer, !showHandSelection && styles.handSelectionHidden]}>
+                                    <LRText weight="bold" style={styles.handSelectionLabel}>
+                                        Select Hand:
+                                    </LRText>
+                                    <View style={styles.handSelectionButtons}>
+                                        <Pressable
+                                            onPress={() => showHandSelection && setSelectedHand('left')}
+                                            disabled={!showHandSelection}
+                                            style={[
+                                                styles.handButton,
+                                                selectedHand === 'left' && styles.handButtonSelected
+                                            ]}
+                                        >
+                                            <LRText weight="bold" style={[
+                                                styles.handButtonText,
+                                                selectedHand === 'left' && styles.handButtonTextSelected
+                                            ]}>
+                                                LEFT
+                                            </LRText>
+                                        </Pressable>
+                                        <Pressable
+                                            onPress={() => showHandSelection && setSelectedHand('right')}
+                                            disabled={!showHandSelection}
+                                            style={[
+                                                styles.handButton,
+                                                selectedHand === 'right' && styles.handButtonSelected
+                                            ]}
+                                        >
+                                            <LRText weight="bold" style={[
+                                                styles.handButtonText,
+                                                selectedHand === 'right' && styles.handButtonTextSelected
+                                            ]}>
+                                                RIGHT
+                                            </LRText>
+                                        </Pressable>
+                                    </View>
+                                </View>
+                                
                                 <AppButton
                                     size="sm"
-                                    onPress={handleEquipUnequip}
-                                    disabled={equipLoading}
+                                    onPress={() => handleEquipUnequip(selectedHand || undefined)}
+                                    disabled={equipLoading || (showHandSelection && !selectedHand)}
                                 >
                                     {equipLoading ? '...' : isEquipped ? 'UNEQUIP' : 'EQUIP'}
                                 </AppButton>
-                                <View style={styles.secondaryActions}>
-                                    <AppButton
-                                        size="xs"
-                                        onPress={() => {
-                                            // TODO: Implement upgrade functionality
-                                            console.log('Upgrade item:', item?.id);
-                                        }}
-                                    >
-                                        UPGRADE
-                                    </AppButton>
-                                    <AppButton
-                                        size="xs"
-                                        onPress={() => {
-                                            // TODO: Implement scrap functionality
-                                            console.log('Scrap item:', item?.id);
-                                        }}
-                                    >
-                                        SCRAP
-                                    </AppButton>
-                                </View>
                             </View>
                             </ScrollView>
                         </View>
@@ -440,7 +496,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContent: {
-        padding: 12,
+        padding: 16,
         paddingTop: 12,
         alignItems: 'center',
         paddingBottom: 20,
@@ -475,13 +531,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         marginVertical: 3,
         width: '100%',
-        paddingHorizontal: 8,
+        minHeight: 100,
     },
     statsSideColumn: {
-        flex: 1,
+        width: '25%', // Fixed width percentage to ensure equal columns
         alignItems: 'flex-start',
-        justifyContent: 'center',
-        paddingHorizontal: 8,
+        justifyContent: 'flex-start',
     },
     statRowSide: {
         flexDirection: 'row',
@@ -508,14 +563,14 @@ const styles = StyleSheet.create({
         width: 100,
         height: 100,
         marginHorizontal: 8,
+        flexShrink: 0, // Prevent image container from shrinking
     },
     descriptionSection: {
         marginVertical: 8,
-        paddingHorizontal: 16,
         paddingVertical: 8,
         backgroundColor: 'rgba(139, 115, 85, 0.1)',
         borderRadius: 4,
-        width: '80%',
+        width: '100%',
     },
     descriptionText: {
         fontSize: 11,
@@ -594,10 +649,10 @@ const styles = StyleSheet.create({
     },
     flavorSection: {
         marginVertical: 4,
-        paddingHorizontal: 8,
         paddingVertical: 4,
         backgroundColor: 'rgba(139, 115, 85, 0.1)',
         borderRadius: 4,
+        width: '100%',
     },
     flavorText: {
         fontSize: 11,
@@ -611,10 +666,48 @@ const styles = StyleSheet.create({
         width: '100%',
         alignItems: 'center',
     },
-    secondaryActions: {
+    handSelectionContainer: {
+        marginBottom: 12,
+        alignItems: 'center',
+        width: '100%',
+    },
+    handSelectionHidden: {
+        opacity: 0,
+        pointerEvents: 'none',
+    },
+    handSelectionLabel: {
+        fontSize: 12,
+        color: '#2a1a0a',
+        marginBottom: 8,
+        textShadowColor: 'rgba(255, 255, 255, 0.8)',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 2,
+    },
+    handSelectionButtons: {
         flexDirection: 'row',
-        gap: 6,
+        gap: 8,
         justifyContent: 'center',
+    },
+    handButton: {
+        paddingHorizontal: 20,
+        paddingVertical: 8,
+        borderRadius: 8,
+        borderWidth: 2,
+        borderColor: '#8b5a3c',
+        backgroundColor: 'rgba(139, 90, 60, 0.2)',
+        minWidth: 80,
+        alignItems: 'center',
+    },
+    handButtonSelected: {
+        backgroundColor: '#8b5a3c',
+        borderColor: '#6b4530',
+    },
+    handButtonText: {
+        fontSize: 12,
+        color: '#5a4a3a',
+    },
+    handButtonTextSelected: {
+        color: '#ffffff',
     },
 });
 

@@ -65,12 +65,29 @@ export default function StyledHomeMockup(){
           eq.feet_right = code;
           break;
         case 'weapon':
-          eq.weapon_main = code;
+          // Check if two-handed first
+          if (it.isTwoHanded === true) {
+            eq.weapon_twohanded = code;
+          } else if (it.equippedHand === 'left') {
+            eq.weapon_left = code;
+          } else if (it.equippedHand === 'right') {
+            eq.weapon_right = code;
+          }
           break;
         case 'shield':
           eq.shield = code;
           break;
-        // Note: 'neck', 'ring', 'legs' are not used in equipmentCodes for character rendering
+        case 'legs':
+          eq.legs = code;
+          break;
+        case 'ring':
+          if (it.equippedHand === 'left') {
+            eq.ring_left = code;
+          } else if (it.equippedHand === 'right') {
+            eq.ring_right = code;
+          }
+          break;
+        // Note: 'neck' is not used in equipmentCodes for character rendering
       }
     }
     return eq;

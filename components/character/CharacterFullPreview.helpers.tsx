@@ -10,7 +10,8 @@ export type EquippedMap = Partial<{
     helmet: string; chest: string; cape: string;
     glove_left: string; glove_right: string;
     feet_left: string; feet_right: string;
-    weapon_main: string; weapon_off: string; weapon_twohanded: string; shield: string;
+    weapon_left: string; weapon_right: string; weapon_twohanded: string; shield: string;
+    ring_left: string; ring_right: string;
     legs: string;
 }>;
 
@@ -57,12 +58,30 @@ export const buildBodyLayers = (appearance: CharacterAppearance | null | undefin
 };
 
 export const buildEquipmentGroups = (equipment: EquippedMap | null | undefined, appearance: CharacterAppearance | null | undefined) => {
-    const g: Record<string, React.ReactNode[]> = { back: [], body: [], feet: [], weapon: [], hands: [] };
+    // Separate groups for proper z-index layering:
+    // back: cape back (lowest)
+    // legs: legs/pants (behind everything except cape back)
+    // chest: chest armor (behind cape front)
+    // capeFront: cape front (max z-index)
+    // feet: boots (max z-index)
+    // weapon: weapons/shield (behind gloves, in front of chest & legs)
+    // hands: gloves (max z-index)
+    // helmet: helmet (max z-index, rendered with head)
+    const g: Record<string, React.ReactNode[]> = { 
+        back: [],      // cape back - lowest
+        legs: [],      // legs/pants - low
+        chest: [],     // chest armor
+        capeFront: [], // cape front - max
+        feet: [],      // boots - max
+        weapon: [],    // weapons/shield
+        hands: [],     // gloves - max
+        helmet: []     // helmet - max (rendered with head)
+    };
     if (!equipment || !appearance) return g;
 
     const gender = appearance.gender;
 
-    const addSingle = (slot: 'helmet' | 'chest' | 'cape' | 'legs', slug?: string, bucket: keyof typeof g = 'body') => {
+    const addSingle = (slot: 'helmet' | 'chest' | 'cape' | 'legs', slug?: string, bucket: keyof typeof g = 'chest') => {
         if (!slug) return;
         const asset = getItemAsset(slot, slug);
         const pos = getItemPosition(asset, gender);
@@ -86,7 +105,7 @@ export const buildEquipmentGroups = (equipment: EquippedMap | null | undefined, 
         add('right', rightSlug);
     };
 
-    // Handle cape: render back first, then front
+    // Handle cape: render back and front separately
     if (equipment.cape) {
         const capeBack = getItemAsset('cape', `${equipment.cape}_back`);
         const capeFront = getItemAsset('cape', `${equipment.cape}_front`);
@@ -96,27 +115,24 @@ export const buildEquipmentGroups = (equipment: EquippedMap | null | undefined, 
             g.back.push(<Image key="cape_back" source={capeBack.source} style={getAssetStyle(backPos.width, backPos.height, backPos.top, backPos.left)} resizeMode="contain" />);
         }
         if (capeFront && frontPos) {
-            g.body.push(<Image key="cape_front" source={capeFront.source} style={getAssetStyle(frontPos.width, frontPos.height, frontPos.top, frontPos.left)} resizeMode="contain" />);
+            g.capeFront.push(<Image key="cape_front" source={capeFront.source} style={getAssetStyle(frontPos.width, frontPos.height, frontPos.top, frontPos.left)} resizeMode="contain" />);
         }
     }
     
-    addSingle('chest', equipment.chest || undefined, 'body');
-    addSingle('helmet', equipment.helmet || undefined, 'body');
-    addSingle('legs', equipment.legs || undefined, 'body');
+    // Separate equipment into proper groups
+    addSingle('chest', equipment.chest || undefined, 'chest');
+    addSingle('helmet', equipment.helmet || undefined, 'helmet');
+    addSingle('legs', equipment.legs || undefined, 'legs');
     addSide('feet', equipment.feet_left, equipment.feet_right, 'feet');
 
-    const main = equipment.weapon_twohanded
-        ? { ...getItemAsset('weapon', equipment.weapon_twohanded)!, weaponType: 'twohanded' as const, itemType: 'weapon' as const }
-        : equipment.weapon_main
-            ? { ...getItemAsset('weapon', equipment.weapon_main)!, weaponType: 'main' as const, itemType: 'weapon' as const }
-            : null;
-    const off = equipment.shield
-        ? { ...getItemAsset('shield', equipment.shield)!, itemType: 'shield' as const }
-        : equipment.weapon_off
-            ? { ...getItemAsset('weapon', equipment.weapon_off)!, itemType: 'weapon' as const, weaponType: 'off' as const }
-            : null;
-    getWeaponRenderInstructions(main as any, off as any, gender)
-        .forEach((w, i) => g.weapon.push(<Image key={`weapon_${i}`} source={w.source} style={getAssetStyle(w.width, w.height, w.top, w.left)} resizeMode="contain" />));
+    // Render weapons using new left/right/two-handed logic
+    getWeaponRenderInstructions(
+        equipment.weapon_left,
+        equipment.weapon_right,
+        equipment.weapon_twohanded,
+        equipment.shield,
+        gender
+    ).forEach((w, i) => g.weapon.push(<Image key={`weapon_${i}`} source={w.source} style={getAssetStyle(w.width, w.height, w.top, w.left)} resizeMode="contain" />));
     addSide('glove', equipment.glove_left, equipment.glove_right, 'hands');
 
     return g;
@@ -163,6 +179,7 @@ export const computeAutoOffsetX = (
     }
 
     // Use item-specific positioning instead of slotMeta
+    // Exclude cape and gloves from bounding box to prevent character shifting when equipping/unequipping them
     const addSinglePos = (slot: 'helmet' | 'chest' | 'cape' | 'legs', slug?: string) => {
         if (!slug) return;
         const asset = getItemAsset(slot, slug);
@@ -170,15 +187,8 @@ export const computeAutoOffsetX = (
         if (pos) include(pos);
     };
     
-    // Handle cape front/back
-    if (equipment?.cape) {
-        const capeBack = getItemAsset('cape', `${equipment.cape}_back`);
-        const capeFront = getItemAsset('cape', `${equipment.cape}_front`);
-        const backPos = getItemPosition(capeBack, gender);
-        const frontPos = getItemPosition(capeFront, gender);
-        if (backPos) include(backPos);
-        if (frontPos) include(frontPos);
-    }
+    // Exclude cape from bounding box calculation - it can extend beyond character bounds
+    // and cause unwanted shifting when equipped/unequipped
     
     addSinglePos('chest', equipment?.chest || undefined);
     addSinglePos('helmet', equipment?.helmet || undefined);
@@ -204,19 +214,17 @@ export const computeAutoOffsetX = (
         }
     };
     addSidePos('feet', equipment?.feet_left, equipment?.feet_right);
-    addSidePos('glove', equipment?.glove_left, equipment?.glove_right);
+    // Exclude gloves from bounding box calculation - they can extend beyond character bounds
+    // and cause unwanted shifting when equipped/unequipped
 
-    const main = equipment?.weapon_twohanded
-        ? { ...getItemAsset('weapon', equipment.weapon_twohanded)!, weaponType: 'twohanded' as const, itemType: 'weapon' as const }
-        : equipment?.weapon_main
-            ? { ...getItemAsset('weapon', equipment.weapon_main)!, weaponType: 'main' as const, itemType: 'weapon' as const }
-            : null;
-    const off = equipment?.shield
-        ? { ...getItemAsset('shield', equipment.shield)!, itemType: 'shield' as const }
-        : equipment?.weapon_off
-            ? { ...getItemAsset('weapon', equipment.weapon_off)!, itemType: 'weapon' as const, weaponType: 'off' as const }
-            : null;
-    const weaponLayers = getWeaponRenderInstructions(main as any, off as any, gender);
+    // Include weapons in bounding box calculation
+    const weaponLayers = getWeaponRenderInstructions(
+        equipment?.weapon_left,
+        equipment?.weapon_right,
+        equipment?.weapon_twohanded,
+        equipment?.shield,
+        gender
+    );
     weaponLayers.forEach(w => include({ width: w.width, height: w.height, top: w.top, left: w.left }));
 
     if (!isFinite(minLeft) || !isFinite(maxRight)) return 0;
