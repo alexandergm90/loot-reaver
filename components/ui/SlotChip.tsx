@@ -2,6 +2,7 @@ import { EquipmentSlotType, isValidEquipmentSlot } from '@/types/slot';
 import { getItemIcon } from '@/utils/getItemIcon';
 import React from 'react';
 import { Image, ImageBackground, Pressable, StyleSheet, View } from 'react-native';
+import RarityGradientBackground from './RarityGradientBackground';
 
 type Props = {
     label: string;
@@ -59,6 +60,7 @@ const SlotChip: React.FC<Props> = ({ label, item, slotType, onPress, fallback })
     const hasItem = !!item;
     const itemCode = item?.template?.code;
     const itemIcon = getItemIcon(itemCode);
+    const rarity = item?.rarity || item?.template?.rarity || 'worn';
     
     return (
         <Comp onPress={clickable ? () => onPress && onPress(item) : undefined} style={styles.container}>
@@ -67,23 +69,30 @@ const SlotChip: React.FC<Props> = ({ label, item, slotType, onPress, fallback })
                 resizeMode="contain"
                 style={styles.background}
             >
-                <View style={styles.content}>
-                    {hasItem && itemIcon ? (
-                        // Show item icon when equipped
-                        <Image 
-                            source={itemIcon} 
-                            style={styles.icon}
-                            resizeMode="contain"
-                        />
-                    ) : (
-                        // Show placeholder icon when empty
+                {hasItem ? (
+                    // Show item with rarity background when equipped
+                    <RarityGradientBackground
+                        rarity={rarity}
+                        style={styles.content}
+                    >
+                        {itemIcon ? (
+                            <Image 
+                                source={itemIcon} 
+                                style={styles.icon}
+                                resizeMode="contain"
+                            />
+                        ) : null}
+                    </RarityGradientBackground>
+                ) : (
+                    // Show placeholder icon when empty
+                    <View style={styles.content}>
                         <Image 
                             source={placeholderIcon} 
                             style={styles.icon}
                             resizeMode="contain"
                         />
-                    )}
-                </View>
+                    </View>
+                )}
             </ImageBackground>
         </Comp>
     );
@@ -103,11 +112,13 @@ const styles = StyleSheet.create({
     content: {
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 4,
+        width: '100%',
+        height: '100%',
+        padding: 8,
     },
     icon: {
-        width: 30,
-        height: 30,
+        width: '100%',
+        height: '100%',
     },
 });
 

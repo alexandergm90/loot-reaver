@@ -152,6 +152,16 @@ export const computeAutoOffsetX = (
     ];
     orderedAssets.filter(Boolean).forEach((asset: any) => include({ width: asset.width, height: asset.height, top: asset.top, left: asset.left }));
 
+    // Always include body arms in bounding box calculation to maintain consistent positioning
+    // even when gloves are equipped (which hide the body arms)
+    const bodyData = characterAssets[gender]?.body?.[appearance.skinTone];
+    if (bodyData) {
+        // Include body parts (left arm, torso, right arm) to maintain consistent bounds
+        include({ width: bodyData.left_arm.width, height: bodyData.left_arm.height, top: bodyData.left_arm.top, left: bodyData.left_arm.left });
+        include({ width: bodyData.body.width, height: bodyData.body.height, top: bodyData.body.top, left: bodyData.body.left });
+        include({ width: bodyData.right_arm.width, height: bodyData.right_arm.height, top: bodyData.right_arm.top, left: bodyData.right_arm.left });
+    }
+
     // Use item-specific positioning instead of slotMeta
     const addSinglePos = (slot: 'helmet' | 'chest' | 'cape' | 'legs', slug?: string) => {
         if (!slug) return;

@@ -7,7 +7,7 @@ import { useEquippedFromCharacter } from '@/hooks/useEquippedFromCharacter';
 import { getPlayerCharacter, getPlayerInventory, getPlayerItem } from '@/services/playerService';
 import { usePlayerStore } from '@/store/playerStore';
 import { getItemIcon } from '@/utils/getItemIcon';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Dimensions, FlatList, Image, ImageBackground, Pressable, View } from 'react-native';
 import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
@@ -52,6 +52,49 @@ export default function InventoryScreen() {
     const [equipmentBottom, setEquipmentBottom] = useState<number | null>(null);
 
     const { equippedItems, equipmentCodes } = useEquippedFromCharacter(player?.character);
+
+    // Refresh function to reload character and inventory data
+    const refreshData = useCallback(async (skipItemDetails = false) => {
+        try {
+            const [charData, invData] = await Promise.all([
+                getPlayerCharacter(),
+                getPlayerInventory(),
+            ]);
+
+            // Update player store with new character data
+            const currentPlayer = usePlayerStore.getState().player;
+            setPlayer({
+                ...(currentPlayer || { id: 'unknown' }),
+                hasCharacter: true,
+                character: charData,
+            } as any);
+            setInventory(invData);
+
+            // Refresh item details if an item is currently selected and not skipping
+            if (!skipItemDetails && selectedItem?.id) {
+                try {
+                    const details = await getPlayerItem(selectedItem.id);
+                    setItemDetails(details);
+                } catch (e: any) {
+                    console.error('[Inventory] Failed to refresh item details:', e);
+                    // Fallback to basic item info
+                    setItemDetails(selectedItem);
+                }
+            }
+        } catch (e: any) {
+            console.error('[Inventory] Failed to refresh data:', e);
+            setError(e?.message || 'Failed to refresh data');
+        }
+    }, [selectedItem?.id, setPlayer]);
+
+    // Handle equip/unequip changes
+    const handleEquipChange = useCallback(async () => {
+        // Clear selected item to prevent modal from reopening
+        setSelectedItem(null);
+        setItemDetails(null);
+        // Skip refreshing item details since we're closing the modal
+        await refreshData(true);
+    }, [refreshData]);
 
     // Animation values - initialize with collapsed height
     const inventoryHeight = useSharedValue(COLLAPSED_HEIGHT);
@@ -208,7 +251,7 @@ export default function InventoryScreen() {
                         resizeMode="contain"
                         style={{ width: '100%', height: 390, overflow: 'hidden' }}
                     >
-                    <View style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 100, paddingLeft: 10 }} collapsable={false}>
+                    <View style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 100, paddingLeft: 0 }} collapsable={false}>
                         <View style={{ transform: [{ scale: 0.6 }] }}>
                             <CharacterFullPreview
                                 appearance={player?.character?.appearance || null}
@@ -333,9 +376,10 @@ export default function InventoryScreen() {
                                     borderBottomWidth: 2,
                                     borderBottomColor: '#8b5a3c',
                                     backgroundColor: 'rgba(26, 15, 5, 0.7)',
+                                    minHeight: HEADER_HEIGHT,
                                 }}
                             >
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                                     <LRText
                                         weight="black"
                                         style={{
@@ -365,18 +409,20 @@ export default function InventoryScreen() {
                                         </LRText>
                                     )}
                                 </View>
-                                <LRText
-                                    weight="bold"
-                                    style={{
-                                        color: '#d4a574',
-                                        fontSize: 14,
-                                        textShadowColor: 'rgba(0, 0, 0, 0.6)',
-                                        textShadowOffset: { width: 1, height: 1 },
-                                        textShadowRadius: 2,
-                                    }}
-                                >
-                                    {isExpanded ? '▼' : '▲'}
-                                </LRText>
+                                <View style={{ width: 20, alignItems: 'center', justifyContent: 'center' }}>
+                                    <LRText
+                                        weight="bold"
+                                        style={{
+                                            color: '#d4a574',
+                                            fontSize: 14,
+                                            textShadowColor: 'rgba(0, 0, 0, 0.6)',
+                                            textShadowOffset: { width: 1, height: 1 },
+                                            textShadowRadius: 2,
+                                        }}
+                                    >
+                                        {isExpanded ? '▼' : '▲'}
+                                    </LRText>
+                                </View>
                             </Pressable>
 
                             {/* Content area */}
@@ -411,24 +457,30 @@ export default function InventoryScreen() {
                                         keyExtractor={(it) => it.id}
                                         numColumns={5}
                                         scrollEnabled={true}
-                                        contentContainerStyle={{ paddingBottom: 20 }}
+                                        contentContainerStyle={{ 
+                                            paddingBottom: 20,
+                                            flexGrow: 1,
+                                            justifyContent: (unequippedItems?.length || 0) === 0 ? 'center' : 'flex-start',
+                                        }}
                                         columnWrapperStyle={{ gap: 4 }}
                                         ListEmptyComponent={
-                                            <LRText
-                                                weight="regular"
-                                                style={{
-                                                    textAlign: 'center',
-                                                    fontSize: 14,
-                                                    color: '#8b7355',
-                                                    opacity: 0.7,
-                                                    paddingVertical: 24,
-                                                    textShadowColor: 'rgba(0, 0, 0, 0.6)',
-                                                    textShadowOffset: { width: 1, height: 1 },
-                                                    textShadowRadius: 2,
-                                                }}
-                                            >
-                                                No items
-                                            </LRText>
+                                            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+                                                <LRText
+                                                    weight="regular"
+                                                    style={{
+                                                        textAlign: 'center',
+                                                        fontSize: 14,
+                                                        color: '#8b7355',
+                                                        opacity: 0.7,
+                                                        paddingVertical: 24,
+                                                        textShadowColor: 'rgba(0, 0, 0, 0.6)',
+                                                        textShadowOffset: { width: 1, height: 1 },
+                                                        textShadowRadius: 2,
+                                                    }}
+                                                >
+                                                    No items
+                                                </LRText>
+                                            </View>
                                         }
                                         renderItem={({ item }) => {
                                             const itemCode = item.template?.code;
@@ -484,18 +536,40 @@ export default function InventoryScreen() {
                                     />
                                 ) : (
                                     // Show only first row when collapsed
-                                    <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
-                                        {unequippedItems?.slice(0, 5).map((item) => {
+                                    (!unequippedItems || unequippedItems.length === 0) ? (
+                                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: ITEM_ROW_HEIGHT }}>
+                                            <LRText
+                                                weight="regular"
+                                                style={{
+                                                    textAlign: 'center',
+                                                    fontSize: 14,
+                                                    color: '#8b7355',
+                                                    opacity: 0.7,
+                                                    textShadowColor: 'rgba(0, 0, 0, 0.6)',
+                                                    textShadowOffset: { width: 1, height: 1 },
+                                                    textShadowRadius: 2,
+                                                }}
+                                            >
+                                                No items
+                                            </LRText>
+                                        </View>
+                                    ) : (
+                                        <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center', justifyContent: 'flex-start' }}>
+                                        {unequippedItems.slice(0, 5).map((item) => {
                                             const itemCode = item.template?.code;
                                             const itemIcon = getItemIcon(itemCode);
                                             // Try both item.rarity and item.template.rarity
                                             const rarity = item.rarity;
+                                            // Calculate width: if more than 5 items, shrink to make room for "+X more" text
+                                            // Otherwise use 19% for consistent sizing
+                                            const hasMoreItems = (unequippedItems?.length || 0) > 5;
+                                            const itemWidth = hasMoreItems ? '17%' : '19%';
                                             return (
                                                 <Pressable
                                                     key={item.id}
                                                     onPress={() => setSelectedItem(item)}
                                                     style={{
-                                                        flex: 1,
+                                                        width: itemWidth,
                                                         aspectRatio: 1,
                                                         overflow: 'hidden',
                                                         shadowColor: '#000',
@@ -552,6 +626,7 @@ export default function InventoryScreen() {
                                             </LRText>
                                         )}
                                     </View>
+                                    )
                                 )}
                             </View>
                         )}
@@ -567,7 +642,8 @@ export default function InventoryScreen() {
                 onClose={() => {
                     setSelectedItem(null);
                     setItemDetails(null);
-                }} 
+                }}
+                onEquipChange={handleEquipChange}
             />
         </View>
     );

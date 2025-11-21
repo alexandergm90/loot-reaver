@@ -1,6 +1,7 @@
+import { equipItem, unequipItem } from '@/services/playerService';
 import { getItemIcon } from '@/utils/getItemIcon';
-import React from 'react';
-import { ActivityIndicator, Dimensions, Image, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { ActivityIndicator, Alert, Dimensions, Image, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import AppButton from './AppButton';
 import LRText from './LRText';
 import RarityGradientBackground from './RarityGradientBackground';
@@ -72,14 +73,45 @@ type Props = {
     item: ItemDetails | any | null;
     loading?: boolean;
     onClose: () => void;
+    onEquipChange?: () => void;
 };
 
-const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose }) => {
+const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEquipChange }) => {
     if (!item && !loading) return null;
 
+    const [equipLoading, setEquipLoading] = useState(false);
     const itemCode = item?.template?.code;
     const itemIcon = getItemIcon(itemCode);
     const rarity = item?.rarity || item?.template?.rarity || 'worn';
+    const isEquipped = item?.equipped === true;
+
+    const handleEquipUnequip = async () => {
+        if (!item?.id) return;
+        
+        setEquipLoading(true);
+        try {
+            if (isEquipped) {
+                await unequipItem(item.id);
+            } else {
+                await equipItem(item.id);
+            }
+            
+            // Notify parent to refresh data
+            if (onEquipChange) {
+                onEquipChange();
+            }
+            
+            // Close the modal after successful operation
+            onClose();
+        } catch (error: any) {
+            Alert.alert(
+                'Error',
+                error?.message || `Failed to ${isEquipped ? 'unequip' : 'equip'} item`
+            );
+        } finally {
+            setEquipLoading(false);
+        }
+    };
     const rarityColorMap: Record<string, string> = {
         worn: '#a0a0a0', // gray
         superior: '#90ee90', // light green
@@ -325,12 +357,10 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose }) => {
                             <View style={styles.actionsSection}>
                                 <AppButton
                                     size="sm"
-                                    onPress={() => {
-                                        // TODO: Implement equip functionality
-                                        console.log('Equip item:', item?.id);
-                                    }}
+                                    onPress={handleEquipUnequip}
+                                    disabled={equipLoading}
                                 >
-                                    EQUIP
+                                    {equipLoading ? '...' : isEquipped ? 'UNEQUIP' : 'EQUIP'}
                                 </AppButton>
                                 <View style={styles.secondaryActions}>
                                     <AppButton

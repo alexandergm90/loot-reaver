@@ -36,6 +36,42 @@ export async function getPlayerItem(itemId: string) {
     return data;
 }
 
+export async function equipItem(itemId: string, slot?: string) {
+    const token = await storage.getItem('access_token');
+    if (!token) throw new Error('Not authenticated');
+    const body: { itemId: string; slot?: string } = { itemId };
+    if (slot) {
+        body.slot = slot;
+    }
+    const res = await fetch(`${API_BASE}/player/equipment/equip`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.message || 'Failed to equip item');
+    return data;
+}
+
+export async function unequipItem(itemId: string) {
+    const token = await storage.getItem('access_token');
+    if (!token) throw new Error('Not authenticated');
+    const res = await fetch(`${API_BASE}/player/equipment/unequip`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ itemId }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.message || 'Failed to unequip item');
+    return data;
+}
+
 export async function registerPlayerProfile({
     appearance,
     trait,
