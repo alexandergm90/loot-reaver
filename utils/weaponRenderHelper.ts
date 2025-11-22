@@ -86,13 +86,15 @@ export function getWeaponRenderInstructions(
     if (shield) {
         const asset = getItemAsset('shield', shield);
         if (asset) {
-            const pos = itemSlotMeta.shield.left;
+            const assetPos = getItemPosition(asset, gender);
+            const slotPos = itemSlotMeta.shield.left;
+            // Use asset's width/height (size), but slotMeta's position (top/left)
             instructions.push({
                 source: asset.source,
-                width: pos.width,
-                height: pos.height,
-                top: pos.top,
-                left: pos.left,
+                width: assetPos?.width || slotPos.width,
+                height: assetPos?.height || slotPos.height,
+                top: slotPos.top,
+                left: slotPos.left,
                 excludeFromBounds: true, // Exclude shield from bounding box
             });
         }

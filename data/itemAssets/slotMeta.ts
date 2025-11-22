@@ -20,7 +20,7 @@ export const itemSlotMeta: ItemSlotMeta = {
         center: { width: 196, height: 128, top: 36, left: 30 },
     },
     shield: {
-        left: { width: 100, height: 100, top: 48, left: 8 },
+        left: { width: 100, height: 100, top: 180, left: 55 },
     },
     legs: { width: 149, height: 145, top: 180, left: -20 },
 };
