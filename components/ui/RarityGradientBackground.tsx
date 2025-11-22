@@ -28,16 +28,7 @@ export const RarityGradientBackground: React.FC<RarityGradientBackgroundProps> =
 }) => {
     // Default to worn if rarity is not recognized
     const normalizedRarity = (rarity?.toLowerCase() as Rarity) || 'worn';
-    
-    // Debug: Log rarity values to help diagnose cache/mapping issues
-    if (__DEV__) {
-        console.log('[RarityGradientBackground]', {
-            originalRarity: rarity,
-            normalizedRarity,
-            availableRarities: Object.keys(RARITY_GLOW),
-        });
-    }
-    
+
     const glowImage = RARITY_GLOW[normalizedRarity] || RARITY_GLOW.worn;
 
     return (

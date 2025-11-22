@@ -132,7 +132,13 @@ export const buildEquipmentGroups = (equipment: EquippedMap | null | undefined, 
         equipment.weapon_twohanded,
         equipment.shield,
         gender
-    ).forEach((w, i) => g.weapon.push(<Image key={`weapon_${i}`} source={w.source} style={getAssetStyle(w.width, w.height, w.top, w.left)} resizeMode="contain" />));
+    ).forEach((w, i) => {
+        const baseStyle = getAssetStyle(w.width, w.height, w.top, w.left);
+        const style = w.flipHorizontal 
+            ? { ...baseStyle, transform: [{ scaleX: -1 }] }
+            : baseStyle;
+        g.weapon.push(<Image key={`weapon_${i}`} source={w.source} style={style} resizeMode="contain" />);
+    });
     addSide('glove', equipment.glove_left, equipment.glove_right, 'hands');
 
     return g;
@@ -218,6 +224,7 @@ export const computeAutoOffsetX = (
     // and cause unwanted shifting when equipped/unequipped
 
     // Include weapons in bounding box calculation
+    // Exclude off-hand weapons and shields to prevent character shifting when equipping/unequipping
     const weaponLayers = getWeaponRenderInstructions(
         equipment?.weapon_left,
         equipment?.weapon_right,
@@ -225,7 +232,9 @@ export const computeAutoOffsetX = (
         equipment?.shield,
         gender
     );
-    weaponLayers.forEach(w => include({ width: w.width, height: w.height, top: w.top, left: w.left }));
+    weaponLayers
+        .filter(w => !w.excludeFromBounds) // Exclude off-hand weapons and shields
+        .forEach(w => include({ width: w.width, height: w.height, top: w.top, left: w.left }));
 
     if (!isFinite(minLeft) || !isFinite(maxRight)) return 0;
     const centerOfContent = (minLeft + maxRight) / 2;

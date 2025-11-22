@@ -82,6 +82,7 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
 
     const [equipLoading, setEquipLoading] = useState(false);
     const [selectedHand, setSelectedHand] = useState<'left' | 'right' | null>(null);
+    const [titleIsTwoLines, setTitleIsTwoLines] = useState(false);
     const itemCode = item?.template?.code;
     const itemIcon = getItemIcon(itemCode);
     const rarity = item?.rarity || item?.template?.rarity || 'worn';
@@ -169,10 +170,21 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                             </Pressable>
 
                             <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-                                {/* Item name - top centered */}
-                                <LRText weight="black" style={styles.itemName}>
-                                    {item?.template?.name || 'Unknown Item'}
-                                </LRText>
+                                {/* Item name - top centered with fixed height container */}
+                                <View style={[styles.itemNameContainer, titleIsTwoLines ? styles.itemNameContainerTwoLines : styles.itemNameContainerOneLine]}>
+                                    <LRText 
+                                        weight="black" 
+                                        style={styles.itemName} 
+                                        numberOfLines={2} 
+                                        ellipsizeMode="tail"
+                                        onTextLayout={(e) => {
+                                            const lines = e.nativeEvent.lines.length;
+                                            setTitleIsTwoLines(lines > 1);
+                                        }}
+                                    >
+                                        {item?.template?.name || 'Unknown Item'}
+                                    </LRText>
+                                </View>
 
                             {/* Rarity - below title, centered */}
                             <LRText
@@ -227,9 +239,9 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                                         const allStats: Array<{ key: string; value: string | number; icon: any | null }> = [];
                                         const slot = item?.slot || item?.template?.slot;
                                         
-                                        // Base Stats (excluding level, power, and attackType)
-                                        if (item?.template?.baseStats) {
-                                            Object.entries(item.template.baseStats).forEach(([key, value]) => {
+                                        // Only use bonuses from item (actual extended stats when item is created)
+                                        if (item?.bonuses && typeof item.bonuses === 'object') {
+                                            Object.entries(item.bonuses).forEach(([key, value]) => {
                                                 if (key === 'level' || key === 'power') return;
                                                 // Don't show attackType in stats (it's shown at the top for weapons)
                                                 if (key.toLowerCase() === 'attacktype') return;
@@ -237,15 +249,6 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                                                 const normalizedKey = key.toLowerCase();
                                                 const icon = getStatIcon(normalizedKey);
                                                 allStats.push({ key, value: value as number, icon });
-                                            });
-                                        }
-                                        
-                                        // Bonuses from item.bonuses
-                                        if (item?.bonuses && typeof item.bonuses === 'object') {
-                                            Object.entries(item.bonuses).forEach(([key, value]) => {
-                                                const normalizedKey = key.toLowerCase();
-                                                const icon = getStatIcon(normalizedKey);
-                                                allStats.push({ key: `bonus_${key}`, value: value as number, icon });
                                             });
                                         }
                                         
@@ -305,9 +308,9 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                                         const allStats: Array<{ key: string; value: string | number; icon: any | null }> = [];
                                         const slot = item?.slot || item?.template?.slot;
                                         
-                                        // Base Stats (excluding level, power, and attackType)
-                                        if (item?.template?.baseStats) {
-                                            Object.entries(item.template.baseStats).forEach(([key, value]) => {
+                                        // Only use bonuses from item (actual extended stats when item is created)
+                                        if (item?.bonuses && typeof item.bonuses === 'object') {
+                                            Object.entries(item.bonuses).forEach(([key, value]) => {
                                                 if (key === 'level' || key === 'power') return;
                                                 // Don't show attackType in stats (it's shown at the top for weapons)
                                                 if (key.toLowerCase() === 'attacktype') return;
@@ -315,15 +318,6 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                                                 const normalizedKey = key.toLowerCase();
                                                 const icon = getStatIcon(normalizedKey);
                                                 allStats.push({ key, value: value as number, icon });
-                                            });
-                                        }
-                                        
-                                        // Bonuses from item.bonuses
-                                        if (item?.bonuses && typeof item.bonuses === 'object') {
-                                            Object.entries(item.bonuses).forEach(([key, value]) => {
-                                                const normalizedKey = key.toLowerCase();
-                                                const icon = getStatIcon(normalizedKey);
-                                                allStats.push({ key: `bonus_${key}`, value: value as number, icon });
                                             });
                                         }
                                         
@@ -410,7 +404,7 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                                                 styles.handButtonText,
                                                 selectedHand === 'left' && styles.handButtonTextSelected
                                             ]}>
-                                                LEFT
+                                                {isWeapon ? 'OFF HAND' : 'LEFT'}
                                             </LRText>
                                         </Pressable>
                                         <Pressable
@@ -425,7 +419,7 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                                                 styles.handButtonText,
                                                 selectedHand === 'right' && styles.handButtonTextSelected
                                             ]}>
-                                                RIGHT
+                                                {isWeapon ? 'MAIN HAND' : 'RIGHT'}
                                             </LRText>
                                         </Pressable>
                                     </View>
@@ -473,7 +467,7 @@ const styles = StyleSheet.create({
     closeButton: {
         position: 'absolute',
         top: 24,
-        right: 24,
+        right: 10,
         width: 32,
         height: 32,
         borderRadius: 16,
@@ -566,8 +560,8 @@ const styles = StyleSheet.create({
         flexShrink: 0, // Prevent image container from shrinking
     },
     descriptionSection: {
-        marginVertical: 8,
-        paddingVertical: 8,
+        marginVertical: 2,
+        paddingVertical: 2,
         backgroundColor: 'rgba(139, 115, 85, 0.1)',
         borderRadius: 4,
         width: '100%',
@@ -597,15 +591,30 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
     },
+    itemNameContainer: {
+        width: '100%',
+        height: 56, // Fixed height to accommodate 2 lines (24px font + 28px line height)
+        marginBottom: 2,
+        paddingHorizontal: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    itemNameContainerOneLine: {
+        marginTop: 8, // Less margin when title is on 1 line
+    },
+    itemNameContainerTwoLines: {
+        marginTop: 16, // More margin when title is on 2 lines
+    },
     itemName: {
         fontSize: 24,
         color: '#2a1a0a',
-        marginTop: 8,
-        marginBottom: 2,
         textAlign: 'center',
+        marginTop: 4,
+        marginBottom: 4,
         textShadowColor: 'rgba(255, 255, 255, 0.8)',
         textShadowOffset: { width: 1, height: 1 },
         textShadowRadius: 2,
+        lineHeight: 28, // Line height for 2-line text
     },
     rarity: {
         fontSize: 16,

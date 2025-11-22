@@ -7,6 +7,15 @@ const itemIconMap: Record<string, any> = {
     leather_glove: require('@/assets/images/items/icons/leather_glove.png'),
     leather_helmet: require('@/assets/images/items/icons/leather_helmet.png'),
     leather_pants: require('@/assets/images/items/icons/leather_pants.png'),
+    bronze_necklace: require('@/assets/images/items/icons/bronze_necklace.png'),
+    dark_necklace: require('@/assets/images/items/icons/dark_necklace.png'),
+    silver_green_necklace: require('@/assets/images/items/icons/silver_green_necklace.png'),
+    gold_blue_necklace: require('@/assets/images/items/icons/gold_blue_necklace.png'),
+    dark_ring: require('@/assets/images/items/icons/dark_ring.png'),
+    gold_ruby_ring: require('@/assets/images/items/icons/gold_ruby_ring.png'),
+    iron_ring: require('@/assets/images/items/icons/iron_ring.png'),
+    silver_ring: require('@/assets/images/items/icons/silver_ring.png'),
+    wooden_shield: require('@/assets/images/items/icons/wooden_shield.png'),
 };
 
 /**

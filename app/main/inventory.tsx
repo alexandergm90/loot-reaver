@@ -299,7 +299,7 @@ export default function InventoryScreen() {
                                     <SlotChip label="Ring R" item={equippedItems.ringRight} slotType="ring" onPress={setSelectedItem} fallback="Ring R" />
                                 </View>
                             </View>
-                            {/* Bottom center: Weapon Left / Weapon Right or Two-Handed / Shield */}
+                            {/* Bottom center: Main Hand / Off Hand or Two-Handed / Shield */}
                             <View className="absolute left-1/2 bottom-2 flex-row" style={{ transform: [{ translateX: -60 }], gap: 8 }}>
                                 {equippedItems.weaponTwoHanded ? (
                                     <>
@@ -308,8 +308,8 @@ export default function InventoryScreen() {
                                     </>
                                 ) : (
                                     <>
-                                        <SlotChip label="Weapon L" item={equippedItems.weaponLeft} slotType="weapon" onPress={setSelectedItem} fallback="Weapon L" />
-                                        <SlotChip label={equippedItems.shield ? "Shield" : "Weapon R"} item={equippedItems.shield || equippedItems.weaponRight} slotType={equippedItems.shield ? "shield" : "weapon"} onPress={setSelectedItem} fallback={equippedItems.shield ? "Shield" : "Weapon R"} />
+                                        <SlotChip label="Main Hand" item={equippedItems.weaponLeft} slotType="weapon" onPress={setSelectedItem} fallback="Main Hand" />
+                                        <SlotChip label={equippedItems.shield ? "Shield" : "Off Hand"} item={equippedItems.shield || equippedItems.weaponRight} slotType={equippedItems.shield ? "shield" : "weapon"} onPress={setSelectedItem} fallback={equippedItems.shield ? "Shield" : "Off Hand"} />
                                     </>
                                 )}
                             </View>

@@ -69,9 +69,11 @@ export default function StyledHomeMockup(){
           if (it.isTwoHanded === true) {
             eq.weapon_twohanded = code;
           } else if (it.equippedHand === 'left') {
-            eq.weapon_left = code;
-          } else if (it.equippedHand === 'right') {
+            // API left (off-hand) maps to weapon_right slot (right UI slot)
             eq.weapon_right = code;
+          } else if (it.equippedHand === 'right') {
+            // API right (main-hand) maps to weapon_left slot (left UI slot)
+            eq.weapon_left = code;
           }
           break;
         case 'shield':

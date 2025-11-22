@@ -9,8 +9,8 @@ export const itemSlotMeta: ItemSlotMeta = {
         right: { width: 54, height: 54, top: 170, left: 95 },
     },
     weapon: {
-        left: { width: 100, height: 70, top: 48, left: 8 },
-        right: { width: 100, height: 70, top: 148, left: 100 },
+        left: { width: 100, height: 70, top: 260, left: -35 },
+        right: { width: 100, height: 70, top: 258, left: 7 },
     },
     feet: {
         left: { width: 47, height: 64, top: 252, left: 18 },

@@ -23,10 +23,12 @@ export const useEquippedFromCharacter = (character: any) => {
         const twoHandedWeapon = weapons.find((w) => w.isTwoHanded === true) || null;
         
         // Find left/right weapons (only if no two-handed)
+        // Note: API equippedHand "left" = off-hand, "right" = main-hand
+        // Mapping: leftWeapon (off-hand) → weapon_left slot, rightWeapon (main-hand) → weapon_right slot
         const leftWeapon = !twoHandedWeapon ? weapons.find((w) => w.equippedHand === 'left') || null : null;
         const rightWeapon = !twoHandedWeapon ? weapons.find((w) => w.equippedHand === 'right') || null : null;
         
-        // Find shield (always left hand)
+        // Find shield (always left hand/off-hand)
         const shield = shields[0] || null;
         
         // Find rings by hand
@@ -38,10 +40,13 @@ export const useEquippedFromCharacter = (character: any) => {
             body: findOne('chest'),
             cape: findOne('cape'),
             hands: findOne('glove'),
-            mainHand: twoHandedWeapon || rightWeapon || leftWeapon, // For backward compatibility
-            offHand: shield, // For backward compatibility
-            weaponLeft: leftWeapon,
-            weaponRight: rightWeapon,
+            mainHand: twoHandedWeapon || rightWeapon || leftWeapon, // Main-hand = right weapon (or two-handed, or left as fallback)
+            offHand: shield, // Off-hand = shield (or could be left weapon if no shield)
+            // Note: weaponLeft/weaponRight here refer to UI slot positions, not API equippedHand
+            // weaponLeft (left UI slot) = main-hand weapons (API equippedHand: "right")
+            // weaponRight (right UI slot) = off-hand weapons (API equippedHand: "left")
+            weaponLeft: rightWeapon,  // Main-hand goes to left UI slot
+            weaponRight: leftWeapon,  // Off-hand goes to right UI slot
             weaponTwoHanded: twoHandedWeapon,
             shield: shield,
             feet: findOne('feet'),
@@ -76,9 +81,11 @@ export const useEquippedFromCharacter = (character: any) => {
                     if (it.isTwoHanded === true) {
                         eq.weapon_twohanded = code;
                     } else if (it.equippedHand === 'left') {
-                        eq.weapon_left = code;
-                    } else if (it.equippedHand === 'right') {
+                        // API left (off-hand) maps to weapon_right slot (right UI slot)
                         eq.weapon_right = code;
+                    } else if (it.equippedHand === 'right') {
+                        // API right (main-hand) maps to weapon_left slot (left UI slot)
+                        eq.weapon_left = code;
                     }
                     break;
                 case 'shield':
