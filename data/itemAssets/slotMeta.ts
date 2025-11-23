@@ -9,7 +9,7 @@ export const itemSlotMeta: ItemSlotMeta = {
         right: { width: 54, height: 54, top: 170, left: 95 },
     },
     weapon: {
-        left: { width: 100, height: 70, top: 260, left: -35 },
+        left: { width: 100, height: 70, top: 255, left: -38 },
         right: { width: 100, height: 70, top: 258, left: 7 },
     },
     feet: {
@@ -23,4 +23,13 @@ export const itemSlotMeta: ItemSlotMeta = {
         left: { width: 100, height: 100, top: 180, left: 55 },
     },
     legs: { width: 149, height: 145, top: 180, left: -20 },
+    // These slots exist in the API but are not rendered on the character preview
+    neck: {
+        left: { width: 0, height: 0, top: 0, left: 0 },
+        right: { width: 0, height: 0, top: 0, left: 0 },
+    },
+    ring: {
+        left: { width: 0, height: 0, top: 0, left: 0 },
+        right: { width: 0, height: 0, top: 0, left: 0 },
+    },
 };

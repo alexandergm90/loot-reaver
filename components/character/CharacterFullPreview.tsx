@@ -140,24 +140,29 @@ const CharacterFullPreview: React.FC<Props> = ({
             <Animated.View style={[styles.stack, { width: BASE_CANVAS, height: BASE_CANVAS, transform: [{ scale: scaleToFit }] }]} collapsable={false}>
                 {/* inner wrapper receives combined centering and animations */}
                 <Animated.View style={[styles.layersWrapper, combinedStyle]} collapsable={false}>
-                    {/* Render order from back to front (z-index):
-                        1. Cape back (lowest, only thing behind body)
-                        2. Body (base character body - arms, torso)
-                        3. Legs/pants (in front of body, but low - behind other equipment)
-                        4. Chest armor (behind cape front)
-                        5. Weapons/shield (behind gloves, in front of chest & legs)
-                        6. Gloves (max z-index)
-                        7. Boots (max z-index)
-                        8. Cape front (max z-index)
-                        9. Head (base head layers)
-                        10. Helmet (max z-index, on top of everything)
-                    */}
                     <Animated.View style={[styles.layer]} collapsable={false}>{groups.back}</Animated.View>
                     <Animated.View style={[styles.layer, bodyStyle]} collapsable={false}>{bodyLayers}</Animated.View>
                     <Animated.View style={[styles.layer, bodyStyle]} collapsable={false}>{groups.legs}</Animated.View>
                     <Animated.View style={[styles.layer, bodyStyle]} collapsable={false}>{groups.chest}</Animated.View>
-                    <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.weapon}</Animated.View>
-                    <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.hands}</Animated.View>
+                    {/* Render order: later elements appear on top in React Native */}
+                    {/* When shield equipped:
+                        1. Right hand/glove behind main-hand weapon
+                        2. Shield
+                        3. Main-hand weapon
+                        4. Left hand/glove in front of shield
+                    */}
+                    {/* 1. Right hand/glove behind main-hand weapon (when shield equipped) */}
+                    <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.handMainHandBehind}</Animated.View>
+                    {/* 2. Shield (when equipped) */}
+                    <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.shield}</Animated.View>
+                    {/* 3. Off-hand weapon (when no shield) */}
+                    <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.weaponOffHand}</Animated.View>
+                    {/* 4. Main-hand weapon */}
+                    <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.weaponMainHand}</Animated.View>
+                    {/* 5. Left hand/glove in front of shield/off-hand weapon */}
+                    <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.handOffHandFront}</Animated.View>
+                    {/* 6. Right hand/glove in front of main-hand weapon (when no shield) */}
+                    <Animated.View style={[styles.layer, rightHandStyle]} collapsable={false}>{groups.handMainHandFront}</Animated.View>
                     <Animated.View style={[styles.layer, feetStyle]} collapsable={false}>{groups.feet}</Animated.View>
                     <Animated.View style={[styles.layer]} collapsable={false}>{groups.capeFront}</Animated.View>
                     <Animated.View style={[styles.layer, headStyle]} collapsable={false}>{headLayers}</Animated.View>

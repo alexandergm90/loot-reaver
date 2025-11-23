@@ -41,20 +41,8 @@ export const buildBodyLayers = (appearance: CharacterAppearance | null | undefin
     
     if (!bodyData) return null;
     
-    // Hide hands when gloves are equipped
-    const hasGloves = !!(equipment?.glove_left || equipment?.glove_right);
-    
-    // Render arms first (behind), then body (on top)
-    // Left arm, body, right arm
-    const layers = [];
-    if (!hasGloves) {
-        layers.push(<Image key="body_left_arm" source={bodyData.left_arm.source} style={getAssetStyle(bodyData.left_arm.width, bodyData.left_arm.height, bodyData.left_arm.top, bodyData.left_arm.left)} resizeMode="contain" />);
-    }
-    layers.push(<Image key="body_torso" source={bodyData.body.source} style={getAssetStyle(bodyData.body.width, bodyData.body.height, bodyData.body.top, bodyData.body.left)} resizeMode="contain" />);
-    if (!hasGloves) {
-        layers.push(<Image key="body_right_arm" source={bodyData.right_arm.source} style={getAssetStyle(bodyData.right_arm.width, bodyData.right_arm.height, bodyData.right_arm.top, bodyData.right_arm.left)} resizeMode="contain" />);
-    }
-    return layers;
+    // Only render torso - arms are handled separately for proper weapon/glove layering
+    return [<Image key="body_torso" source={bodyData.body.source} style={getAssetStyle(bodyData.body.width, bodyData.body.height, bodyData.body.top, bodyData.body.left)} resizeMode="contain" />];
 };
 
 export const buildEquipmentGroups = (equipment: EquippedMap | null | undefined, appearance: CharacterAppearance | null | undefined) => {
@@ -64,8 +52,13 @@ export const buildEquipmentGroups = (equipment: EquippedMap | null | undefined, 
     // chest: chest armor (behind cape front)
     // capeFront: cape front (max z-index)
     // feet: boots (max z-index)
-    // weapon: weapons/shield (behind gloves, in front of chest & legs)
-    // hands: gloves (max z-index)
+    // weaponOffHand: off-hand weapon only
+    // weaponMainHand: main-hand weapon only
+    // shield: shield only
+    // handOffHandBehind: left hand/glove behind shield (when shield equipped)
+    // handOffHandFront: left hand/glove in front of shield/off-hand weapon
+    // handMainHandBehind: right hand/glove behind main-hand weapon (when shield equipped)
+    // handMainHandFront: right hand/glove in front of main-hand weapon (when no shield)
     // helmet: helmet (max z-index, rendered with head)
     const g: Record<string, React.ReactNode[]> = { 
         back: [],      // cape back - lowest
@@ -73,13 +66,21 @@ export const buildEquipmentGroups = (equipment: EquippedMap | null | undefined, 
         chest: [],     // chest armor
         capeFront: [], // cape front - max
         feet: [],      // boots - max
-        weapon: [],    // weapons/shield
-        hands: [],     // gloves - max
+        weaponOffHand: [], // off-hand weapon only
+        weaponMainHand: [], // main-hand weapon only
+        shield: [],    // shield only
+        handOffHandBehind: [], // left hand/glove behind shield (when shield equipped)
+        handOffHandFront: [],  // left hand/glove in front of shield/off-hand weapon
+        handMainHandBehind: [], // right hand/glove behind main-hand weapon (when shield equipped)
+        handMainHandFront: [],  // right hand/glove in front of main-hand weapon (when no shield)
         helmet: []     // helmet - max (rendered with head)
     };
     if (!equipment || !appearance) return g;
 
     const gender = appearance.gender;
+    const hasShield = !!(equipment && equipment.shield);
+    const hasGloves = !!(equipment.glove_left || equipment.glove_right);
+    const bodyData = characterAssets[gender]?.body?.[appearance.skinTone];
 
     const addSingle = (slot: 'helmet' | 'chest' | 'cape' | 'legs', slug?: string, bucket: keyof typeof g = 'chest') => {
         if (!slug) return;
@@ -90,7 +91,7 @@ export const buildEquipmentGroups = (equipment: EquippedMap | null | undefined, 
         }
     };
     
-    const addSide = (slot: 'glove' | 'feet', leftSlug?: string, rightSlug?: string, bucket: keyof typeof g = 'hands') => {
+    const addSide = (slot: 'glove' | 'feet', leftSlug?: string, rightSlug?: string, bucket: keyof typeof g = 'feet') => {
         const add = (side: 'left' | 'right', slug?: string) => {
             if (!slug) return;
             // Construct the proper asset slug by appending _left or _right
@@ -125,21 +126,81 @@ export const buildEquipmentGroups = (equipment: EquippedMap | null | undefined, 
     addSingle('legs', equipment.legs || undefined, 'legs');
     addSide('feet', equipment.feet_left, equipment.feet_right, 'feet');
 
-    // Render weapons using new left/right/two-handed logic
-    getWeaponRenderInstructions(
+    // Render weapons and shield separately for proper layering
+    // Order from weaponRenderHelper: [main-hand weapon (if present), off-hand weapon (if present), shield (if present)]
+    const weaponInstructions = getWeaponRenderInstructions(
         equipment.weapon_left,
         equipment.weapon_right,
         equipment.weapon_twohanded,
         equipment.shield,
         gender
-    ).forEach((w, i) => {
+    );
+    
+    // Separate main-hand weapon, off-hand weapon, and shield
+    // Shield is always the last instruction when present
+    const shieldIndex = hasShield ? weaponInstructions.length - 1 : -1;
+    const hasTwoHanded = !!equipment.weapon_twohanded;
+    
+    weaponInstructions.forEach((w, i) => {
         const baseStyle = getAssetStyle(w.width, w.height, w.top, w.left);
         const style = w.flipHorizontal 
             ? { ...baseStyle, transform: [{ scaleX: -1 }] }
             : baseStyle;
-        g.weapon.push(<Image key={`weapon_${i}`} source={w.source} style={style} resizeMode="contain" />);
+        
+        if (i === shieldIndex) {
+            g.shield.push(<Image key={`shield_${i}`} source={w.source} style={style} resizeMode="contain" />);
+        } else if (hasTwoHanded) {
+            g.weaponMainHand.push(<Image key={`weapon_twohanded_${i}`} source={w.source} style={style} resizeMode="contain" />);
+        } else if (w.flipHorizontal) {
+            g.weaponOffHand.push(<Image key={`weapon_off_${i}`} source={w.source} style={style} resizeMode="contain" />);
+        } else {
+            g.weaponMainHand.push(<Image key={`weapon_main_${i}`} source={w.source} style={style} resizeMode="contain" />);
+        }
     });
-    addSide('glove', equipment.glove_left, equipment.glove_right, 'hands');
+    
+    // Handle hands/gloves with conditional layering based on shield
+    // When shield is equipped: 
+    //   - Left hand/glove in front of shield
+    //   - Right hand/glove behind main-hand weapon
+    // When no shield:
+    //   - Left hand/glove in front of off-hand weapon
+    //   - Right hand/glove in front of main-hand weapon
+    
+    // Left hand/glove
+    if (equipment.glove_left && bodyData) {
+        const assetSlug = `${equipment.glove_left}_left`;
+        const asset = getItemAsset('glove', assetSlug);
+        const pos = getItemPosition(asset, gender);
+        if (asset && pos) {
+            g.handOffHandFront.push(<Image key="glove_left" source={asset.source} style={getAssetStyle(pos.width, pos.height, pos.top, pos.left)} resizeMode="contain" />);
+        }
+    } else if (!hasGloves && bodyData) {
+        // Bare left hand
+        g.handOffHandFront.push(<Image key="hand_left" source={bodyData.left_arm.source} style={getAssetStyle(bodyData.left_arm.width, bodyData.left_arm.height, bodyData.left_arm.top, bodyData.left_arm.left)} resizeMode="contain" />);
+    }
+    
+    // Right hand/glove
+    if (equipment.glove_right && bodyData) {
+        const assetSlug = `${equipment.glove_right}_right`;
+        const asset = getItemAsset('glove', assetSlug);
+        const pos = getItemPosition(asset, gender);
+        if (asset && pos) {
+            const handImage = <Image key="glove_right" source={asset.source} style={getAssetStyle(pos.width, pos.height, pos.top, pos.left)} resizeMode="contain" />;
+            if (hasShield) {
+                g.handMainHandBehind.push(handImage);
+            } else {
+                g.handMainHandFront.push(handImage);
+            }
+        }
+    } else if (!hasGloves && bodyData) {
+        // Bare right hand
+        const handImage = <Image key="hand_right" source={bodyData.right_arm.source} style={getAssetStyle(bodyData.right_arm.width, bodyData.right_arm.height, bodyData.right_arm.top, bodyData.right_arm.left)} resizeMode="contain" />;
+        if (hasShield) {
+            g.handMainHandBehind.push(handImage);
+        } else {
+            g.handMainHandFront.push(handImage);
+        }
+    }
 
     return g;
 };
