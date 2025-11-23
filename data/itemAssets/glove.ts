@@ -9,11 +9,11 @@ export const gloveAssets: EquipmentAssets = {
     leather_glove_left: {
         source: require('../../assets/images/items/glove/leather_glove.png'),
         male: { width: 50, height: 66, top: 233, left: -36 },
-        female: { width: 54, height: 54, top: 180, left: -20 },
+        female: { width: 47, height: 61, top: 230, left: -30 },
     },
     leather_glove_right: {
         source: require('../../assets/images/items/glove/leather_glove.png'),
         male: { width: 50, height: 66, top: 230, left: 120 },
-        female: { width: 54, height: 54, top: 170, left: 95 },
+        female: { width: 47, height: 61, top: 230, left: 128 },
     },
 };

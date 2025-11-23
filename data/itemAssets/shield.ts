@@ -5,6 +5,6 @@ export const shieldAssets: EquipmentAssets = {
         source: require('../../assets/images/items/shield/wooden_shield.png'),
         // Shield positioning - uses asset size, position from slotMeta
         male: { width: 130, height: 150, top: 0, left: 0 },
-        female: { width: 100, height: 100, top: 0, left: 0 },
+        female:{ width: 130, height: 150, top: 0, left: 0 },
     },
 };

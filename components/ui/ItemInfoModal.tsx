@@ -91,7 +91,7 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
     const isWeapon = slot?.toLowerCase() === 'weapon';
     const isRing = slot?.toLowerCase() === 'ring';
     const isShield = slot?.toLowerCase() === 'shield';
-    const isTwoHanded = item?.isTwoHanded === true;
+    const isTwoHanded = item?.template?.isTwoHanded === true;
     
     // Show hand selection for weapons (if not two-handed) and rings
     const showHandSelection = !isEquipped && (isWeapon || isRing) && !isTwoHanded;
@@ -205,14 +205,20 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                                 <LRText weight="regular" style={styles.infoText}>
                                     {(() => {
                                         const slot = item?.slot || item?.template?.slot || 'Unknown';
-                                        // Get attackType from baseStats
-                                        const attackType = item?.template?.baseStats?.attackType || item?.template?.baseStats?.attacktype;
                                         
-                                        // For weapons, show "Weapon • Slash" format (case-insensitive slot check)
-                                        if (slot?.toLowerCase() === 'weapon' && attackType) {
-                                            const mappedType = ATTACK_TYPE_MAP[attackType.toLowerCase()] || attackType.toLowerCase();
-                                            const capitalizedType = mappedType.charAt(0).toUpperCase() + mappedType.slice(1);
-                                            return `Weapon • ${capitalizedType}`;
+                                        // For weapons, show "Two Handed Weapon • Slash" or "One Handed Weapon • Slash"
+                                        if (slot?.toLowerCase() === 'weapon') {
+                                            const isTwoHandedWeapon = item?.template?.isTwoHanded === true;
+                                            const handedness = isTwoHandedWeapon ? 'Two Handed Weapon' : 'One Handed Weapon';
+                                            
+                                            // Get attackType from baseStats
+                                            const attackType = item?.template?.baseStats?.attackType || item?.template?.baseStats?.attacktype;
+                                            if (attackType) {
+                                                const mappedType = ATTACK_TYPE_MAP[attackType.toLowerCase()] || attackType.toLowerCase();
+                                                const capitalizedType = mappedType.charAt(0).toUpperCase() + mappedType.slice(1);
+                                                return `${handedness} • ${capitalizedType}`;
+                                            }
+                                            return handedness;
                                         }
                                         return slot;
                                     })()}

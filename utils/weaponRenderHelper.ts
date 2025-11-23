@@ -23,7 +23,7 @@ export function getWeaponRenderInstructions(
 ): RenderInstruction[] {
     const instructions: RenderInstruction[] = [];
 
-    // Two-handed weapons have highest priority
+    // Two-handed weapons have highest priority and are always treated as main-hand
     if (weaponTwoHanded) {
         const asset = getItemAsset('weapon', weaponTwoHanded);
         if (asset) {
@@ -35,14 +35,16 @@ export function getWeaponRenderInstructions(
                 height: pos.height,
                 top: pos.top,
                 left: pos.left,
+                excludeFromBounds: true, // Exclude two-handed weapon from bounding box
             });
         }
-        // Return early - two-handed weapons occupy both hands
+        // Return early - two-handed weapons occupy both hands and are always main-hand
         return instructions;
     }
 
     // Left weapon slot (main-hand) - use asset size, slotMeta position
     // Do NOT flip main-hand weapons
+    // Exclude from bounding box to prevent character shifting
     if (weaponLeft) {
         const asset = getItemAsset('weapon', weaponLeft);
         if (asset) {
@@ -55,7 +57,7 @@ export function getWeaponRenderInstructions(
                 height: assetPos?.height || slotPos.height,
                 top: slotPos.top,
                 left: slotPos.left,
-                // Main-hand weapon should NOT be flipped
+                excludeFromBounds: true, // Exclude main-hand weapon from bounding box
             });
         }
     }

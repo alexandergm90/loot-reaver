@@ -1,6 +1,7 @@
 // Map of item codes to their icon images
 const itemIconMap: Record<string, any> = {
     basic_sword: require('@/assets/images/items/icons/basic_sword.png'),
+    iron_sword: require('@/assets/images/items/icons/iron_sword.png'),
     basic_cape: require('@/assets/images/items/icons/basic_cape.png'),
     leather_tunic: require('@/assets/images/items/icons/leather_tunic.png'),
     leather_boot: require('@/assets/images/items/icons/leather_boot.png'),

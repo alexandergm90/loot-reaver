@@ -128,6 +128,12 @@ export const buildEquipmentGroups = (equipment: EquippedMap | null | undefined, 
 
     // Render weapons and shield separately for proper layering
     // Order from weaponRenderHelper: [main-hand weapon (if present), off-hand weapon (if present), shield (if present)]
+    console.log('[CharacterFullPreview] Equipment received:', {
+        weapon_left: equipment.weapon_left,
+        weapon_right: equipment.weapon_right,
+        weapon_twohanded: equipment.weapon_twohanded,
+        shield: equipment.shield
+    });
     const weaponInstructions = getWeaponRenderInstructions(
         equipment.weapon_left,
         equipment.weapon_right,
@@ -135,6 +141,10 @@ export const buildEquipmentGroups = (equipment: EquippedMap | null | undefined, 
         equipment.shield,
         gender
     );
+    console.log('[CharacterFullPreview] Weapon instructions created:', weaponInstructions.length, 'instructions');
+    weaponInstructions.forEach((w, idx) => {
+        console.log(`  [${idx}] flipHorizontal:`, w.flipHorizontal, 'hasSource:', !!w.source);
+    });
     
     // Separate main-hand weapon, off-hand weapon, and shield
     // Shield is always the last instruction when present
@@ -152,8 +162,10 @@ export const buildEquipmentGroups = (equipment: EquippedMap | null | undefined, 
         } else if (hasTwoHanded) {
             g.weaponMainHand.push(<Image key={`weapon_twohanded_${i}`} source={w.source} style={style} resizeMode="contain" />);
         } else if (w.flipHorizontal) {
+            console.log('[CharacterFullPreview] ✅ Off-hand weapon added to weaponOffHand group, index:', i);
             g.weaponOffHand.push(<Image key={`weapon_off_${i}`} source={w.source} style={style} resizeMode="contain" />);
         } else {
+            console.log('[CharacterFullPreview] ✅ Main-hand weapon added to weaponMainHand group, index:', i);
             g.weaponMainHand.push(<Image key={`weapon_main_${i}`} source={w.source} style={style} resizeMode="contain" />);
         }
     });
@@ -261,41 +273,12 @@ export const computeAutoOffsetX = (
     addSinglePos('helmet', equipment?.helmet || undefined);
     addSinglePos('legs', equipment?.legs || undefined);
     
-    const addSidePos = (slot: 'glove' | 'feet', leftSlug?: string, rightSlug?: string) => {
-        const add = (slug?: string) => {
-            if (!slug) return;
-            const assetSlug = `${slug}_left`;
-            const asset = getItemAsset(slot, assetSlug);
-            const pos = getItemPosition(asset, gender);
-            if (pos) include(pos);
-        };
-        if (leftSlug) {
-            const asset = getItemAsset(slot, `${leftSlug}_left`);
-            const pos = getItemPosition(asset, gender);
-            if (pos) include(pos);
-        }
-        if (rightSlug) {
-            const asset = getItemAsset(slot, `${rightSlug}_right`);
-            const pos = getItemPosition(asset, gender);
-            if (pos) include(pos);
-        }
-    };
-    addSidePos('feet', equipment?.feet_left, equipment?.feet_right);
-    // Exclude gloves from bounding box calculation - they can extend beyond character bounds
+    // Exclude gloves and boots from bounding box calculation - they can extend beyond character bounds
     // and cause unwanted shifting when equipped/unequipped
 
-    // Include weapons in bounding box calculation
-    // Exclude off-hand weapons and shields to prevent character shifting when equipping/unequipping
-    const weaponLayers = getWeaponRenderInstructions(
-        equipment?.weapon_left,
-        equipment?.weapon_right,
-        equipment?.weapon_twohanded,
-        equipment?.shield,
-        gender
-    );
-    weaponLayers
-        .filter(w => !w.excludeFromBounds) // Exclude off-hand weapons and shields
-        .forEach(w => include({ width: w.width, height: w.height, top: w.top, left: w.left }));
+    // Exclude all weapons and shields from bounding box calculation to prevent character shifting
+    // when equipping/unequipping them
+    // (Weapons are handled separately and don't affect character centering)
 
     if (!isFinite(minLeft) || !isFinite(maxRight)) return 0;
     const centerOfContent = (minLeft + maxRight) / 2;

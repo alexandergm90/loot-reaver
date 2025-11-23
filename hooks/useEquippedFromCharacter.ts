@@ -5,8 +5,13 @@ type CharacterItem = {
     id: string;
     slot: EquipmentSlotType;
     equippedHand?: "left" | "right" | null;
-    isTwoHanded?: boolean;
-    template?: { code?: string; name?: string; rarity?: string; baseStats?: Record<string, number> };
+    template?: { 
+        code?: string; 
+        name?: string; 
+        rarity?: string; 
+        baseStats?: Record<string, number>;
+        isTwoHanded?: boolean;
+    };
 };
 
 export const useEquippedFromCharacter = (character: any) => {
@@ -20,7 +25,8 @@ export const useEquippedFromCharacter = (character: any) => {
         const shields = findMany('shield');
         
         // Find two-handed weapon (highest priority)
-        const twoHandedWeapon = weapons.find((w) => w.isTwoHanded === true) || null;
+        // Two-handed is determined by template.isTwoHanded
+        const twoHandedWeapon = weapons.find((w) => w.template?.isTwoHanded === true) || null;
         
         // Find left/right weapons (only if no two-handed)
         // Note: API equippedHand "left" = off-hand, "right" = main-hand
@@ -77,15 +83,29 @@ export const useEquippedFromCharacter = (character: any) => {
                 case 'feet':
                     eq.feet_left = code; eq.feet_right = code; break;
                 case 'weapon':
-                    // Check if two-handed first
-                    if (it.isTwoHanded === true) {
+                    // Check if two-handed first (from template.isTwoHanded)
+                    // Two-handed weapons are always main-hand
+                    if (it.template?.isTwoHanded === true) {
                         eq.weapon_twohanded = code;
-                    } else if (it.equippedHand === 'left') {
-                        // API left (off-hand) maps to weapon_right slot (right UI slot)
-                        eq.weapon_right = code;
-                    } else if (it.equippedHand === 'right') {
-                        // API right (main-hand) maps to weapon_left slot (left UI slot)
-                        eq.weapon_left = code;
+                    } else {
+                        // Handle single-handed weapons
+                        const equippedHand = String(it.equippedHand || '').toLowerCase();
+                        if (equippedHand === 'left') {
+                            // API left (off-hand) maps to weapon_right slot (right UI slot)
+                            eq.weapon_right = code;
+                        } else if (equippedHand === 'right') {
+                            // API right (main-hand) maps to weapon_left slot (left UI slot)
+                            eq.weapon_left = code;
+                        } else {
+                            // equippedHand is undefined/null - need to determine which slot
+                            // If weapon_left is already taken, assign to weapon_right (off-hand)
+                            // Otherwise, assign to weapon_left (main-hand)
+                            if (eq.weapon_left) {
+                                eq.weapon_right = code;
+                            } else {
+                                eq.weapon_left = code;
+                            }
+                        }
                     }
                     break;
                 case 'shield':

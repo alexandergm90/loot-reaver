@@ -20,7 +20,7 @@ export const itemSlotMeta: ItemSlotMeta = {
         center: { width: 196, height: 128, top: 36, left: 30 },
     },
     shield: {
-        left: { width: 100, height: 100, top: 180, left: 55 },
+        left: { width: 100, height: 100, top: 180, left: 60 },
     },
     legs: { width: 149, height: 145, top: 180, left: -20 },
     // These slots exist in the API but are not rendered on the character preview
