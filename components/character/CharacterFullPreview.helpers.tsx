@@ -128,12 +128,6 @@ export const buildEquipmentGroups = (equipment: EquippedMap | null | undefined, 
 
     // Render weapons and shield separately for proper layering
     // Order from weaponRenderHelper: [main-hand weapon (if present), off-hand weapon (if present), shield (if present)]
-    console.log('[CharacterFullPreview] Equipment received:', {
-        weapon_left: equipment.weapon_left,
-        weapon_right: equipment.weapon_right,
-        weapon_twohanded: equipment.weapon_twohanded,
-        shield: equipment.shield
-    });
     const weaponInstructions = getWeaponRenderInstructions(
         equipment.weapon_left,
         equipment.weapon_right,
@@ -141,10 +135,6 @@ export const buildEquipmentGroups = (equipment: EquippedMap | null | undefined, 
         equipment.shield,
         gender
     );
-    console.log('[CharacterFullPreview] Weapon instructions created:', weaponInstructions.length, 'instructions');
-    weaponInstructions.forEach((w, idx) => {
-        console.log(`  [${idx}] flipHorizontal:`, w.flipHorizontal, 'hasSource:', !!w.source);
-    });
     
     // Separate main-hand weapon, off-hand weapon, and shield
     // Shield is always the last instruction when present
@@ -162,10 +152,8 @@ export const buildEquipmentGroups = (equipment: EquippedMap | null | undefined, 
         } else if (hasTwoHanded) {
             g.weaponMainHand.push(<Image key={`weapon_twohanded_${i}`} source={w.source} style={style} resizeMode="contain" />);
         } else if (w.flipHorizontal) {
-            console.log('[CharacterFullPreview] ✅ Off-hand weapon added to weaponOffHand group, index:', i);
             g.weaponOffHand.push(<Image key={`weapon_off_${i}`} source={w.source} style={style} resizeMode="contain" />);
         } else {
-            console.log('[CharacterFullPreview] ✅ Main-hand weapon added to weaponMainHand group, index:', i);
             g.weaponMainHand.push(<Image key={`weapon_main_${i}`} source={w.source} style={style} resizeMode="contain" />);
         }
     });

@@ -1,4 +1,5 @@
 import CharacterFullPreview from '@/components/character/CharacterFullPreview';
+import { EquipmentStatsDisplay } from '@/components/character/EquipmentStatsDisplay';
 import ItemInfoModal from '@/components/ui/ItemInfoModal';
 import LRText from '@/components/ui/LRText';
 import RarityGradientBackground from '@/components/ui/RarityGradientBackground';
@@ -263,6 +264,13 @@ export default function InventoryScreen() {
                             />
                         </View>
                     </View>
+                    {/* Stats Display - between arch and character (outside inner View to avoid layout constraints) */}
+                    {(() => {
+                        const derivedStats = (player?.character as any)?.derivedStats as Record<string, number> | undefined;
+                        console.log('[Inventory] Character derivedStats:', derivedStats);
+                        console.log('[Inventory] Player character:', player?.character);
+                        return <EquipmentStatsDisplay stats={derivedStats} />;
+                    })()}
                     </ImageBackground>
                     {/* Equipped Slots Around Character - outside ImageBackground to avoid clipping */}
                     <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}>

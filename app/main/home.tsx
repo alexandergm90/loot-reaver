@@ -42,12 +42,10 @@ export default function StyledHomeMockup(){
     const eq: Record<string, string> = {};
     const items = (player?.character as any)?.items as any[] | undefined;
     if (!items) return eq;
-    console.log('[Home] Processing items:', items.length);
     for (const it of items) {
       const code = it?.template?.code as string | undefined;
       const slot = it?.slot as string | undefined;
       if (!code || !slot) continue;
-      console.log('[Home] Processing item:', { code, slot, equippedHand: it.equippedHand, isTwoHanded: it.template?.isTwoHanded });
       switch (slot) {
         case 'chest':
           eq.chest = code;
@@ -71,29 +69,12 @@ export default function StyledHomeMockup(){
           // Two-handed weapons are always main-hand
           if (it.template?.isTwoHanded === true) {
             eq.weapon_twohanded = code;
-          } else {
-            // Handle single-handed weapons
-            const equippedHand = String(it.equippedHand || '').toLowerCase();
-            if (equippedHand === 'left') {
-              // API left (off-hand) maps to weapon_right slot (right UI slot)
-              eq.weapon_right = code;
-              console.log('[Home] ✅ Off-hand weapon assigned to weapon_right:', code, 'equippedHand:', it.equippedHand);
-            } else if (equippedHand === 'right') {
-              // API right (main-hand) maps to weapon_left slot (left UI slot)
-              eq.weapon_left = code;
-              console.log('[Home] ✅ Main-hand weapon assigned to weapon_left:', code, 'equippedHand:', it.equippedHand);
-            } else {
-              // equippedHand is undefined/null - need to determine which slot
-              // If weapon_left is already taken, assign to weapon_right (off-hand)
-              // Otherwise, assign to weapon_left (main-hand)
-              if (eq.weapon_left) {
-                eq.weapon_right = code;
-                console.log('[Home] ✅ Weapon with undefined equippedHand assigned to weapon_right (off-hand) - weapon_left already taken:', code);
-              } else {
-                eq.weapon_left = code;
-                console.log('[Home] ✅ Weapon with undefined equippedHand assigned to weapon_left (main-hand):', code);
-              }
-            }
+          } else if (it.equippedHand === 'left') {
+            // API left (off-hand) maps to weapon_right slot (right UI slot)
+            eq.weapon_right = code;
+          } else if (it.equippedHand === 'right') {
+            // API right (main-hand) maps to weapon_left slot (left UI slot)
+            eq.weapon_left = code;
           }
           break;
         case 'shield':
