@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Dimensions, Image, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import LRText from '../ui/LRText';
-import RarityGradientBackground from '../ui/RarityGradientBackground';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -59,28 +58,35 @@ export const EquipmentStatsDisplay: React.FC<Props> = ({ stats }) => {
     const health = stats?.health || stats?.Health || 0;
     const attack = stats?.attack || stats?.Attack || 0;
     
+    // Get power (before filtering)
+    const power = stats?.power || stats?.Power || 0;
+    
     const healthIcon = getStatIcon('health');
     const attackIcon = getStatIcon('attack');
     
-    // Get all stats for the modal, sorted with health and attack first
-    const allStats = Object.entries(stats || {})
-        .filter(([key]) => {
-            const normalizedKey = key.toLowerCase();
-            return normalizedKey !== 'level' && normalizedKey !== 'power';
-        })
-        .map(([key, value]) => ({
+    // Get core attributes for the two-column layout
+    const getStat = (key: string) => {
+        const value = stats?.[key] || stats?.[key.toLowerCase()] || stats?.[key.toUpperCase()] || 0;
+        return {
             key,
             value: value as number,
             icon: getStatIcon(key),
-        }))
-        .sort((a, b) => {
-            // Sort: health and attack first, then alphabetically
-            if (a.key.toLowerCase() === 'health') return -1;
-            if (b.key.toLowerCase() === 'health') return 1;
-            if (a.key.toLowerCase() === 'attack') return -1;
-            if (b.key.toLowerCase() === 'attack') return 1;
-            return a.key.localeCompare(b.key);
-        });
+        };
+    };
+    
+    // Column 1: Strength, Dexterity, Intelligence
+    const column1Stats = [
+        getStat('strength'),
+        getStat('dexterity'),
+        getStat('intelligence'),
+    ];
+    
+    // Column 2: Health, Attack, Armor
+    const column2Stats = [
+        getStat('health'),
+        getStat('attack'),
+        getStat('armor'),
+    ];
     
     return (
         <>
@@ -133,33 +139,77 @@ export const EquipmentStatsDisplay: React.FC<Props> = ({ stats }) => {
                             style={styles.modalBackground}
                             imageStyle={styles.modalBackgroundImage}
                         >
-                            <View style={styles.modalHeader}>
-                                <LRText weight="bold" style={styles.modalTitle}>Character Stats</LRText>
-                                <Pressable
-                                    onPress={() => setShowModal(false)}
-                                    style={styles.closeButton}
-                                >
-                                    <LRText style={styles.closeButtonText}>✕</LRText>
-                                </Pressable>
-                            </View>
+                            {/* Close button - positioned absolutely like ItemInfoModal */}
+                            <Pressable
+                                onPress={() => setShowModal(false)}
+                                style={styles.closeButton}
+                            >
+                                <LRText weight="black" style={styles.closeButtonText}>✕</LRText>
+                            </Pressable>
                             
-                            <ScrollView style={styles.modalScrollView} showsVerticalScrollIndicator={false}>
-                                <View style={styles.statsContainer}>
-                                    {allStats.map((stat) => (
-                                        <View key={stat.key} style={styles.modalStatRow}>
-                                            {stat.icon && (
-                                                <Image source={stat.icon} style={styles.modalStatIcon} resizeMode="contain" />
-                                            )}
-                                            <View style={styles.modalStatInfo}>
-                                                <LRText weight="regular" style={styles.modalStatLabel}>
-                                                    {stat.key.charAt(0).toUpperCase() + stat.key.slice(1)}
-                                                </LRText>
-                                                <LRText weight="bold" style={styles.modalStatValue}>
-                                                    {formatStatValue(stat.key, stat.value)}
-                                                </LRText>
-                                            </View>
+                            <ScrollView 
+                                style={styles.modalScrollView} 
+                                showsVerticalScrollIndicator={false}
+                                contentContainerStyle={styles.modalScrollContent}
+                            >
+                                {/* Title - centered */}
+                                <View style={styles.titleContainer}>
+                                    <LRText weight="bold" style={styles.modalTitle}>Character Stats</LRText>
+                                </View>
+                                
+                                {/* Item Power - centered with dashes */}
+                                <View style={styles.powerContainer}>
+                                    <LRText weight="regular" style={styles.powerText}>
+                                        ───── Item Power {power} ─────
+                                    </LRText>
+                                </View>
+                                
+                                {/* Core Attributes Section */}
+                                <View style={styles.sectionContainer}>
+                                    <LRText weight="regular" style={styles.sectionTitle}>
+                                        ──────── Core Attributes ────────
+                                    </LRText>
+                                    
+                                    {/* Two-column layout */}
+                                    <View style={styles.columnsContainer}>
+                                        {/* Column 1: Strength, Dexterity, Intelligence */}
+                                        <View style={styles.column}>
+                                            {column1Stats.map((stat) => (
+                                                <View key={stat.key} style={styles.modalStatRow}>
+                                                    {stat.icon && (
+                                                        <Image source={stat.icon} style={styles.modalStatIcon} resizeMode="contain" />
+                                                    )}
+                                                    <View style={styles.modalStatInfo}>
+                                                        <LRText weight="regular" style={styles.modalStatLabel}>
+                                                            {stat.key.charAt(0).toUpperCase() + stat.key.slice(1)}
+                                                        </LRText>
+                                                        <LRText weight="bold" style={styles.modalStatValue}>
+                                                            {formatStatValue(stat.key, stat.value)}
+                                                        </LRText>
+                                                    </View>
+                                                </View>
+                                            ))}
                                         </View>
-                                    ))}
+                                        
+                                        {/* Column 2: Health, Attack, Armor */}
+                                        <View style={styles.column}>
+                                            {column2Stats.map((stat) => (
+                                                <View key={stat.key} style={styles.modalStatRow}>
+                                                    {stat.icon && (
+                                                        <Image source={stat.icon} style={styles.modalStatIcon} resizeMode="contain" />
+                                                    )}
+                                                    <View style={styles.modalStatInfo}>
+                                                        <LRText weight="regular" style={styles.modalStatLabel}>
+                                                            {stat.key.charAt(0).toUpperCase() + stat.key.slice(1)}
+                                                        </LRText>
+                                                        <LRText weight="bold" style={styles.modalStatValue}>
+                                                            {formatStatValue(stat.key, stat.value)}
+                                                        </LRText>
+                                                    </View>
+                                                </View>
+                                            ))}
+                                        </View>
+                                    </View>
                                 </View>
                             </ScrollView>
                         </ImageBackground>
@@ -234,41 +284,67 @@ const styles = StyleSheet.create({
     modalBackground: {
         width: '100%',
         height: '100%',
+        position: 'relative',
     },
     modalBackgroundImage: {
         resizeMode: 'contain',
     },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        borderBottomWidth: 2,
-        borderBottomColor: '#1c1917',
-    },
-    modalTitle: {
-        fontSize: 20,
-        color: '#1c1917',
-    },
     closeButton: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+        position: 'absolute',
+        top: 24,
+        right: 10,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
         alignItems: 'center',
         justifyContent: 'center',
+        zIndex: 10,
     },
     closeButtonText: {
-        fontSize: 16,
-        color: '#1c1917',
-        fontWeight: 'bold',
+        color: '#d4a574',
+        fontSize: 18,
+        lineHeight: 20,
     },
     modalScrollView: {
-        maxHeight: 400,
+        flex: 1,
     },
-    statsContainer: {
-        padding: 16,
+    modalScrollContent: {
+        paddingHorizontal: 24,
+        paddingTop: 20,
+        paddingBottom: 24,
+    },
+    titleContainer: {
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 22,
+        color: '#1c1917',
+    },
+    powerContainer: {
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    powerText: {
+        fontSize: 16,
+        color: '#1c1917',
+    },
+    sectionContainer: {
+        gap: 16,
+    },
+    sectionTitle: {
+        fontSize: 16,
+        color: '#1c1917',
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    columnsContainer: {
+        flexDirection: 'row',
+        gap: 16,
+    },
+    column: {
+        flex: 1,
         gap: 12,
     },
     modalStatRow: {
