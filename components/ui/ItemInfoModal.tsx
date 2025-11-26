@@ -50,6 +50,46 @@ const formatStatValue = (key: string, value: number): string => {
     return `+${String(value)}`;
 };
 
+// Helper to process bonuses and combine minAttack/maxAttack into attack range
+const processBonuses = (bonuses: any): Array<{ key: string; value: string | number; icon: any | null }> => {
+    const allStats: Array<{ key: string; value: string | number; icon: any | null }> = [];
+    
+    if (!bonuses || typeof bonuses !== 'object') {
+        return allStats;
+    }
+    
+    // Check if both minAttack and maxAttack exist
+    const minAttack = bonuses.minAttack;
+    const maxAttack = bonuses.maxAttack;
+    const hasAttackRange = typeof minAttack === 'number' && typeof maxAttack === 'number';
+    
+    Object.entries(bonuses).forEach(([key, value]) => {
+        // Skip attackType (it's shown at the top for weapons)
+        if (key.toLowerCase() === 'attacktype') return;
+        
+        // Skip minAttack and maxAttack if we're combining them
+        if (hasAttackRange && (key.toLowerCase() === 'minattack' || key.toLowerCase() === 'maxattack')) {
+            return;
+        }
+        
+        const normalizedKey = key.toLowerCase();
+        const icon = getStatIcon(normalizedKey);
+        allStats.push({ key, value: value as number, icon });
+    });
+    
+    // Add combined attack range at the beginning if both minAttack and maxAttack exist
+    if (hasAttackRange) {
+        const attackIcon = getStatIcon('attack');
+        allStats.unshift({ 
+            key: 'attack', 
+            value: `${minAttack}-${maxAttack}`, 
+            icon: attackIcon 
+        });
+    }
+    
+    return allStats;
+};
+
 type ItemDetails = {
     id: string;
     slot: string;
@@ -242,21 +282,7 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                                 {/* Left stats column */}
                                 <View style={styles.statsSideColumn}>
                                     {(() => {
-                                        const allStats: Array<{ key: string; value: string | number; icon: any | null }> = [];
-                                        const slot = item?.slot || item?.template?.slot;
-                                        
-                                        // Only use bonuses from item (actual extended stats when item is created)
-                                        if (item?.bonuses && typeof item.bonuses === 'object') {
-                                            Object.entries(item.bonuses).forEach(([key, value]) => {
-                                                if (key === 'level' || key === 'power') return;
-                                                // Don't show attackType in stats (it's shown at the top for weapons)
-                                                if (key.toLowerCase() === 'attacktype') return;
-                                                
-                                                const normalizedKey = key.toLowerCase();
-                                                const icon = getStatIcon(normalizedKey);
-                                                allStats.push({ key, value: value as number, icon });
-                                            });
-                                        }
+                                        const allStats = processBonuses(item?.bonuses);
                                         
                                         // Left column: first 4 stats
                                         const leftStats = allStats.slice(0, 4);
@@ -268,7 +294,10 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                                         
                                         return leftStats.map((stat) => {
                                             const statIcon = stat.icon;
-                                            const formattedValue = formatStatValue(stat.key, stat.value as number);
+                                            // For attack range (string value), display as-is; otherwise format normally
+                                            const formattedValue = typeof stat.value === 'string' 
+                                                ? stat.value 
+                                                : formatStatValue(stat.key, stat.value as number);
                                             
                                             return (
                                                 <View key={stat.key} style={styles.statRowSide}>
@@ -311,21 +340,7 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                                 {/* Right stats column */}
                                 <View style={styles.statsSideColumn}>
                                     {(() => {
-                                        const allStats: Array<{ key: string; value: string | number; icon: any | null }> = [];
-                                        const slot = item?.slot || item?.template?.slot;
-                                        
-                                        // Only use bonuses from item (actual extended stats when item is created)
-                                        if (item?.bonuses && typeof item.bonuses === 'object') {
-                                            Object.entries(item.bonuses).forEach(([key, value]) => {
-                                                if (key === 'level' || key === 'power') return;
-                                                // Don't show attackType in stats (it's shown at the top for weapons)
-                                                if (key.toLowerCase() === 'attacktype') return;
-                                                
-                                                const normalizedKey = key.toLowerCase();
-                                                const icon = getStatIcon(normalizedKey);
-                                                allStats.push({ key, value: value as number, icon });
-                                            });
-                                        }
+                                        const allStats = processBonuses(item?.bonuses);
                                         
                                         // Right column: stats 5-8 (or empty if less than 5)
                                         const rightStats = allStats.slice(4, 8);
@@ -337,7 +352,10 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                                         
                                         return rightStats.map((stat) => {
                                             const statIcon = stat.icon;
-                                            const formattedValue = formatStatValue(stat.key, stat.value as number);
+                                            // For attack range (string value), display as-is; otherwise format normally
+                                            const formattedValue = typeof stat.value === 'string' 
+                                                ? stat.value 
+                                                : formatStatValue(stat.key, stat.value as number);
                                             
                                             return (
                                                 <View key={stat.key} style={styles.statRowSide}>

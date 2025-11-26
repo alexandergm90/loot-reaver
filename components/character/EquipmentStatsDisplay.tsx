@@ -54,15 +54,15 @@ export const EquipmentStatsDisplay: React.FC<Props> = ({ stats }) => {
         console.log('[EquipmentStatsDisplay] Stats keys:', stats ? Object.keys(stats) : 'null');
     }, [stats]);
     
-    // Get health and attack from derivedStats
+    // Get health and armor from derivedStats
     const health = stats?.health || stats?.Health || 0;
-    const attack = stats?.attack || stats?.Attack || 0;
+    const armor = stats?.armor || stats?.Armor || 0;
     
     // Get power (before filtering)
     const power = stats?.power || stats?.Power || 0;
     
     const healthIcon = getStatIcon('health');
-    const attackIcon = getStatIcon('attack');
+    const armorIcon = getStatIcon('armor');
     
     // Get core attributes for the two-column layout
     const getStat = (key: string) => {
@@ -100,11 +100,11 @@ export const EquipmentStatsDisplay: React.FC<Props> = ({ stats }) => {
                     </View>
                 )}
                 
-                {/* Attack */}
-                {attackIcon && (
+                {/* Armor */}
+                {armorIcon && (
                     <View style={styles.statRow}>
-                        <Image source={attackIcon} style={styles.statIcon} resizeMode="contain" />
-                        <LRText weight="bold" style={styles.statValue}>{attack}</LRText>
+                        <Image source={armorIcon} style={styles.statIcon} resizeMode="contain" />
+                        <LRText weight="bold" style={styles.statValue}>{armor}</LRText>
                     </View>
                 )}
                 
