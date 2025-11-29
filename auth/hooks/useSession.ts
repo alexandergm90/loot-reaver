@@ -1,5 +1,6 @@
-import { getAuthenticatedUser } from '@/auth/services/authService';
+import { getAuthenticatedUser, loginAsGuest } from '@/auth/services/authService';
 import { tokenService } from '@/auth/services/tokenService';
+import { PLAYER_ID_KEY } from '@/auth/utils/playerId';
 import storage from '@/auth/utils/storage';
 import { usePlayerStore } from '@/store/playerStore';
 import { useEffect, useState } from 'react';
@@ -29,7 +30,34 @@ export function useSession() {
             const hasValidToken = await tokenService.isTokenValid();
 
             if (!hasValidToken) {
-                // Clear any stale player data when token is invalid
+                // If no valid token, check if we have an existing player_id to auto-reauthenticate
+                const existingPlayerId = await storage.getItem(PLAYER_ID_KEY);
+                
+                // If we have an existing player_id, try to re-authenticate automatically
+                if (existingPlayerId) {
+                    try {
+                        // Try to re-authenticate as guest with existing player_id
+                        await loginAsGuest(existingPlayerId);
+                        // Now fetch the user with the new token
+                        const user = await getAuthenticatedUser();
+                        if (user) {
+                            setPlayer(user);
+                            await storage.setItem('player', JSON.stringify(user));
+                            setState({
+                                isAuthenticated: true,
+                                hasCharacter: user.hasCharacter,
+                                isLoading: false,
+                                error: null,
+                            });
+                            return;
+                        }
+                    } catch (err) {
+                        console.warn('Auto-reauthentication failed:', err);
+                        // Fall through to clear state
+                    }
+                }
+                
+                // Clear any stale player data when token is invalid and re-auth failed
                 clearPlayer();
                 await storage.deleteItem('player');
                 setState({
