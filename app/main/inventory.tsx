@@ -267,9 +267,10 @@ export default function InventoryScreen() {
                     {/* Stats Display - between arch and character (outside inner View to avoid layout constraints) */}
                     {(() => {
                         const derivedStats = (player?.character as any)?.derivedStats as Record<string, number> | undefined;
+                        const characterLevel = player?.character?.level;
                         console.log('[Inventory] Character derivedStats:', derivedStats);
                         console.log('[Inventory] Player character:', player?.character);
-                        return <EquipmentStatsDisplay stats={derivedStats} />;
+                        return <EquipmentStatsDisplay stats={derivedStats} level={characterLevel} />;
                     })()}
                     </ImageBackground>
                     {/* Equipped Slots Around Character - outside ImageBackground to avoid clipping */}

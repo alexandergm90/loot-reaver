@@ -16,12 +16,10 @@ const STAT_ICONS: Record<string, any> = {
     fire: require('@/assets/images/equipment/stats_icons/fire.png'),
     intelligence: require('@/assets/images/equipment/stats_icons/intelligence.png'),
     lighting: require('@/assets/images/equipment/stats_icons/lighting.png'),
+    lightning: require('@/assets/images/equipment/stats_icons/lighting.png'),
     poison: require('@/assets/images/equipment/stats_icons/poison.png'),
     strength: require('@/assets/images/equipment/stats_icons/strength.png'),
 };
-
-// Stats that should display as percentages
-const PERCENTAGE_STATS = ['critical', 'block', 'dodge'];
 
 // Helper to get stat icon
 const getStatIcon = (statKey: string): any | null => {
@@ -29,64 +27,64 @@ const getStatIcon = (statKey: string): any | null => {
     return STAT_ICONS[normalizedKey] || null;
 };
 
-// Helper to format stat value
-const formatStatValue = (key: string, value: number): string => {
-    const normalizedKey = key.toLowerCase();
-    if (PERCENTAGE_STATS.includes(normalizedKey)) {
-        // If value is already a percentage (0-100), use as is, otherwise convert from decimal
-        const percentage = value > 1 ? value : Math.round(value * 100);
-        return `${percentage}%`;
-    }
+// Helper to format percentage value (converts decimal to percentage)
+const formatPercentage = (value: number): string => {
+    const percentage = Math.round(value * 100);
+    return `${percentage}%`;
+};
+
+// Helper to format flat number (for elemental damage)
+const formatFlatNumber = (value: number): string => {
     return value.toString();
+};
+
+// Helper to format crit multiplier (1.5 -> 150% or 1.5x)
+const formatCritMultiplier = (value: number): string => {
+    const percentage = Math.round(value * 100);
+    return `${percentage}%`;
+};
+
+// Helper to format damage range
+const formatDamageRange = (min: number, max: number): string => {
+    return `${min}-${max}`;
 };
 
 type Props = {
     stats: Record<string, number> | null | undefined;
+    level?: number;
 };
 
-export const EquipmentStatsDisplay: React.FC<Props> = ({ stats }) => {
+export const EquipmentStatsDisplay: React.FC<Props> = ({ stats, level }) => {
     const [showModal, setShowModal] = useState(false);
     
-    // Debug: Log stats to see what we're receiving
-    React.useEffect(() => {
-        console.log('[EquipmentStatsDisplay] Stats received:', stats);
-        console.log('[EquipmentStatsDisplay] Stats type:', typeof stats);
-        console.log('[EquipmentStatsDisplay] Stats keys:', stats ? Object.keys(stats) : 'null');
-    }, [stats]);
+    // Extract all stats from derivedStats
+    const health = stats?.health || 0;
+    const armor = stats?.armor || 0;
+    const strength = stats?.strength || 0;
+    const dexterity = stats?.dexterity || 0;
+    const intelligence = stats?.intelligence || 0;
+    const physicalDamageMin = stats?.physicalDamageMin || 0;
+    const physicalDamageMax = stats?.physicalDamageMax || 0;
+    const totalDamageMin = stats?.totalDamageMin || 0;
+    const totalDamageMax = stats?.totalDamageMax || 0;
+    const critChance = stats?.critChance || 0;
+    const critMultiplier = stats?.critMultiplier || 0;
+    const dodgeChance = stats?.dodgeChance || 0;
+    const blockChance = stats?.blockChance || 0;
+    const physicalReduction = stats?.physicalReduction || 0;
+    const fireDamage = stats?.fireDamage || 0;
+    const lightningDamage = stats?.lightningDamage || 0;
+    const poisonDamage = stats?.poisonDamage || 0;
+    const burnChance = stats?.burnChance || 0;
+    const poisonChance = stats?.poisonChance || 0;
+    const stunChance = stats?.stunChance || 0;
+    const power = stats?.power || 0;
     
-    // Get health and armor from derivedStats
-    const health = stats?.health || stats?.Health || 0;
-    const armor = stats?.armor || stats?.Armor || 0;
-    
-    // Get power (before filtering)
-    const power = stats?.power || stats?.Power || 0;
+    // Calculate attack rating (using totalDamageMax as shown in reference)
+    const attackRating = totalDamageMax;
     
     const healthIcon = getStatIcon('health');
     const armorIcon = getStatIcon('armor');
-    
-    // Get core attributes for the two-column layout
-    const getStat = (key: string) => {
-        const value = stats?.[key] || stats?.[key.toLowerCase()] || stats?.[key.toUpperCase()] || 0;
-        return {
-            key,
-            value: value as number,
-            icon: getStatIcon(key),
-        };
-    };
-    
-    // Column 1: Strength, Dexterity, Intelligence
-    const column1Stats = [
-        getStat('strength'),
-        getStat('dexterity'),
-        getStat('intelligence'),
-    ];
-    
-    // Column 2: Health, Attack, Armor
-    const column2Stats = [
-        getStat('health'),
-        getStat('attack'),
-        getStat('armor'),
-    ];
     
     return (
         <>
@@ -147,71 +145,337 @@ export const EquipmentStatsDisplay: React.FC<Props> = ({ stats }) => {
                                 <LRText weight="black" style={styles.closeButtonText}>✕</LRText>
                             </Pressable>
                             
-                            <ScrollView 
-                                style={styles.modalScrollView} 
-                                showsVerticalScrollIndicator={false}
-                                contentContainerStyle={styles.modalScrollContent}
-                            >
+                            <View style={styles.modalContentInner}>
                                 {/* Title - centered */}
                                 <View style={styles.titleContainer}>
-                                    <LRText weight="bold" style={styles.modalTitle}>Character Stats</LRText>
-                                </View>
-                                
-                                {/* Item Power - centered with dashes */}
-                                <View style={styles.powerContainer}>
-                                    <LRText weight="regular" style={styles.powerText}>
-                                        ───── Item Power {power} ─────
-                                    </LRText>
+                                    <LRText weight="black" style={styles.modalTitle}>CHARACTER STATS</LRText>
                                 </View>
                                 
                                 {/* Core Attributes Section */}
                                 <View style={styles.sectionContainer}>
-                                    <LRText weight="regular" style={styles.sectionTitle}>
-                                        ──────── Core Attributes ────────
-                                    </LRText>
+                                    <View style={styles.sectionTitleContainer}>
+                                        <Image
+                                            source={require('@/assets/images/equipment/horizontal_delimiter.png')}
+                                            resizeMode="contain"
+                                            style={styles.delimiterSide}
+                                        />
+                                        <LRText weight="regular" style={styles.sectionTitle}>
+                                            CORE ATTRIBUTES
+                                        </LRText>
+                                        <Image
+                                            source={require('@/assets/images/equipment/horizontal_delimiter.png')}
+                                            resizeMode="contain"
+                                            style={styles.delimiterSide}
+                                        />
+                                    </View>
                                     
                                     {/* Two-column layout */}
                                     <View style={styles.columnsContainer}>
                                         {/* Column 1: Strength, Dexterity, Intelligence */}
                                         <View style={styles.column}>
-                                            {column1Stats.map((stat) => (
-                                                <View key={stat.key} style={styles.modalStatRow}>
-                                                    {stat.icon && (
-                                                        <Image source={stat.icon} style={styles.modalStatIcon} resizeMode="contain" />
-                                                    )}
-                                                    <View style={styles.modalStatInfo}>
-                                                        <LRText weight="regular" style={styles.modalStatLabel}>
-                                                            {stat.key.charAt(0).toUpperCase() + stat.key.slice(1)}
-                                                        </LRText>
-                                                        <LRText weight="bold" style={styles.modalStatValue}>
-                                                            {formatStatValue(stat.key, stat.value)}
-                                                        </LRText>
-                                                    </View>
-                                                </View>
-                                            ))}
+                                            <View style={styles.modalStatRow}>
+                                                {getStatIcon('strength') && (
+                                                    <Image source={getStatIcon('strength')} style={styles.modalStatIcon} resizeMode="contain" />
+                                                )}
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    STRENGTH{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {strength}
+                                                </LRText>
+                                            </View>
+                                            <View style={styles.modalStatRow}>
+                                                {getStatIcon('dexterity') && (
+                                                    <Image source={getStatIcon('dexterity')} style={styles.modalStatIcon} resizeMode="contain" />
+                                                )}
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    DEXTERITY{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {dexterity}
+                                                </LRText>
+                                            </View>
+                                            <View style={styles.modalStatRow}>
+                                                {getStatIcon('intelligence') && (
+                                                    <Image source={getStatIcon('intelligence')} style={styles.modalStatIcon} resizeMode="contain" />
+                                                )}
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    INTELLIGENCE{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {intelligence}
+                                                </LRText>
+                                            </View>
                                         </View>
                                         
-                                        {/* Column 2: Health, Attack, Armor */}
+                                        {/* Column 2: Item Power, Level */}
                                         <View style={styles.column}>
-                                            {column2Stats.map((stat) => (
-                                                <View key={stat.key} style={styles.modalStatRow}>
-                                                    {stat.icon && (
-                                                        <Image source={stat.icon} style={styles.modalStatIcon} resizeMode="contain" />
-                                                    )}
-                                                    <View style={styles.modalStatInfo}>
-                                                        <LRText weight="regular" style={styles.modalStatLabel}>
-                                                            {stat.key.charAt(0).toUpperCase() + stat.key.slice(1)}
-                                                        </LRText>
-                                                        <LRText weight="bold" style={styles.modalStatValue}>
-                                                            {formatStatValue(stat.key, stat.value)}
-                                                        </LRText>
-                                                    </View>
+                                            <View style={styles.modalStatRow}>
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    ITEM POWER{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {power}
+                                                </LRText>
+                                            </View>
+                                            {level !== undefined && (
+                                                <View style={styles.modalStatRow}>
+                                                    <LRText weight="regular" style={styles.modalStatLabel}>
+                                                        LEVEL{' '}
+                                                    </LRText>
+                                                    <LRText weight="bold" style={styles.modalStatValue}>
+                                                        {level}
+                                                    </LRText>
                                                 </View>
-                                            ))}
+                                            )}
                                         </View>
                                     </View>
                                 </View>
-                            </ScrollView>
+                                
+                                {/* Offense Section */}
+                                <View style={styles.sectionContainer}>
+                                    <View style={styles.sectionTitleContainer}>
+                                        <Image
+                                            source={require('@/assets/images/equipment/horizontal_delimiter.png')}
+                                            resizeMode="contain"
+                                            style={styles.delimiterSide}
+                                        />
+                                        <LRText weight="regular" style={styles.sectionTitle}>
+                                            OFFENSE
+                                        </LRText>
+                                        <Image
+                                            source={require('@/assets/images/equipment/horizontal_delimiter.png')}
+                                            resizeMode="contain"
+                                            style={styles.delimiterSide}
+                                        />
+                                    </View>
+                                    
+                                    {/* Two-column layout */}
+                                    <View style={styles.columnsContainer}>
+                                        {/* Column 1: Physical Attack, Total Attack */}
+                                        <View style={styles.column}>
+                                            <View style={styles.modalStatRow}>
+                                                {getStatIcon('attack') && (
+                                                    <Image source={getStatIcon('attack')} style={styles.modalStatIcon} resizeMode="contain" />
+                                                )}
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    PHYSICAL{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {formatDamageRange(physicalDamageMin, physicalDamageMax)}
+                                                </LRText>
+                                            </View>
+                                            <View style={styles.modalStatRow}>
+                                                {getStatIcon('attack') && (
+                                                    <Image source={getStatIcon('attack')} style={styles.modalStatIcon} resizeMode="contain" />
+                                                )}
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    TOTAL{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {formatDamageRange(totalDamageMin, totalDamageMax)}
+                                                </LRText>
+                                            </View>
+                                        </View>
+                                        
+                                        {/* Column 2: Crit Chance, Crit Damage */}
+                                        <View style={styles.column}>
+                                            <View style={styles.modalStatRow}>
+                                                {getStatIcon('critical') && (
+                                                    <Image source={getStatIcon('critical')} style={styles.modalStatIcon} resizeMode="contain" />
+                                                )}
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    CRIT STRIKE{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {formatPercentage(critChance)}
+                                                </LRText>
+                                            </View>
+                                            <View style={styles.modalStatRow}>
+                                                {getStatIcon('critical') && (
+                                                    <Image source={getStatIcon('critical')} style={styles.modalStatIcon} resizeMode="contain" />
+                                                )}
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    CRIT DAMAGE{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {formatCritMultiplier(critMultiplier)}
+                                                </LRText>
+                                            </View>
+                                        </View>
+                                    </View>
+                                </View>
+                                
+                                {/* Defense Section */}
+                                <View style={styles.sectionContainer}>
+                                    <View style={styles.sectionTitleContainer}>
+                                        <Image
+                                            source={require('@/assets/images/equipment/horizontal_delimiter.png')}
+                                            resizeMode="contain"
+                                            style={styles.delimiterSide}
+                                        />
+                                        <LRText weight="regular" style={styles.sectionTitle}>
+                                            DEFENSE
+                                        </LRText>
+                                        <Image
+                                            source={require('@/assets/images/equipment/horizontal_delimiter.png')}
+                                            resizeMode="contain"
+                                            style={styles.delimiterSide}
+                                        />
+                                    </View>
+                                    
+                                    {/* Two-column layout */}
+                                    <View style={styles.columnsContainer}>
+                                        {/* Column 1: Health, Armor */}
+                                        <View style={styles.column}>
+                                            <View style={styles.modalStatRow}>
+                                                {healthIcon && (
+                                                    <Image source={healthIcon} style={styles.modalStatIcon} resizeMode="contain" />
+                                                )}
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    HEALTH{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {health}
+                                                </LRText>
+                                            </View>
+                                            <View style={styles.modalStatRow}>
+                                                {armorIcon && (
+                                                    <Image source={armorIcon} style={styles.modalStatIcon} resizeMode="contain" />
+                                                )}
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    ARMOR{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {armor}
+                                                </LRText>
+                                            </View>
+                                        </View>
+                                        
+                                        {/* Column 2: Dodge, Block */}
+                                        <View style={styles.column}>
+                                            <View style={styles.modalStatRow}>
+                                                {getStatIcon('dodge') && (
+                                                    <Image source={getStatIcon('dodge')} style={styles.modalStatIcon} resizeMode="contain" />
+                                                )}
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    DODGE{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {formatPercentage(dodgeChance)}
+                                                </LRText>
+                                            </View>
+                                            <View style={styles.modalStatRow}>
+                                                {getStatIcon('block') && (
+                                                    <Image source={getStatIcon('block')} style={styles.modalStatIcon} resizeMode="contain" />
+                                                )}
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    BLOCK{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {formatPercentage(blockChance)}
+                                                </LRText>
+                                            </View>
+                                        </View>
+                                    </View>
+                                </View>
+                                
+                                {/* Elemental Affinity Section */}
+                                <View style={styles.sectionContainer}>
+                                    <View style={styles.sectionTitleContainer}>
+                                        <Image
+                                            source={require('@/assets/images/equipment/horizontal_delimiter.png')}
+                                            resizeMode="contain"
+                                            style={styles.delimiterSide}
+                                        />
+                                        <LRText weight="regular" style={styles.sectionTitle}>
+                                            ELEMENTAL AFFINITY
+                                        </LRText>
+                                        <Image
+                                            source={require('@/assets/images/equipment/horizontal_delimiter.png')}
+                                            resizeMode="contain"
+                                            style={styles.delimiterSide}
+                                        />
+                                    </View>
+                                    
+                                    {/* Two-column layout */}
+                                    <View style={styles.columnsContainer}>
+                                        {/* Column 1: Elemental Damage */}
+                                        <View style={styles.column}>
+                                            <View style={styles.modalStatRow}>
+                                                {getStatIcon('fire') && (
+                                                    <Image source={getStatIcon('fire')} style={styles.modalStatIconSmall} resizeMode="contain" />
+                                                )}
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    FIRE DAMAGE{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {formatFlatNumber(fireDamage)}
+                                                </LRText>
+                                            </View>
+                                            <View style={styles.modalStatRow}>
+                                                {getStatIcon('lightning') && (
+                                                    <Image source={getStatIcon('lightning')} style={styles.modalStatIconSmall} resizeMode="contain" />
+                                                )}
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    LIGHTNING DAMAGE{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {formatFlatNumber(lightningDamage)}
+                                                </LRText>
+                                            </View>
+                                            <View style={styles.modalStatRow}>
+                                                {getStatIcon('poison') && (
+                                                    <Image source={getStatIcon('poison')} style={styles.modalStatIconSmall} resizeMode="contain" />
+                                                )}
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    POISON DAMAGE{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {formatFlatNumber(poisonDamage)}
+                                                </LRText>
+                                            </View>
+                                        </View>
+                                        
+                                        {/* Column 2: Elemental Chances */}
+                                        <View style={styles.column}>
+                                            <View style={styles.modalStatRow}>
+                                                {getStatIcon('fire') && (
+                                                    <Image source={getStatIcon('fire')} style={styles.modalStatIconSmall} resizeMode="contain" />
+                                                )}
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    BURN CHANCE{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {formatPercentage(burnChance)}
+                                                </LRText>
+                                            </View>
+                                            <View style={styles.modalStatRow}>
+                                                {getStatIcon('poison') && (
+                                                    <Image source={getStatIcon('poison')} style={styles.modalStatIconSmall} resizeMode="contain" />
+                                                )}
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    POISON CHANCE{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {formatPercentage(poisonChance)}
+                                                </LRText>
+                                            </View>
+                                            <View style={styles.modalStatRow}>
+                                                {getStatIcon('lightning') && (
+                                                    <Image source={getStatIcon('lightning')} style={styles.modalStatIconSmall} resizeMode="contain" />
+                                                )}
+                                                <LRText weight="regular" style={styles.modalStatLabel}>
+                                                    STUN CHANCE{' '}
+                                                </LRText>
+                                                <LRText weight="bold" style={styles.modalStatValue}>
+                                                    {formatPercentage(stunChance)}
+                                                </LRText>
+                                            </View>
+                                        </View>
+                                    </View>
+                                </View>
+                            </View>
                         </ImageBackground>
                     </Pressable>
                 </Pressable>
@@ -278,8 +542,6 @@ const styles = StyleSheet.create({
         maxHeight: '80%',
         borderRadius: 24,
         overflow: 'hidden',
-        borderWidth: 2,
-        borderColor: '#1c1917',
     },
     modalBackground: {
         width: '100%',
@@ -291,7 +553,7 @@ const styles = StyleSheet.create({
     },
     closeButton: {
         position: 'absolute',
-        top: 24,
+        top: 16,
         right: 10,
         width: 32,
         height: 32,
@@ -306,75 +568,89 @@ const styles = StyleSheet.create({
         fontSize: 18,
         lineHeight: 20,
     },
-    modalScrollView: {
-        flex: 1,
-    },
-    modalScrollContent: {
+    modalContentInner: {
         paddingHorizontal: 24,
-        paddingTop: 20,
-        paddingBottom: 24,
+        paddingTop: 12,
+        paddingBottom: 20,
     },
     titleContainer: {
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 8,
+        marginTop: 4,
     },
     modalTitle: {
         fontSize: 22,
-        color: '#1c1917',
-    },
-    powerContainer: {
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    powerText: {
-        fontSize: 16,
-        color: '#1c1917',
+        color: '#2a1a0a',
+        textShadowColor: 'rgba(255, 255, 255, 0.8)',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 2,
     },
     sectionContainer: {
-        gap: 16,
+        marginBottom: 8,
+    },
+    sectionTitleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 6,
+        marginTop: 4,
+        gap: 8,
     },
     sectionTitle: {
-        fontSize: 16,
-        color: '#1c1917',
+        fontSize: 12,
+        color: '#2a1a0a',
         textAlign: 'center',
-        marginBottom: 8,
+    },
+    delimiterSide: {
+        width: 60,
+        height: 12,
+        flex: 1,
     },
     columnsContainer: {
         flexDirection: 'row',
-        gap: 16,
+        gap: 8,
+        paddingHorizontal: 2,
     },
     column: {
         flex: 1,
-        gap: 12,
+        gap: 4,
     },
     modalStatRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
-        paddingVertical: 10,
-        paddingHorizontal: 14,
-        backgroundColor: 'rgba(255, 255, 255, 0.6)',
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: '#1c1917',
+        gap: 4,
+        paddingVertical: 2,
+        paddingHorizontal: 4,
+        minHeight: 22,
     },
     modalStatIcon: {
-        width: 28,
-        height: 28,
+        width: 20,
+        height: 20,
+    },
+    modalStatIconSmall: {
+        width: 16,
+        height: 16,
     },
     modalStatInfo: {
         flex: 1,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
     },
     modalStatLabel: {
-        fontSize: 15,
-        color: '#1c1917',
+        fontSize: 12,
+        color: '#2a1a0a',
+        opacity: 0.7,
     },
     modalStatValue: {
-        fontSize: 17,
-        color: '#1c1917',
+        fontSize: 12,
+        color: '#2a1a0a',
+        fontWeight: 'bold',
+    },
+    modalStatSubtext: {
+        fontSize: 11,
+        color: '#5a4a3a',
+        fontStyle: 'italic',
+        marginTop: 2,
     },
 });
 
