@@ -19,10 +19,13 @@ const STAT_ICONS: Record<string, any> = {
     dodge: require('@/assets/images/equipment/stats_icons/dodge.png'),
     fire: require('@/assets/images/equipment/stats_icons/fire.png'),
     intelligence: require('@/assets/images/equipment/stats_icons/intelligence.png'),
-    lighting: require('@/assets/images/equipment/stats_icons/lighting.png'),
-    lightning: require('@/assets/images/equipment/stats_icons/lighting.png'),
+    lightning: require('@/assets/images/equipment/stats_icons/lightning.png'),
     poison: require('@/assets/images/equipment/stats_icons/poison.png'),
     strength: require('@/assets/images/equipment/stats_icons/strength.png'),
+    // Spell icons
+    fireball: require('@/assets/images/combat/spells/fireball.png'),
+    arcbolt: require('@/assets/images/combat/spells/arcBolt.png'),
+    toxicbolt: require('@/assets/images/combat/spells/toxicBolt.png'),
 };
 
 // Attack type mapping
@@ -41,6 +44,58 @@ const getStatIcon = (statKey: string): any | null => {
     return STAT_ICONS[normalizedKey] || null;
 };
 
+// Helper to capitalize spell names (e.g., "fireball" -> "Fireball", "arcBolt" -> "Arc Bolt")
+const capitalizeSpellName = (spellName: string): string => {
+    // Handle camelCase: "arcBolt" -> "Arc Bolt"
+    const withSpaces = spellName.replace(/([a-z])([A-Z])/g, '$1 $2');
+    // Capitalize first letter of each word
+    return withSpaces
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+};
+
+// Helper to get display name for stat keys
+const getStatDisplayName = (key: string): string => {
+    const keyLower = key.toLowerCase();
+    
+    // Special cases
+    if (keyLower === 'attack') return 'Damage';
+    
+    // Attribute stats
+    const attributeNames: Record<string, string> = {
+        strength: 'Strength',
+        dexterity: 'Dexterity',
+        intelligence: 'Intelligence',
+    };
+    
+    // Element power stats
+    const elementNames: Record<string, string> = {
+        fire: 'Fire Damage',
+        lightning: 'Lightning Damage',
+        poison: 'Poison Damage',
+    };
+    
+    // Special stats
+    const specialNames: Record<string, string> = {
+        critical: 'Critical',
+        block: 'Block',
+        dodge: 'Dodge',
+    };
+    
+    // Primary stats
+    const primaryNames: Record<string, string> = {
+        armor: 'Armor',
+        health: 'Health',
+    };
+    
+    return attributeNames[keyLower] 
+        || elementNames[keyLower] 
+        || specialNames[keyLower] 
+        || primaryNames[keyLower]
+        || capitalizeSpellName(key); // Fallback to capitalized key
+};
+
 // Helper to format stat value
 const formatStatValue = (key: string, value: number): string => {
     if (PERCENTAGE_STATS.includes(key.toLowerCase())) {
@@ -52,40 +107,128 @@ const formatStatValue = (key: string, value: number): string => {
 };
 
 // Helper to process bonuses and combine minAttack/maxAttack into attack range
-const processBonuses = (bonuses: any): Array<{ key: string; value: string | number; icon: any | null }> => {
-    const allStats: Array<{ key: string; value: string | number; icon: any | null }> = [];
+const processBonuses = (bonuses: any): Array<{ key: string; value: string | number; icon: any | null; isSpell?: boolean }> => {
+    const allStats: Array<{ key: string; value: string | number; icon: any | null; isSpell?: boolean }> = [];
     
     if (!bonuses || typeof bonuses !== 'object') {
         return allStats;
     }
     
-    // Check if both minAttack and maxAttack exist
-    const minAttack = bonuses.minAttack;
-    const maxAttack = bonuses.maxAttack;
-    const hasAttackRange = typeof minAttack === 'number' && typeof maxAttack === 'number';
+    // Check if this is the new nested structure (has primary, attributes, etc.)
+    const isNestedStructure = bonuses.primary || bonuses.attributes || bonuses.elementPower || bonuses.spells || bonuses.special;
     
-    Object.entries(bonuses).forEach(([key, value]) => {
-        // Skip attackType (it's shown at the top for weapons)
-        if (key.toLowerCase() === 'attacktype') return;
+    if (isNestedStructure) {
+        // Handle new nested structure
+        const primary = bonuses.primary || {};
+        const attributes = bonuses.attributes || {};
+        const elementPower = bonuses.elementPower || {};
+        const spells = bonuses.spells || {};
+        const special = bonuses.special || {};
         
-        // Skip minAttack and maxAttack if we're combining them
-        if (hasAttackRange && (key.toLowerCase() === 'minattack' || key.toLowerCase() === 'maxattack')) {
-            return;
+        // Process primary stats (minAttack, maxAttack, armor, health)
+        const minAttack = primary.minAttack;
+        const maxAttack = primary.maxAttack;
+        const hasAttackRange = typeof minAttack === 'number' && typeof maxAttack === 'number';
+        
+        // Add combined attack range at the beginning if both minAttack and maxAttack exist
+        if (hasAttackRange) {
+            const attackIcon = getStatIcon('attack');
+            allStats.unshift({ 
+                key: 'attack', 
+                value: `${minAttack}-${maxAttack}`, 
+                icon: attackIcon 
+            });
         }
         
-        const normalizedKey = key.toLowerCase();
-        const icon = getStatIcon(normalizedKey);
-        allStats.push({ key, value: value as number, icon });
-    });
-    
-    // Add combined attack range at the beginning if both minAttack and maxAttack exist
-    if (hasAttackRange) {
-        const attackIcon = getStatIcon('attack');
-        allStats.unshift({ 
-            key: 'attack', 
-            value: `${minAttack}-${maxAttack}`, 
-            icon: attackIcon 
+        // Add armor and health from primary
+        if (typeof primary.armor === 'number' && primary.armor !== 0) {
+            const icon = getStatIcon('armor');
+            allStats.push({ key: 'armor', value: primary.armor, icon });
+        }
+        if (typeof primary.health === 'number' && primary.health !== 0) {
+            const icon = getStatIcon('health');
+            allStats.push({ key: 'health', value: primary.health, icon });
+        }
+        
+        // Process attributes (strength, dexterity, intelligence)
+        Object.entries(attributes).forEach(([key, value]) => {
+            if (typeof value === 'number' && value !== 0) {
+                const normalizedKey = key.toLowerCase();
+                const icon = getStatIcon(normalizedKey);
+                allStats.push({ key, value: value as number, icon });
+            }
         });
+        
+        // Process element power (fire, lightning, poison)
+        Object.entries(elementPower).forEach(([key, value]) => {
+            if (typeof value === 'number' && value !== 0) {
+                const normalizedKey = key.toLowerCase();
+                const icon = getStatIcon(normalizedKey);
+                allStats.push({ key, value: value as number, icon });
+            }
+        });
+        
+        // Process special stats (critChance -> critical, dodgeChance -> dodge, blockChance -> block)
+        const specialMapping: Record<string, string> = {
+            critChance: 'critical',
+            dodgeChance: 'dodge',
+            blockChance: 'block',
+        };
+        
+        Object.entries(special).forEach(([key, value]) => {
+            if (typeof value === 'number' && value !== 0) {
+                const mappedKey = specialMapping[key] || key;
+                const icon = getStatIcon(mappedKey.toLowerCase());
+                allStats.push({ key: mappedKey, value: value as number, icon });
+            }
+        });
+        
+        // Process spells (fireball, arcBolt, toxicBolt)
+        Object.entries(spells).forEach(([spellName, spellData]: [string, any]) => {
+            if (spellData && typeof spellData === 'object' && typeof spellData.chance === 'number' && spellData.chance > 0) {
+                const normalizedSpellName = spellName.toLowerCase();
+                const icon = getStatIcon(normalizedSpellName);
+                // Format as "Fireball 10% • 20+"
+                const chancePercent = Math.round(spellData.chance * 100);
+                const damage = spellData.damage || 0;
+                const capitalizedName = capitalizeSpellName(spellName);
+                const displayValue = damage > 0 
+                    ? `${capitalizedName} ${chancePercent}% • ${damage}+`
+                    : `${capitalizedName} ${chancePercent}%`;
+                allStats.push({ key: spellName, value: displayValue, icon, isSpell: true });
+            }
+        });
+    } else {
+        // Handle old flat structure (backward compatibility)
+        const minAttack = bonuses.minAttack;
+        const maxAttack = bonuses.maxAttack;
+        const hasAttackRange = typeof minAttack === 'number' && typeof maxAttack === 'number';
+        
+        Object.entries(bonuses).forEach(([key, value]) => {
+            // Skip attackType (it's shown at the top for weapons)
+            if (key.toLowerCase() === 'attacktype') return;
+            
+            // Skip minAttack and maxAttack if we're combining them
+            if (hasAttackRange && (key.toLowerCase() === 'minattack' || key.toLowerCase() === 'maxattack')) {
+                return;
+            }
+            
+            if (typeof value === 'number' && value !== 0) {
+                const normalizedKey = key.toLowerCase();
+                const icon = getStatIcon(normalizedKey);
+                allStats.push({ key, value: value as number, icon });
+            }
+        });
+        
+        // Add combined attack range at the beginning if both minAttack and maxAttack exist
+        if (hasAttackRange) {
+            const attackIcon = getStatIcon('attack');
+            allStats.unshift({ 
+                key: 'attack', 
+                value: `${minAttack}-${maxAttack}`, 
+                icon: attackIcon 
+            });
+        }
     }
     
     return allStats;
@@ -252,8 +395,10 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                                             const isTwoHandedWeapon = item?.template?.isTwoHanded === true;
                                             const handedness = isTwoHandedWeapon ? 'Two Handed Weapon' : 'One Handed Weapon';
                                             
-                                            // Get attackType from baseStats
-                                            const attackType = item?.template?.baseStats?.attackType || item?.template?.baseStats?.attacktype;
+                                            // Get attackType from baseStats (old structure) or bonuses.primary (new structure)
+                                            const attackType = item?.bonuses?.primary?.attackType 
+                                                || item?.template?.baseStats?.attackType 
+                                                || item?.template?.baseStats?.attacktype;
                                             if (attackType) {
                                                 const mappedType = ATTACK_TYPE_MAP[attackType.toLowerCase()] || attackType.toLowerCase();
                                                 const capitalizedType = mappedType.charAt(0).toUpperCase() + mappedType.slice(1);
@@ -278,45 +423,9 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                                 />
                             </View>
 
-                            {/* Item icon with stats on sides */}
+                            {/* Item icon with stats on right */}
                             <View style={styles.itemWithStatsContainer}>
-                                {/* Left stats column */}
-                                <View style={styles.statsSideColumn}>
-                                    {(() => {
-                                        const allStats = processBonuses(item?.bonuses);
-                                        
-                                        // Left column: first 4 stats
-                                        const leftStats = allStats.slice(0, 4);
-                                        
-                                        // Return empty view if no stats to maintain layout
-                                        if (leftStats.length === 0) {
-                                            return <View key="empty-left" style={{ minHeight: 20 }} />;
-                                        }
-                                        
-                                        return leftStats.map((stat) => {
-                                            const statIcon = stat.icon;
-                                            // For attack range (string value), display as-is; otherwise format normally
-                                            const formattedValue = typeof stat.value === 'string' 
-                                                ? stat.value 
-                                                : formatStatValue(stat.key, stat.value as number);
-                                            
-                                            return (
-                                                <View key={stat.key} style={styles.statRowSide}>
-                                                    {statIcon ? (
-                                                        <Image source={statIcon} style={styles.statIcon} resizeMode="contain" />
-                                                    ) : (
-                                                        <View style={styles.statIcon} />
-                                                    )}
-                                                    <LRText weight="bold" style={styles.statValue}>
-                                                        {formattedValue}
-                                                    </LRText>
-                                                </View>
-                                            );
-                                        });
-                                    })()}
-                                </View>
-
-                                {/* Large item image in center with paper border */}
+                                {/* Large item image on left with paper border */}
                                 {itemIcon && (
                                     <View style={styles.largeImageContainer}>
                                         <ImageBackground
@@ -338,28 +447,38 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                                     </View>
                                 )}
 
-                                {/* Right stats column */}
-                                <View style={styles.statsSideColumn}>
+                                {/* All stats column on right */}
+                                <View style={styles.statsRightColumn}>
                                     {(() => {
                                         const allStats = processBonuses(item?.bonuses);
                                         
-                                        // Right column: stats 5-8 (or empty if less than 5)
-                                        const rightStats = allStats.slice(4, 8);
-                                        
                                         // Return empty view if no stats to maintain layout
-                                        if (rightStats.length === 0) {
-                                            return <View key="empty-right" style={{ minHeight: 20 }} />;
+                                        if (allStats.length === 0) {
+                                            return <View key="empty-stats" style={{ minHeight: 20 }} />;
                                         }
                                         
-                                        return rightStats.map((stat) => {
+                                        return allStats.map((stat) => {
                                             const statIcon = stat.icon;
-                                            // For attack range (string value), display as-is; otherwise format normally
-                                            const formattedValue = typeof stat.value === 'string' 
-                                                ? stat.value 
-                                                : formatStatValue(stat.key, stat.value as number);
+                                            
+                                            // For spells, the value already includes the name, so use it as-is
+                                            // For other stats, add the display name
+                                            let formattedValue: string;
+                                            if (stat.isSpell) {
+                                                // Spells already have name in value: "Fireball 10% • 20+"
+                                                formattedValue = stat.value as string;
+                                            } else if (typeof stat.value === 'string') {
+                                                // Attack range: "8-15" -> "8-15 Damage"
+                                                const statDisplayName = getStatDisplayName(stat.key);
+                                                formattedValue = `${stat.value} ${statDisplayName}`;
+                                            } else {
+                                                // Regular stats: formatted value + display name
+                                                const statDisplayName = getStatDisplayName(stat.key);
+                                                const valueStr = formatStatValue(stat.key, stat.value as number);
+                                                formattedValue = `${valueStr} ${statDisplayName}`;
+                                            }
                                             
                                             return (
-                                                <View key={stat.key} style={styles.statRowSide}>
+                                                <View key={stat.key} style={[styles.statRowSide, stat.isSpell && styles.statRowSpell]}>
                                                     {statIcon ? (
                                                         <Image source={statIcon} style={styles.statIcon} resizeMode="contain" />
                                                     ) : (
@@ -546,14 +665,16 @@ const styles = StyleSheet.create({
     },
     itemWithStatsContainer: {
         flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start',
         marginVertical: 3,
         width: '100%',
         minHeight: 100,
+        paddingHorizontal: 8,
     },
-    statsSideColumn: {
-        width: '25%', // Fixed width percentage to ensure equal columns
+    statsRightColumn: {
+        flex: 1,
+        marginLeft: 12,
         alignItems: 'flex-start',
         justifyContent: 'flex-start',
     },
@@ -563,6 +684,10 @@ const styles = StyleSheet.create({
         marginVertical: 2,
         width: '100%',
         minHeight: 20,
+    },
+    statRowSpell: {
+        marginVertical: 1,
+        minHeight: 18,
     },
     statIcon: {
         width: 20,

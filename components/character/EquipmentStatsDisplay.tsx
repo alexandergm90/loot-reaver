@@ -15,8 +15,7 @@ const STAT_ICONS: Record<string, any> = {
     dodge: require('@/assets/images/equipment/stats_icons/dodge.png'),
     fire: require('@/assets/images/equipment/stats_icons/fire.png'),
     intelligence: require('@/assets/images/equipment/stats_icons/intelligence.png'),
-    lighting: require('@/assets/images/equipment/stats_icons/lighting.png'),
-    lightning: require('@/assets/images/equipment/stats_icons/lighting.png'),
+    lightning: require('@/assets/images/equipment/stats_icons/lightning.png'),
     poison: require('@/assets/images/equipment/stats_icons/poison.png'),
     strength: require('@/assets/images/equipment/stats_icons/strength.png'),
 };
