@@ -51,6 +51,8 @@ export default function InventoryScreen() {
     const [isExpanded, setIsExpanded] = useState(false);
     const [showFullList, setShowFullList] = useState(false);
     const [equipmentBottom, setEquipmentBottom] = useState<number | null>(null);
+    const [headerHeight, setHeaderHeight] = useState<number>(HEADER_HEIGHT);
+    const [bottomBorderHeight, setBottomBorderHeight] = useState<number>(0);
 
     const { equippedItems, equipmentCodes } = useEquippedFromCharacter(player?.character);
 
@@ -149,6 +151,15 @@ export default function InventoryScreen() {
     const animatedOverlayStyle = useAnimatedStyle(() => ({
         opacity: overlayOpacity.value,
     }));
+
+    const animatedSideBorderStyle = useAnimatedStyle(() => {
+        // Side borders should span from after header to before bottom border
+        const availableHeight = inventoryHeight.value - headerHeight - bottomBorderHeight;
+        return {
+            top: headerHeight,
+            height: Math.max(0, availableHeight),
+        };
+    });
 
     // Filter out equipped items from inventory - only show unequipped items
     const unequippedItems = React.useMemo(() => {
@@ -361,9 +372,6 @@ export default function InventoryScreen() {
                                 right: 12, // Match px-3 padding
                                 borderTopLeftRadius: 16,
                                 borderTopRightRadius: 16,
-                                borderWidth: 3,
-                                borderColor: '#a67c52',
-                                borderBottomWidth: 3,
                                 zIndex: isExpanded ? 2 : 1,
                                 overflow: 'hidden',
                                 // Shadow to sell the "panel over content" feeling
@@ -379,72 +387,140 @@ export default function InventoryScreen() {
                         <ImageBackground
                             source={require('@/assets/images/dark_leather.png')}
                             resizeMode="repeat"
-                            style={{ flex: 1 }}
+                            style={{ flex: 1, paddingBottom: 14 }}
                             imageStyle={{ opacity: 1.0 }}
                         >
-                            {/* Header with expand/collapse button */}
-                            <Pressable
-                                onPress={() => setIsExpanded((prev) => !prev)}
+                            {/* Left side border */}
+                            <Animated.Image
+                                source={require('@/assets/images/equipment/inventory_side.png')}
+                                resizeMode="repeat"
+                                style={[
+                                    {
+                                        position: 'absolute',
+                                        left: 0,
+                                        width: 10,
+                                    },
+                                    animatedSideBorderStyle,
+                                ]}
+                            />
+                            {/* Right side border */}
+                            <Animated.Image
+                                source={require('@/assets/images/equipment/inventory_side.png')}
+                                resizeMode="repeat"
+                                style={[
+                                    {
+                                        position: 'absolute',
+                                        right: 0,
+                                        width: 10,
+                                    },
+                                    animatedSideBorderStyle,
+                                ]}
+                            />
+                            {/* Bottom border */}
+                            <Image
+                                source={require('@/assets/images/equipment/inventory_bottom.png')}
+                                resizeMode="stretch"
+                                onLayout={(e) => {
+                                    const { height } = e.nativeEvent.layout;
+                                    setBottomBorderHeight(height);
+                                }}
                                 style={{
-                                    flexDirection: 'row',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    paddingHorizontal: 16,
-                                    paddingVertical: 12,
-                                    borderBottomWidth: 2,
-                                    borderBottomColor: '#8b5a3c',
-                                    backgroundColor: 'rgba(26, 15, 5, 0.7)',
-                                    minHeight: HEADER_HEIGHT,
+                                    position: 'absolute',
+                                    bottom: 0,
+                                    left: 0,
+                                    right: 0,
+                                    width: '100%',
+                                    height: 14,
+                                }}
+                            />
+                            {/* Header with expand/collapse button */}
+                            <View 
+                                style={{ width: '100%' }}
+                                onLayout={(e) => {
+                                    const { height } = e.nativeEvent.layout;
+                                    setHeaderHeight(height);
                                 }}
                             >
-                                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                    <LRText
-                                        weight="black"
-                                        style={{
-                                            color: '#d4a574',
-                                            fontSize: 18,
-                                            textShadowColor: 'rgba(0, 0, 0, 0.8)',
-                                            textShadowOffset: { width: 1, height: 1 },
-                                            textShadowRadius: 3,
-                                            letterSpacing: 0.5,
-                                        }}
-                                    >
-                                        Inventory
-                                    </LRText>
-                                    {!!unequippedItems?.length && (
+                                <ImageBackground
+                                    source={require('@/assets/images/equipment/inventory_head.png')}
+                                    resizeMode="stretch"
+                                    imageStyle={{ width: '100%', height: '100%' }}
+                                    style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        right: 0,
+                                        bottom: 0,
+                                        width: '100%',
+                                    }}
+                                />
+                                <Pressable
+                                    onPress={() => setIsExpanded((prev) => !prev)}
+                                    style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        paddingHorizontal: 16,
+                                        paddingVertical: 12,
+                                        minHeight: HEADER_HEIGHT,
+                                        position: 'relative',
+                                    }}
+                                >
+                                    <View style={{ 
+                                        position: 'absolute', 
+                                        left: 0, 
+                                        right: 0, 
+                                        alignItems: 'center', 
+                                        justifyContent: 'center',
+                                        flexDirection: 'row',
+                                    }}>
+                                        <LRText
+                                            weight="black"
+                                            style={{
+                                                color: '#d4a574',
+                                                fontSize: 18,
+                                                textShadowColor: 'rgba(0, 0, 0, 0.8)',
+                                                textShadowOffset: { width: 1, height: 1 },
+                                                textShadowRadius: 3,
+                                                letterSpacing: 0.5,
+                                            }}
+                                        >
+                                            Inventory
+                                        </LRText>
+                                        {!!unequippedItems?.length && (
+                                            <LRText
+                                                weight="bold"
+                                                style={{
+                                                    marginLeft: 8,
+                                                    fontSize: 13,
+                                                    color: '#b88756',
+                                                    textShadowColor: 'rgba(0, 0, 0, 0.6)',
+                                                    textShadowOffset: { width: 1, height: 1 },
+                                                    textShadowRadius: 2,
+                                                }}
+                                            >
+                                                ({unequippedItems.length})
+                                            </LRText>
+                                        )}
+                                    </View>
+                                    <View style={{ width: 20, alignItems: 'center', justifyContent: 'center', marginLeft: 'auto', paddingRight: 16 }}>
                                         <LRText
                                             weight="bold"
                                             style={{
-                                                marginLeft: 8,
-                                                fontSize: 13,
-                                                color: '#b88756',
+                                                color: '#d4a574',
+                                                fontSize: 14,
                                                 textShadowColor: 'rgba(0, 0, 0, 0.6)',
                                                 textShadowOffset: { width: 1, height: 1 },
                                                 textShadowRadius: 2,
                                             }}
                                         >
-                                            ({unequippedItems.length})
+                                            {isExpanded ? '▼' : '▲'}
                                         </LRText>
-                                    )}
-                                </View>
-                                <View style={{ width: 20, alignItems: 'center', justifyContent: 'center' }}>
-                                    <LRText
-                                        weight="bold"
-                                        style={{
-                                            color: '#d4a574',
-                                            fontSize: 14,
-                                            textShadowColor: 'rgba(0, 0, 0, 0.6)',
-                                            textShadowOffset: { width: 1, height: 1 },
-                                            textShadowRadius: 2,
-                                        }}
-                                    >
-                                        {isExpanded ? '▼' : '▲'}
-                                    </LRText>
-                                </View>
-                            </Pressable>
+                                    </View>
+                                </Pressable>
+                            </View>
 
                             {/* Content area */}
-                            <View style={{ flex: 1, padding: 8, justifyContent: showFullList ? 'flex-start' : 'center' }}>
+                            <View style={{ flex: 1, paddingHorizontal: 28, paddingVertical: 8 }}>
                                 {loading && (
                                     <View className="py-6 items-center justify-center">
                                         <ActivityIndicator color="#d4a574" />
@@ -467,7 +543,7 @@ export default function InventoryScreen() {
                                 )}
 
                         {!loading && !error && (
-                            <View>
+                            <View style={{ flex: 1, justifyContent: showFullList ? 'flex-start' : 'center' }}>
                                 {showFullList ? (
                                     // Show full scrollable list when expanded
                                     <FlatList
@@ -482,7 +558,7 @@ export default function InventoryScreen() {
                                         }}
                                         columnWrapperStyle={{ gap: 4 }}
                                         ListEmptyComponent={
-                                            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+                                            <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
                                                 <LRText
                                                     weight="regular"
                                                     style={{
