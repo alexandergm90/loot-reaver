@@ -10,6 +10,7 @@ type Props = {
     slotType?: EquipmentSlotType; // Preferred: use slot type from API
     onPress?: (i: any) => void;
     fallback?: string;
+    scale?: number; // Scale factor for responsive sizing (default: 1)
 };
 
 // Map slot types to placeholder icon paths
@@ -29,9 +30,12 @@ const getPlaceholderIcon = (slotType: EquipmentSlotType): any => {
     return iconMap[slotType] || iconMap.chest;
 };
 
-const SlotChip: React.FC<Props> = ({ label, item, slotType, onPress, fallback }) => {
+const SlotChip: React.FC<Props> = ({ label, item, slotType, onPress, fallback, scale = 1 }) => {
     const clickable = !!item;
     const Comp: any = clickable ? Pressable : View;
+    
+    // Calculate scaled dimensions
+    const scaledSize = 60 * scale;
     
     // Determine slot type: prefer prop, then item.slot, then fallback to label matching
     const resolvedSlotType: EquipmentSlotType = (() => {
@@ -63,7 +67,10 @@ const SlotChip: React.FC<Props> = ({ label, item, slotType, onPress, fallback })
     const rarity = item?.rarity || item?.template?.rarity || 'worn';
     
     return (
-        <Comp onPress={clickable ? () => onPress && onPress(item) : undefined} style={styles.container}>
+        <Comp 
+            onPress={clickable ? () => onPress && onPress(item) : undefined} 
+            style={[styles.container, { width: scaledSize, height: scaledSize }]}
+        >
             <ImageBackground
                 source={require('@/assets/images/equipment/equipment_slot.png')}
                 resizeMode="contain"
