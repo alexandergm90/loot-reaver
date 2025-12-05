@@ -70,19 +70,18 @@ export default function InventoryScreen() {
     const maxWidth = isLargeScreen ? MAX_GAME_WIDTH_LARGE : MAX_GAME_WIDTH;
     const contentWidth = Math.min(width, maxWidth);
     
-    // For scaling calculations, use actual screen width on very large screens to allow proper scaling
-    // Otherwise use contentWidth to maintain phone-like layout
-    const scaleBaseWidth = isVeryLargeScreen ? width : contentWidth;
-    
-    // Calculate scale factors relative to reference dimensions
-    const scaleX = scaleBaseWidth / REF_WIDTH;
+    // Always use contentWidth for scaling to maintain consistent proportions
+    // This ensures the equipment area scales properly relative to the clamped content width
+    const scaleX = contentWidth / REF_WIDTH;
     const scaleY = windowHeight / REF_HEIGHT;
+    
     // Use uniform scaling for equipment area to maintain aspect ratio
-    // On small screens, use a less aggressive scale to keep elements visible
-    // Use the larger of the two scales to prevent things from being too small
+    // Cap the scale to prevent things from becoming too large on very large screens
+    const rawEquipmentScale = Math.min(scaleX, scaleY);
+    const maxScale = 1.3; // Cap at 130% to prevent excessive scaling on tablets
     const equipmentScale = isShortScreen 
         ? Math.max(scaleX, scaleY) * 0.95 // Use max scale and only reduce 5% on short screens
-        : Math.min(scaleX, scaleY);
+        : Math.min(rawEquipmentScale, maxScale); // Cap the scale on larger screens
 
     const { player, setPlayer } = usePlayerStore();
     const [inventory, setInventory] = useState<InventoryItem[] | null>(null);

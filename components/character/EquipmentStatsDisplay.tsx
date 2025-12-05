@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dimensions, Image, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Dimensions, Image, ImageBackground, Modal, Pressable, StyleSheet, View } from 'react-native';
 import LRText from '../ui/LRText';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -88,7 +88,7 @@ export const EquipmentStatsDisplay: React.FC<Props> = ({ stats, level }) => {
     return (
         <>
             {/* Stats Display - positioned between arch and character */}
-            <View style={styles.container}>
+            <View style={[styles.container, { left: '22%' }]}>
                 {/* Health */}
                 {healthIcon && (
                     <View style={styles.statRow}>
@@ -486,7 +486,7 @@ export const EquipmentStatsDisplay: React.FC<Props> = ({ stats, level }) => {
 const styles = StyleSheet.create({
     container: {
         position: 'absolute',
-        left: 75, // Distance from arch border (left side)
+        // left will be set to 22% via inline style for responsive positioning
         top: '50%',
         marginTop: -50, // Center vertically (adjust based on total height)
         alignItems: 'center',
