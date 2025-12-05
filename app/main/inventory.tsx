@@ -76,12 +76,16 @@ export default function InventoryScreen() {
     const scaleY = windowHeight / REF_HEIGHT;
     
     // Use uniform scaling for equipment area to maintain aspect ratio
-    // Cap the scale to prevent things from becoming too large on very large screens
+    // On tablets/large screens, increase the scale to make UI elements larger and more appropriate
     const rawEquipmentScale = Math.min(scaleX, scaleY);
-    const maxScale = 1.3; // Cap at 130% to prevent excessive scaling on tablets
+    const maxScale = 1.4; // Cap at 140% to prevent excessive scaling
+    
+    // Increase scale on larger screens (tablets) to make UI elements bigger
+    const scaleMultiplier = isLargeScreen ? 1.15 : 1.0; // 15% bigger on tablets
+    
     const equipmentScale = isShortScreen 
         ? Math.max(scaleX, scaleY) * 0.95 // Use max scale and only reduce 5% on short screens
-        : Math.min(rawEquipmentScale, maxScale); // Cap the scale on larger screens
+        : Math.min(rawEquipmentScale * scaleMultiplier, maxScale); // Apply multiplier and cap
 
     const { player, setPlayer } = usePlayerStore();
     const [inventory, setInventory] = useState<InventoryItem[] | null>(null);
@@ -325,7 +329,6 @@ export default function InventoryScreen() {
                         <EquipmentStatsDisplay
                             stats={derivedStats}
                             level={characterLevel}
-                            scaleX={equipmentScale} // Use equipmentScale for consistency with slots
                         />
                     );
                 })()}
