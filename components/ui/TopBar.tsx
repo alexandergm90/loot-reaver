@@ -1,7 +1,7 @@
 import { fetchTopbar } from '@/services/topbarService';
 import { TopbarData } from '@/types';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Image, ImageBackground, LayoutChangeEvent, Text, useWindowDimensions, View } from 'react-native';
+import { Image, ImageBackground, LayoutChangeEvent, Text, View } from 'react-native';
 
 function formatTwoDigits(value: number): string {
     return value < 10 ? `0${value}` : `${value}`;
@@ -106,7 +106,7 @@ function DebugBox({
 const SPEC = {
     levelBadge: { x: 482, y: 34, w: 90, h: 90 },
     goldChip: { x: 224, y: 114, w: 78, h: 40 },
-    scrapChip: { x: 364, y: 114, w: 78, h: 40 },
+    shardsChip: { x: 364, y: 114, w: 78, h: 40 },
     xp: { x: 334, y: 181, w: 384, h: 33 }, // total track rect (left+mid+right)
     runesBlock: { x: 590, y: 100, w: 190, h: 60 }, // rune+count(+timer)
 };
@@ -142,10 +142,6 @@ function useRuneCountdown(initialSeconds: number | null) {
 export const TopBar: React.FC<{ onRuneRefill?: (data: TopbarData) => void }> = ({
     onRuneRefill,
 }) => {
-    const { width: screenWidth } = useWindowDimensions();
-    const isLargeScreen = screenWidth > 800; // Tablets and large screens
-    const MAX_HUD_WIDTH = 700; // Maximum width to use for scaling on large screens (increased for bigger HUD)
-    
     const [data, setData] = useState<TopbarData | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -231,29 +227,16 @@ export const TopBar: React.FC<{ onRuneRefill?: (data: TopbarData) => void }> = (
     const onLayout = (e: LayoutChangeEvent) => setW(e.nativeEvent.layout.width);
     const scale = w ? w / PSD_W : 0;
     const height = w ? (w * PSD_H) / PSD_W : 0;
-    
-    // On large screens, apply a transform scale to make the HUD smaller
-    // This scales everything proportionally without breaking internal positioning
-    const hudScale = isLargeScreen ? Math.min(MAX_HUD_WIDTH / w, 1.0) : 1.0;
-    const scaledWidth = w * hudScale;
-    const scaledHeight = height * hudScale;
 
     return (
         <View style={{ paddingTop: 40 }}>
-            <View 
-                onLayout={onLayout} 
-                style={{ 
-                    width: '100%',
-                    alignItems: 'center', // Center the scaled HUD
-                }}
-            >
+            <View onLayout={onLayout} style={{ width: '100%' }}>
                 {scale > 0 && (
-                    <View style={{ transform: [{ scale: hudScale }] }}>
-                        <ImageBackground
-                            source={require('@/assets/images/ui/top_bar.png')}
-                            style={{ width: w, height }}
-                            imageStyle={{ resizeMode: 'contain' }}
-                        >
+                    <ImageBackground
+                        source={require('@/assets/images/ui/top_bar.png')}
+                        style={{ width: w, height }}
+                        imageStyle={{ resizeMode: 'contain' }}
+                    >
                         {/* Level number */}
                         <Place box={SPEC.levelBadge} scale={scale}>
                             <View
@@ -325,8 +308,8 @@ export const TopBar: React.FC<{ onRuneRefill?: (data: TopbarData) => void }> = (
                             </View>
                         </Place>
 
-                        {/* Scrap chip */}
-                        <Place box={SPEC.scrapChip} scale={scale}>
+                        {/* Shards chip */}
+                        <Place box={SPEC.shardsChip} scale={scale}>
                             <View
                                 style={{
                                     position: 'absolute',
@@ -352,8 +335,8 @@ export const TopBar: React.FC<{ onRuneRefill?: (data: TopbarData) => void }> = (
                                     adjustsFontSizeToFit
                                     minimumFontScale={0.7}
                                 >
-                                    {data?.scrap
-                                        ? formatCurrency(data.scrap)
+                                    {data?.shards
+                                        ? formatCurrency(data.shards)
                                         : isLoading
                                           ? '...'
                                           : '0'}
@@ -626,7 +609,6 @@ export const TopBar: React.FC<{ onRuneRefill?: (data: TopbarData) => void }> = (
                             </View>
                         </Place>
                     </ImageBackground>
-                    </View>
                 )}
             </View>
         </View>

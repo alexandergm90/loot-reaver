@@ -11,6 +11,7 @@ type CharacterItem = {
         rarity?: string; 
         baseStats?: Record<string, number>;
         isTwoHanded?: boolean;
+        description?: string;
     };
 };
 

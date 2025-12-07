@@ -251,6 +251,7 @@ type ItemDetails = {
         slot: string;
         baseStats: Record<string, number>;
         iconUrl: string;
+        description?: string;
     };
 };
 
@@ -518,15 +519,6 @@ const ItemInfoModal: React.FC<Props> = ({ item, loading = false, onClose, onEqui
                                     style={styles.delimiter}
                                 />
                             </View>
-
-                            {/* Flavor text (if available) */}
-                            {item?.template?.description && (
-                                <View style={styles.flavorSection}>
-                                    <LRText weight="regular" style={styles.flavorText}>
-                                        {item.template.description}
-                                    </LRText>
-                                </View>
-                            )}
 
                             {/* Action Buttons */}
                             <View style={styles.actionsSection}>

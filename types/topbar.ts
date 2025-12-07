@@ -11,7 +11,7 @@ export type TopbarData = {
     expInCurrentLevel: number;
     expRequiredForNextLevel: number;
     gold: number;
-    scrap: number;
+    shards: number;
     runes: RuneStatus;
 };
 
