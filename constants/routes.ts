@@ -7,6 +7,7 @@ export const ROUTES = {
         dungeon: '/main/dungeon',
         combat: '/main/combat',
         settings: '/main/settings',
+        forge: '/main/forge',
     },
     auth: {
         login: '/auth/intro',
@@ -20,7 +21,7 @@ export const BOTTOM_NAV_ITEMS = [
     { label: 'Inventory', route: ROUTES.main.inventory },
     { label: 'Dungeon', route: ROUTES.main.dungeon },
     { label: 'Shop', route: null }, // TODO: Add route when available
-    { label: 'Guild', route: null }, // TODO: Add route when available
+    { label: 'Forge', route: ROUTES.main.forge },
 ] as const;
 
 // Routes that should not show the bottom navigation
